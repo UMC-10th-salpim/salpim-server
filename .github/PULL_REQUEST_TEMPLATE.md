@@ -1,6 +1,7 @@
 <!--
     PR 제목 예시1: [SALPIM-이슈번호] 이슈명
-    PR 제목 예시2: [SALPIM-이슈번호] fix/hotfix: 회원가입시 중복 검증
+    PR 제목 예시2: [SALPIM-이슈번호] 구현 기능명
+    PR 제목 예시3: [SALPIM-이슈번호] fix/hotfix: 회원가입시 중복 검증
 -->
 
 
