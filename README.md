@@ -8,14 +8,32 @@
 ## 환경 변수 설정
 프로젝트 루트에 `.env`파일을 생성하고 다음 정보를 입력하세요. (참고: `.env.example`)
 
-```ini
+```
 DATABASE_URL=your_db_url
 GEMINI_API_KEY=your_gemini_api_key
 JWT_SECRET_KEY=your_secret_key
 # 추가적인 환경 변수들... (Firebase 설정, STATIC_PROFILE_DIR, PUBLIC_BASE_URL 등)
 ```
 
-## 커밋 컨벤션
+## 코드 컨벤션
+- Commit Convention 준수
+- 브랜치 전략 준수
+- PR 기반 코드 리뷰 진행
+
+### branch 규칙
+```
+main
+ └── dev
+      └── feature/*
+```
+
+- main 직접 작업 금지
+- dev 직접 작업 금지
+- feature 브랜치 생성 후 작업
+- PR을 통해 dev 브랜치 병합
+
+
+### 커밋 컨벤션
 | Type | Description |
 | :--- | :--- |
 | `feat` | 새로운 기능 추가 |
