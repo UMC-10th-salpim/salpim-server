@@ -32,6 +32,10 @@ main
 - feature 브랜치 생성 후 작업
 - PR을 통해 dev 브랜치 병합
 
+### 💬 PR 컨벤션
+
+- 이슈 등록 및 이슈 번호 활용
+- PR 템플릿 참고하여 작성
 
 ### 🧷 커밋 컨벤션
 | Type | Description |
