@@ -20,7 +20,7 @@ JWT_SECRET_KEY=your_secret_key
 - 브랜치 전략 준수
 - PR 기반 코드 리뷰 진행
 
-### branch 규칙
+### 🌳branch 규칙
 ```
 main
  └── dev
@@ -33,7 +33,7 @@ main
 - PR을 통해 dev 브랜치 병합
 
 
-### 커밋 컨벤션
+### 🧷 커밋 컨벤션
 | Type | Description |
 | :--- | :--- |
 | `feat` | 새로운 기능 추가 |
