@@ -8,8 +8,8 @@
 ## 환경 변수 설정
 프로젝트 루트에 `.env`파일을 생성하고 다음 정보를 입력하세요. (참고: `.env.example`)
 
-```markdown
-DATABASE_URL=postgresql://user:password@db:5432/dbname
+```ini
+DATABASE_URL=your_db_url
 GEMINI_API_KEY=your_gemini_api_key
 JWT_SECRET_KEY=your_secret_key
 # 추가적인 환경 변수들... (Firebase 설정, STATIC_PROFILE_DIR, PUBLIC_BASE_URL 등)
