@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.global.apiPayload.hander;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 import salpim.umc10thsalpim.global.apiPayload.code.BaseErrorCode;
 import salpim.umc10thsalpim.global.apiPayload.code.GeneralErrorCode;
@@ -11,6 +12,7 @@ import salpim.umc10thsalpim.global.apiPayload.exception.ProjectException;
 import java.util.HashMap;
 import java.util.Map;
 
+@RestControllerAdvice
 public class GeneralExceptionAdvice {
 
     // 프로젝트에서 발생한 예외 처리
@@ -28,6 +30,8 @@ public class GeneralExceptionAdvice {
     public ResponseEntity<ApiResponse<String>> handleException(
             Exception ex
     ) {
+        //서버 로그로 에러 확인
+        System.out.println("서버 내부 오류 발생: " + ex.getMessage());
         BaseErrorCode code = GeneralErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(code.getStatus())
                 .body(ApiResponse.onFailure(code, ex.getMessage()));
