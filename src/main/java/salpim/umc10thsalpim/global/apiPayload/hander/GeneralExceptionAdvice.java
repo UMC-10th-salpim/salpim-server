@@ -34,7 +34,7 @@ public class GeneralExceptionAdvice {
         System.out.println("서버 내부 오류 발생: " + ex.getMessage());
         BaseErrorCode code = GeneralErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(code.getStatus())
-                .body(ApiResponse.onFailure(code, ex.getMessage()));
+                .body(ApiResponse.onFailure(code, null));
     }
 
     // @Valid 어노테이션 검증 실패 예외
