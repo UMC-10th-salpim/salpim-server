@@ -27,7 +27,7 @@ main
  └── dev
       └── feature/*
 ```
-깃허브 Branch protection rules로 설정
+깃허브 Branch protection rules 설정
 - main 직접 작업 금지
 - dev 직접 작업 금지
 - feature 브랜치 생성 후 작업
