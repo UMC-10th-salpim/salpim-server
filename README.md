@@ -16,6 +16,7 @@ JWT_SECRET_KEY=your_secret_key
 ```
 
 ## 코드 컨벤션
+- 패키지명은 전체 소문자, 클래스명은 파스칼 케이스, 변수나 매서드명은 카멜케이스
 - Commit Convention 준수
 - 브랜치 전략 준수
 - PR 기반 코드 리뷰 진행
