@@ -4,10 +4,6 @@ spring:
     url:  ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-
-springdoc:
-  override-with-generic-response: false
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,3 +11,7 @@ springdoc:
     properties:
       hibernate:
         format_sql: true
+
+springdoc:
+  override-with-generic-response: false
+
