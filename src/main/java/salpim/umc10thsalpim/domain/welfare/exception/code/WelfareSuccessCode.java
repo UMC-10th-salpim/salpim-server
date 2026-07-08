@@ -3,7 +3,6 @@ package salpim.umc10thsalpim.domain.welfare.exception.code;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import salpim.umc10thsalpim.global.apiPayload.code.BaseErrorCode;
 import salpim.umc10thsalpim.global.apiPayload.code.BaseSuccessCode;
 
 @Getter
