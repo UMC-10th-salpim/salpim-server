@@ -18,4 +18,10 @@ public class AuthReqDTO {
             String code
     ) {
     }
+
+    public record Geocode(
+            @NotBlank(message = "도로명 주소는 필수입니다.")
+            String roadAddress
+    ) {
+    }
 }

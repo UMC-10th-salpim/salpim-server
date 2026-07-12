@@ -9,4 +9,12 @@ public class AuthResDTO {
             Boolean verified
     ) {
     }
+
+    @Builder
+    public record GeocodeResult(
+            String roadAddress,
+            Double latitude,
+            Double longitude
+    ) {
+    }
 }

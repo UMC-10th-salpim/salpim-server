@@ -18,6 +18,12 @@ public enum AuthErrorCode implements BaseErrorCode {
     PHONE_NOT_VERIFIED(HttpStatus.BAD_REQUEST,
             "AUTH400_PHONE_NOT_VERIFIED",
             "휴대폰 인증이 완료되지 않았습니다."),
+    GEOCODING_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "AUTH404_GEOCODING",
+            "주소 검색 결과를 찾을 수 없습니다."),
+    GEOCODING_API_ERROR(HttpStatus.BAD_GATEWAY,
+            "AUTH502_GEOCODING",
+            "주소 좌표 조회에 실패했습니다."),
     ;
 
     private final HttpStatus status;

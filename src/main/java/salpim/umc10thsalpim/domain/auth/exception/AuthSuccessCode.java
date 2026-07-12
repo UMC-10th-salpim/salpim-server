@@ -15,6 +15,9 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     PHONE_VERIFIED(HttpStatus.OK,
             "AUTH200_PHONE_VERIFIED",
             "전화번호 인증이 완료되었습니다."),
+    GEOCODED(HttpStatus.OK,
+            "AUTH200_GEOCODED",
+            "주소 좌표 조회가 완료되었습니다."),
     ;
 
     private final HttpStatus status;
