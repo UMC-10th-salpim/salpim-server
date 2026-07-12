@@ -10,4 +10,6 @@ public interface PhoneVerificationRepository extends JpaRepository<PhoneVerifica
     Optional<PhoneVerification> findByPhoneNumber(String phoneNumber);
 
     boolean existsByPhoneNumber(String phoneNumber);
+
+    void deleteByPhoneNumber(String phoneNumber);
 }

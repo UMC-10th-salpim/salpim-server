@@ -32,27 +32,31 @@ public class PhoneVerificationService {
 
     @Transactional
     public void sendVerificationCode(String phoneNumber) {
-        if (memberRepository.existsByPhoneNumber(phoneNumber)) {
+        String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
+
+        if (memberRepository.existsByPhoneNumber(normalizedPhoneNumber)) {
             throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
         }
 
         String code = generateVerificationCode();
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(VERIFICATION_EXPIRATION_MINUTES);
 
-        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(phoneNumber)
+        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(normalizedPhoneNumber)
                 .map(existingVerification -> {
                     existingVerification.updateCode(code, expiredAt);
                     return existingVerification;
                 })
-                .orElseGet(() -> AuthConverter.toPhoneVerification(phoneNumber, code, expiredAt));
+                .orElseGet(() -> AuthConverter.toPhoneVerification(normalizedPhoneNumber, code, expiredAt));
 
         phoneVerificationRepository.save(phoneVerification);
-        log.info("[DEV] phone verification code. maskedPhoneNumber={}, code={}", maskPhoneNumber(phoneNumber), code);
+        log.info("[DEV] phone verification code. maskedPhoneNumber={}, code={}", maskPhoneNumber(normalizedPhoneNumber), code);
     }
 
     @Transactional
     public AuthResDTO.PhoneVerifyResult verifyCode(String phoneNumber, String code) {
-        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(phoneNumber)
+        String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
+
+        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(normalizedPhoneNumber)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_VERIFICATION_CODE));
 
         if (phoneVerification.getExpiredAt().isBefore(LocalDateTime.now())) {
@@ -68,7 +72,9 @@ public class PhoneVerificationService {
     }
 
     public void validateVerifiedPhoneNumber(String phoneNumber) {
-        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(phoneNumber)
+        String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
+
+        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(normalizedPhoneNumber)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.PHONE_NOT_VERIFIED));
 
         if (!Boolean.TRUE.equals(phoneVerification.getVerified())) {
@@ -80,6 +86,11 @@ public class PhoneVerificationService {
         }
     }
 
+    @Transactional
+    public void deleteVerification(String phoneNumber) {
+        phoneVerificationRepository.deleteByPhoneNumber(normalizePhoneNumber(phoneNumber));
+    }
+
     private String generateVerificationCode() {
         return String.format("%06d", secureRandom.nextInt(VERIFICATION_CODE_BOUND));
     }
@@ -89,5 +100,9 @@ public class PhoneVerificationService {
             return "****";
         }
         return "****" + phoneNumber.substring(phoneNumber.length() - 4);
+    }
+
+    private String normalizePhoneNumber(String phoneNumber) {
+        return phoneNumber.replace("-", "").trim();
     }
 }

@@ -10,6 +10,7 @@ import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.exception.AuthSuccessCode;
 import salpim.umc10thsalpim.domain.auth.service.GeocodingService;
+import salpim.umc10thsalpim.domain.auth.service.LocalSignupService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 
@@ -21,6 +22,7 @@ public class SignupController {
 
     private final PhoneVerificationService phoneVerificationService;
     private final GeocodingService geocodingService;
+    private final LocalSignupService localSignupService;
 
     @Operation(summary = "전화번호 인증번호 발송 API")
     @PostMapping("/phone/send")
@@ -53,5 +55,15 @@ public class SignupController {
         AuthResDTO.GeocodeResult response = geocodingService.geocode(request.roadAddress());
         return ResponseEntity.status(AuthSuccessCode.GEOCODED.getStatus())
                 .body(ApiResponse.onSuccess(AuthSuccessCode.GEOCODED, response));
+    }
+
+    @Operation(summary = "로컬 회원가입 API")
+    @PostMapping("/local")
+    public ResponseEntity<ApiResponse<Void>> signupLocal(
+            @Valid @RequestBody AuthReqDTO.LocalSignup request
+    ) {
+        localSignupService.signup(request);
+        return ResponseEntity.status(AuthSuccessCode.SIGNUP_COMPLETED.getStatus())
+                .body(ApiResponse.onSuccess(AuthSuccessCode.SIGNUP_COMPLETED, null));
     }
 }

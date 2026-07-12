@@ -18,6 +18,9 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     GEOCODED(HttpStatus.OK,
             "AUTH200_GEOCODED",
             "주소 좌표 조회가 완료되었습니다."),
+    SIGNUP_COMPLETED(HttpStatus.CREATED,
+            "AUTH201_SIGNUP",
+            "회원가입이 완료되었습니다."),
     ;
 
     private final HttpStatus status;
