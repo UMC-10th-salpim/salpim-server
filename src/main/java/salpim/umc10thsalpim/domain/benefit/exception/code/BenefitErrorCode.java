@@ -1,4 +1,4 @@
-package salpim.umc10thsalpim.global.apiPayload.exception.code;
+package salpim.umc10thsalpim.domain.benefit.exception.code;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
