@@ -9,6 +9,7 @@ public class BenefitResDTO {
             String applicationMethod,
             String applicationUrl,
             String contact,
-            String organization
+            String organization,
+            Boolean isOnlineApplicationAvailable
     ) {}
 }

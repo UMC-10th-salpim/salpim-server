@@ -6,7 +6,8 @@ import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 public class BenefitConverter {
 
     public static BenefitResDTO.GetApplicationHelperInfo toGetApplicationHelperInfo(
-            WelfareBenefit welfareBenefit
+            WelfareBenefit welfareBenefit,
+            Boolean isOnlineApplicationAvailable
     ) {
         return new BenefitResDTO.GetApplicationHelperInfo(
                 welfareBenefit.getId(),
@@ -15,7 +16,8 @@ public class BenefitConverter {
                 welfareBenefit.getApplicationMethod(),
                 welfareBenefit.getApplicationUrl(),
                 welfareBenefit.getContact(),
-                welfareBenefit.getOrganization()
+                welfareBenefit.getOrganization(),
+                isOnlineApplicationAvailable
         );
     }
 }
