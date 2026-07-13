@@ -1,4 +1,4 @@
-package salpim.umc10thsalpim.domain.welfare.entity;
+package salpim.umc10thsalpim.domain.benefit.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -11,11 +11,11 @@ import salpim.umc10thsalpim.global.entity.BaseEntity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@Builder
 @Entity
 @Getter
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "welfare_benefit")
 public class WelfareBenefit extends BaseEntity {
 

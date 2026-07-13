@@ -1,4 +1,4 @@
-package salpim.umc10thsalpim.domain.welfare.entity;
+package salpim.umc10thsalpim.domain.benefit.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

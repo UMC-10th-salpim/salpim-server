@@ -1,4 +1,4 @@
-package salpim.umc10thsalpim.domain.welfare.exception.code;
+package salpim.umc10thsalpim.global.apiPayload.exception.code;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -7,7 +7,7 @@ import salpim.umc10thsalpim.global.apiPayload.code.BaseSuccessCode;
 
 @Getter
 @RequiredArgsConstructor
-public enum WelfareSuccessCode implements BaseSuccessCode {
+public enum BenefitSuccessCode implements BaseSuccessCode {
 
     BENEFIT_LIST_GET_SUCCESS(
             HttpStatus.OK,

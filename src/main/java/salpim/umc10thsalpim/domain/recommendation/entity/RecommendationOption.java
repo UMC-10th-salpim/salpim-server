@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import salpim.umc10thsalpim.domain.welfare.entity.WelfareCategory;
+import salpim.umc10thsalpim.domain.benefit.entity.WelfareCategory;
 import salpim.umc10thsalpim.global.entity.BaseEntity;
 
 @Entity

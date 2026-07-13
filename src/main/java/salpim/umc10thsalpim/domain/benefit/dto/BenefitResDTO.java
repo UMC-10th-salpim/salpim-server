@@ -1,8 +1,8 @@
-package salpim.umc10thsalpim.domain.welfare.dto;
+package salpim.umc10thsalpim.domain.benefit.dto;
 
 import lombok.Builder;
 
-public class WelfareResDTO {
+public class BenefitResDTO {
 
     @Builder
     public record WelfareSearchResultDTO(
