@@ -1,10 +1,9 @@
 package salpim.umc10thsalpim.domain.map.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import salpim.umc10thsalpim.domain.map.dto.MapRequestDto;
 import salpim.umc10thsalpim.domain.map.dto.MapResponseDto;
 import salpim.umc10thsalpim.domain.map.exception.code.MapSuccessCode;
 import salpim.umc10thsalpim.domain.map.service.FacilityService;
@@ -19,16 +18,12 @@ public class FacilityController {
     private final FacilityService facilityService;
 
     @GetMapping("/details")
-    public ApiResponse<MapResponseDto.FacilityInfoResponse> getFacilityDetails(
+    @Operation(summary = "시설 상세 정보 조회", description = "시설 이름과 유저의 관할동을 비교하여 정보를 반환합니다.")
+    public ApiResponse<MapResponseDto.FacilityInfoResponseDto> getFacilityDetails(
         @RequestParam("memberId") Long memberId,
-        @RequestParam String facilityName,
-        @RequestParam String address,
-        @RequestParam(required = false) String phone,
-        @RequestParam(required = false) String distance
+        @ModelAttribute MapRequestDto.FacilityInfoRequest request
     ){
-        MapResponseDto.FacilityInfoResponse result = facilityService.getFacilityInfo(
-                memberId, facilityName, address, phone, distance
-        );
+        MapResponseDto.FacilityInfoResponseDto result = facilityService.getFacilityInfo(memberId, request);
         BaseSuccessCode code = MapSuccessCode.OK;
         return ApiResponse.onSuccess(code,result);
     }
