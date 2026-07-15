@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.global.apiPayload.exception.code.BenefitSuccessCode;
-import salpim.umc10thsalpim.domain.benefit.service.WelfareService;
+import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 import salpim.umc10thsalpim.global.dto.CursorResDTO;
 
@@ -20,7 +20,7 @@ import java.util.List;
 @RequestMapping("/api")
 public class BenefitController {
 
-    private final WelfareService welfareService;
+    private final BenefitService benefitService;
 
     //직접 찾기 검색 api
     @GetMapping("/v1/welfare-benefits/search")
@@ -33,6 +33,6 @@ public class BenefitController {
             @RequestParam(name="pageSize", defaultValue = "10") Integer pageSize,
             @RequestParam(name="sort", defaultValue = "popular") String sort
     ){
-        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_LIST_GET_SUCCESS, welfareService.getSearchResult(searchKey, regionIds, categoryIds, cursor, pageSize, sort));
+        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_LIST_GET_SUCCESS, benefitService.getSearchResult(searchKey, regionIds, categoryIds, cursor, pageSize, sort));
     }
 }
