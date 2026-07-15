@@ -2,30 +2,54 @@ package salpim.umc10thsalpim.domain.region.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.global.entity.BaseEntity;
 
-@Builder
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "region")
+@Table(name = "region",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_region_parent_name_level",
+                        columnNames = {"parent_id", "name", "region_level"}
+                )
+        })
 public class Region extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "city_l", nullable = false)
-    private String cityL;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "parent_id",
+            foreignKey = @ForeignKey(name = "fk_region_parent")
+    )
+    private Region parent;
 
-    @Column(name = "city_s", nullable = false)
-    private String cityS;
+    @OneToMany(mappedBy = "parent")
+    private List<Region> children = new ArrayList<>();
 
-    @Column(name = "dong", nullable = false)
-    private String dong;
+    @Column(name = "name", nullable = false, length = 50)
+    private String name;
+
+    @Column(name = "region_level", nullable = false, length = 30)
+    @Enumerated(EnumType.STRING)
+    private RegionLevel regionLevel;
+
+    private Region(Region parent, String name, RegionLevel regionLevel) {
+        this.parent = parent;
+        this.name = name;
+        this.regionLevel = regionLevel;
+    }
+
+    public static Region create(Region parent, String name, RegionLevel regionLevel) {
+        return new Region(parent, name, regionLevel);
+    }
 }
