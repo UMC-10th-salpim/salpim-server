@@ -19,3 +19,8 @@ geocoding:
   base-url: ${GEOCODING_BASE_URL:https://dapi.kakao.com}
   api-key: ${KAKAO_LOCAL_API_KEY:}
 
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  access-token-expiration-millis: ${JWT_ACCESS_TOKEN_EXPIRATION_MILLIS:3600000}
+  refresh-token-expiration-millis: ${JWT_REFRESH_TOKEN_EXPIRATION_MILLIS:1209600000}
+

@@ -9,6 +9,16 @@ import salpim.umc10thsalpim.global.apiPayload.code.BaseErrorCode;
 @AllArgsConstructor
 public enum AuthErrorCode implements BaseErrorCode {
 
+    LOGIN_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "AUTH404_LOGIN_MEMBER",
+            "등록되지 않은 회원입니다."),
+    INVALID_PASSWORD(HttpStatus.UNAUTHORIZED,
+            "AUTH401_PASSWORD",
+            "비밀번호가 일치하지 않습니다."),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED,
+            "AUTH401_TOKEN",
+            "유효하지 않은 토큰입니다."),
+
     INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST,
             "AUTH400_VERIFICATION",
             "인증번호가 일치하지 않습니다."),

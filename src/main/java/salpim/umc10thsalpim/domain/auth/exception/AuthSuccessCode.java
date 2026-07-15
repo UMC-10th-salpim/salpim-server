@@ -9,6 +9,10 @@ import salpim.umc10thsalpim.global.apiPayload.code.BaseSuccessCode;
 @AllArgsConstructor
 public enum AuthSuccessCode implements BaseSuccessCode {
 
+    LOGIN_SUCCESS(HttpStatus.OK,
+            "AUTH200_LOGIN",
+            "로그인에 성공했습니다."),
+
     PHONE_VERIFICATION_SENT(HttpStatus.OK,
             "AUTH200_PHONE_SENT",
             "인증번호가 발송되었습니다."),

@@ -5,6 +5,13 @@ import lombok.Builder;
 public class AuthResDTO {
 
     @Builder
+    public record TokenResult(
+            String accessToken,
+            String refreshToken
+    ) {
+    }
+
+    @Builder
     public record PhoneVerifyResult(
             Boolean verified
     ) {

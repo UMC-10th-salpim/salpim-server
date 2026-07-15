@@ -8,6 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.exception.MemberErrorCode;
+import salpim.umc10thsalpim.domain.member.exception.MemberException;
+import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.global.entity.BaseEntity;
 
 import java.math.BigDecimal;
@@ -64,12 +67,47 @@ public class Member extends BaseEntity {
     @Column(name = "longitude", nullable = false, precision = 10, scale = 7)
     private BigDecimal longitude;
 
-    @Column(name = "region_id", nullable = false)
-    private Long regionId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "region_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_member_region")
+    )
+    private Region region;
 
-    @Column(name = "password_recovery_answer", nullable = false)
+    @Column(name = "password_recovery_answer")
     private String passwordRecoveryAnswer;
 
     @Column(name = "welfare_center")
     private String welfareCenter;
+
+    @PrePersist
+    @PreUpdate
+    public void validateLoginTypeFields() {
+        if (loginType == SocialProvider.LOCAL) {
+            validateLocalMemberFields();
+        }
+        if (loginType == SocialProvider.KAKAO) {
+            validateKakaoMemberFields();
+        }
+    }
+
+    private void validateLocalMemberFields() {
+        if (isBlank(password)) {
+            throw new MemberException(MemberErrorCode.REQUIRED_LOCAL_PASSWORD);
+        }
+        if (isBlank(passwordRecoveryAnswer)) {
+            throw new MemberException(MemberErrorCode.REQUIRED_PASSWORD_RECOVERY_ANSWER);
+        }
+    }
+
+    private void validateKakaoMemberFields() {
+        if (isBlank(kakaoId)) {
+            throw new MemberException(MemberErrorCode.REQUIRED_KAKAO_ID);
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
 }

@@ -1,9 +1,9 @@
 package salpim.umc10thsalpim.domain.auth.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
@@ -11,73 +11,92 @@ import jakarta.validation.constraints.Size;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 
 import java.time.LocalDate;
-import java.util.List;
 
 public class AuthReqDTO {
 
+    public record LocalLogin(
+            @Schema(example = "01012345678")
+            @NotBlank(message = "phoneNumber is required.")
+            @Pattern(regexp = "^[0-9-]+$", message = "phoneNumber can contain only numbers and hyphens.")
+            String phoneNumber,
+
+            @Schema(example = "qwer1234")
+            @NotBlank(message = "password is required.")
+            String password
+    ) {
+    }
+
     public record PhoneSend(
-            @NotBlank(message = "전화번호는 필수입니다.")
+            @NotBlank(message = "phoneNumber is required.")
             String phoneNumber
     ) {
     }
 
     public record PhoneVerify(
-            @NotBlank(message = "전화번호는 필수입니다.")
+            @NotBlank(message = "phoneNumber is required.")
             String phoneNumber,
 
-            @NotBlank(message = "인증번호는 필수입니다.")
+            @NotBlank(message = "code is required.")
             String code
     ) {
     }
 
     public record Geocode(
-            @NotBlank(message = "도로명 주소는 필수입니다.")
+            @NotBlank(message = "roadAddress is required.")
             String roadAddress
     ) {
     }
 
     public record LocalSignup(
-            @NotBlank(message = "이름은 필수입니다.")
-            @Size(max = 50, message = "이름은 50자 이하여야 합니다.")
+            @Schema(example = "김지홍")
+            @NotBlank(message = "name is required.")
+            @Size(max = 50, message = "name must be 50 characters or less.")
             String name,
 
-            @NotNull(message = "생년월일은 필수입니다.")
-            @PastOrPresent(message = "생년월일은 미래 날짜일 수 없습니다.")
+            @Schema(example = "2002-03-11")
+            @NotNull(message = "birthDate is required.")
+            @PastOrPresent(message = "birthDate cannot be a future date.")
             LocalDate birthDate,
 
-            @NotNull(message = "성별은 필수입니다.")
+            @Schema(example = "MALE")
+            @NotNull(message = "gender is required.")
             Gender gender,
 
-            @NotBlank(message = "전화번호는 필수입니다.")
-            @Pattern(regexp = "^[0-9-]+$", message = "전화번호는 숫자 또는 하이픈만 입력할 수 있습니다.")
+            @Schema(example = "01012345678")
+            @NotBlank(message = "phoneNumber is required.")
+            @Pattern(regexp = "^[0-9-]+$", message = "phoneNumber can contain only numbers and hyphens.")
             String phoneNumber,
 
-            @NotBlank(message = "비밀번호는 필수입니다.")
-            @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$", message = "비밀번호는 8자 이상이며 영문과 숫자를 포함해야 합니다.")
+            @Schema(example = "qwer1234")
+            @NotBlank(message = "password is required.")
+            @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$", message = "password must be at least 8 characters and include letters and numbers.")
             String password,
 
-            @NotBlank(message = "도로명 주소는 필수입니다.")
+            @Schema(example = "고양시 덕양구 화랑로 28")
+            @NotBlank(message = "roadAddress is required.")
             String roadAddress,
 
+            @Schema(example = "송골매빌 B")
             String detailAddress,
 
-            @NotNull(message = "위도는 필수입니다.")
-            @DecimalMin(value = "-90.0", message = "위도는 -90 이상이어야 합니다.")
-            @DecimalMax(value = "90.0", message = "위도는 90 이하여야 합니다.")
+            @Schema(example = "37.6013094206959")
+            @NotNull(message = "latitude is required.")
+            @DecimalMin(value = "-90.0", message = "latitude must be greater than or equal to -90.")
+            @DecimalMax(value = "90.0", message = "latitude must be less than or equal to 90.")
             Double latitude,
 
-            @NotNull(message = "경도는 필수입니다.")
-            @DecimalMin(value = "-180.0", message = "경도는 -180 이상이어야 합니다.")
-            @DecimalMax(value = "180.0", message = "경도는 180 이하여야 합니다.")
+            @Schema(example = "126.870894409123")
+            @NotNull(message = "longitude is required.")
+            @DecimalMin(value = "-180.0", message = "longitude must be greater than or equal to -180.")
+            @DecimalMax(value = "180.0", message = "longitude must be less than or equal to 180.")
             Double longitude,
 
-            @NotNull(message = "지역 ID는 필수입니다.")
+            @Schema(example = "1")
+            @NotNull(message = "regionId is required.")
             Long regionId,
 
-            @NotEmpty(message = "동의한 약관 ID는 1개 이상이어야 합니다.")
-            List<Long> agreedTermIds,
-
-            @NotBlank(message = "비밀번호 복구 답변은 필수입니다.")
+            @Schema(example = "가을")
+            @NotBlank(message = "passwordAnswer is required.")
             String passwordAnswer
     ) {
     }

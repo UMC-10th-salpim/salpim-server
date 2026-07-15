@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.domain.member.converter;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.region.entity.Region;
 
 import java.math.BigDecimal;
 
@@ -14,7 +15,8 @@ public final class MemberConverter {
     public static Member toLocalMember(
             AuthReqDTO.LocalSignup request,
             String normalizedPhoneNumber,
-            String encodedPassword
+            String encodedPassword,
+            Region region
     ) {
         return Member.builder()
                 .loginType(SocialProvider.LOCAL)
@@ -27,7 +29,7 @@ public final class MemberConverter {
                 .detailAddress(normalizeNullableText(request.detailAddress()))
                 .latitude(BigDecimal.valueOf(request.latitude()))
                 .longitude(BigDecimal.valueOf(request.longitude()))
-                .regionId(request.regionId())
+                .region(region)
                 .passwordRecoveryAnswer(request.passwordAnswer().trim())
                 .build();
     }
