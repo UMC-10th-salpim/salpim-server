@@ -34,6 +34,27 @@ public final class MemberConverter {
                 .build();
     }
 
+    public static Member toKakaoMember(
+            AuthReqDTO.KakaoSignup request,
+            String normalizedPhoneNumber,
+            String kakaoId,
+            Region region
+    ) {
+        return Member.builder()
+                .loginType(SocialProvider.KAKAO)
+                .phoneNumber(normalizedPhoneNumber)
+                .kakaoId(kakaoId)
+                .name(request.name().trim())
+                .birthDate(request.birthDate())
+                .gender(request.gender())
+                .roadAddress(request.roadAddress().trim())
+                .detailAddress(normalizeNullableText(request.detailAddress()))
+                .latitude(BigDecimal.valueOf(request.latitude()))
+                .longitude(BigDecimal.valueOf(request.longitude()))
+                .region(region)
+                .build();
+    }
+
     private static String normalizeNullableText(String value) {
         if (value == null || value.trim().isEmpty()) {
             return null;

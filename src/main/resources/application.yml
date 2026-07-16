@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url:  ${DB_URL}
+    url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   jpa:
@@ -17,10 +17,17 @@ springdoc:
 
 geocoding:
   base-url: ${GEOCODING_BASE_URL:https://dapi.kakao.com}
-  api-key: ${KAKAO_LOCAL_API_KEY:}
+  api-key: ${KAKAO_REST_API_KEY:}
+
+kakao:
+  client-id: ${KAKAO_REST_API_KEY:}
+  client-secret: ${KAKAO_CLIENT_SECRET:}
+  redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:3000/oauth/kakao/callback}
+  token-uri: ${KAKAO_TOKEN_URI:https://kauth.kakao.com/oauth/token}
+  user-info-uri: ${KAKAO_USER_INFO_URI:https://kapi.kakao.com/v2/user/me}
 
 jwt:
-  secret-key: ${JWT_SECRET_KEY}
+  secret-key: ${JWT_SECRET_KEY:}
   access-token-expiration-millis: ${JWT_ACCESS_TOKEN_EXPIRATION_MILLIS:3600000}
   refresh-token-expiration-millis: ${JWT_REFRESH_TOKEN_EXPIRATION_MILLIS:1209600000}
-
+  signup-token-expiration-millis: ${JWT_SIGNUP_TOKEN_EXPIRATION_MILLIS:600000}

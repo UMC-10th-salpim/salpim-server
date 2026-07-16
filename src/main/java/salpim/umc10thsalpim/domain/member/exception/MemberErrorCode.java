@@ -21,6 +21,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     REQUIRED_KAKAO_ID(HttpStatus.BAD_REQUEST,
             "MEMBER400_KAKAO_ID_REQUIRED",
             "카카오 회원은 카카오 ID가 필요합니다."),
+    DUPLICATE_KAKAO_ACCOUNT(HttpStatus.CONFLICT,
+            "MEMBER409_KAKAO",
+            "이미 가입된 카카오 계정입니다."),
     ;
 
     private final HttpStatus status;
