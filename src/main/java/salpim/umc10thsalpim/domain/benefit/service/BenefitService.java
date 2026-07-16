@@ -33,10 +33,16 @@ public class BenefitService {
             throw new BenefitException(BenefitErrorCode.BENEFIT_RULE_NOT_FOUND);
         }
 
+        List<ApplicationType> applicationTypeList = benefitRuleList.stream()
+                .map(BenefitRule::getApplicationType)
+                .distinct()
+                .toList();
+
         Boolean isOnlineApplicationAvailable = benefitRuleList.stream()
                 .anyMatch(benefitRule ->
                         benefitRule.getApplicationType() == ApplicationType.ONLINE);
 
-        return BenefitConverter.toGetApplicationHelperInfo(welfareBenefit, isOnlineApplicationAvailable);
+        return BenefitConverter.toGetApplicationHelperInfo(
+                welfareBenefit, isOnlineApplicationAvailable, applicationTypeList);
     }
 }

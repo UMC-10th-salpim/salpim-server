@@ -1,5 +1,10 @@
 package salpim.umc10thsalpim.domain.benefit.dto;
 
+import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
+
+import java.time.LocalDate;
+import java.util.List;
+
 public class BenefitResDTO {
 
     public record GetApplicationHelperInfo(
@@ -10,6 +15,8 @@ public class BenefitResDTO {
             String applicationUrl,
             String contact,
             String organization,
-            Boolean isOnlineApplicationAvailable
+            Boolean isOnlineApplicationAvailable,
+            List<ApplicationType> applicationTypeList,
+            LocalDate applicationEndDate
     ) {}
 }
