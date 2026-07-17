@@ -1,0 +1,407 @@
+package salpim.umc10thsalpim.domain.benefit.service;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
+import salpim.umc10thsalpim.domain.benefit.entity.BenefitRule;
+import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
+import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
+import salpim.umc10thsalpim.domain.benefit.enums.RegionScope;
+import salpim.umc10thsalpim.domain.benefit.repository.BenefitRuleRepository;
+import salpim.umc10thsalpim.domain.benefit.repository.WelfareBenefitRepository;
+import salpim.umc10thsalpim.domain.member.entity.Member;
+import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
+import salpim.umc10thsalpim.domain.region.entity.Region;
+import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
+import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
+import salpim.umc10thsalpim.domain.benefit.exception.BenefitException;
+import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitErrorCode;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+@ExtendWith(MockitoExtension.class)
+class BenefitServiceTest {
+
+    @Mock
+    private WelfareBenefitRepository welfareBenefitRepository;
+
+    @Mock
+    private BenefitRuleRepository benefitRuleRepository;
+
+    @Mock
+    private MemberRepository memberRepository;
+
+    @Mock
+    private RegionRepository regionRepository;
+
+    @InjectMocks
+    private BenefitService benefitService;
+
+    @Test
+    @DisplayName("회원 동과 헤택 동이 같으면 지역 조건 충족")
+    void returnsTrueWhenMemberDongMatchesBenefitDong() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long dongId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(dongId)
+                .build();
+
+        Region dong = Region.builder()
+                .id(dongId)
+                .parentId(2L)
+                .name("용현동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("테스트 혜택")
+                .regionId(dongId)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.MEMBER_DONG)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(dongId)).willReturn(Optional.of(dong));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isRegionSatisfied()).isTrue();
+    }
+
+    @Test
+    @DisplayName("회원 시군구와 혜택 시군구가 같으면 지역 조건 충족")
+    void returnsTrueWhenMemberSigunguMatchesBenefitSigungu(){
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long dongId = 10L;
+        Long sigunguId = 2L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(dongId)
+                .build();
+
+        Region dong = Region.builder()
+                .id(dongId)
+                .parentId(sigunguId)
+                .name("용현동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        Region sigungu = Region.builder()
+                .id(sigunguId)
+                .parentId(1L)
+                .name("미추홀구")
+                .regionLevel(RegionLevel.SIGUNGU)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("테스트 혜택")
+                .regionId(sigunguId)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.MEMBER_SIGUNGU)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(dongId)).willReturn(Optional.of(dong));
+        given(regionRepository.findById(sigunguId)).willReturn(Optional.of(sigungu));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isRegionSatisfied()).isTrue();
+    }
+
+    @Test
+    @DisplayName("회원 시도와 혜택 시도가 같으면 지역 조건 충족")
+    void returnsTrueWhenMemberSidoMatchesBenefitSido() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long sidoId = 1L;
+        Long sigunguId = 2L;
+        Long dongId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(dongId)
+                .build();
+
+        Region dong = Region.builder()
+                .id(dongId)
+                .parentId(sigunguId)
+                .name("용현동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        Region sigungu = Region.builder()
+                .id(sigunguId)
+                .parentId(sidoId)
+                .name("미추홀구")
+                .regionLevel(RegionLevel.SIGUNGU)
+                .build();
+
+        Region sido = Region.builder()
+                .id(sidoId)
+                .name("인천광역시")
+                .regionLevel(RegionLevel.SIDO)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("테스트 혜택")
+                .regionId(sidoId)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.MEMBER_SIDO)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(dongId)).willReturn(Optional.of(dong));
+        given(regionRepository.findById(sigunguId)).willReturn(Optional.of(sigungu));
+        given(regionRepository.findById(sidoId)).willReturn(Optional.of(sido));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isRegionSatisfied()).isTrue();
+    }
+
+    @Test
+    @DisplayName("회원 동과 혜택 동이 다르면 지역 조건 불충족")
+    void returnsFalseWhenMemberDongDoesNotMatchBenefitDong() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberDongId = 10L;
+        Long benefitDongId = 11L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberDongId)
+                .build();
+
+        Region memberDong = Region.builder()
+                .id(memberDongId)
+                .parentId(2L)
+                .name("용현동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        Region benefitDong = Region.builder()
+                .id(benefitDongId)
+                .parentId(2L)
+                .name("학익동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("테스트 혜택")
+                .regionId(benefitDongId)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.MEMBER_DONG)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberDongId)).willReturn(Optional.of(memberDong));
+        given(regionRepository.findById(benefitDongId)).willReturn(Optional.of(benefitDong));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isRegionSatisfied()).isFalse();
+    }
+
+    @Test
+    @DisplayName("지역 제한이 없는 혜택은 지역 조건을 충족한다")
+    void returnsTrueWhenRegionScopeIsNone() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberDongId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberDongId)
+                .build();
+
+        Region memberDong = Region.builder()
+                .id(memberDongId)
+                .parentId(2L)
+                .name("용현동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("전국 대상 테스트 혜택")
+                .regionId(null)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.NONE)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberDongId)).willReturn(Optional.of(memberDong));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isRegionSatisfied()).isTrue();
+    }
+
+    @Test
+    @DisplayName("지역 조건이 있는데 혜택 지역 정보가 없으면 예외 발생")
+    void throwsExceptionWhenBenefitRegionIsNotConfigured() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberDongId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberDongId)
+                .build();
+
+        Region memberDong = Region.builder()
+                .id(memberDongId)
+                .parentId(2L)
+                .name("용현동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("지역 정보 없는 테스트 혜택")
+                .regionId(null)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.MEMBER_DONG)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberDongId)).willReturn(Optional.of(memberDong));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getApplicationHelperInfo(memberId, benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_REGION_NOT_CONFIGURED);
+    }
+
+    @Test
+    @DisplayName("혜택 지역 레벨과 신청 규칙 범위가 다르면 예외 발생")
+    void throwsExceptionWhenBenefitRegionLevelDoesNotMatchRegionScope() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberDongId = 10L;
+        Long benefitDongId = 11L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberDongId)
+                .build();
+
+        Region memberDong = Region.builder()
+                .id(memberDongId)
+                .parentId(2L)
+                .name("용현동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        Region benefitDong = Region.builder()
+                .id(benefitDongId)
+                .parentId(2L)
+                .name("학익동")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("지역 레벨 불일치 테스트 혜택")
+                .regionId(benefitDongId)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.MEMBER_SIGUNGU)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberDongId)).willReturn(Optional.of(memberDong));
+        given(regionRepository.findById(benefitDongId)).willReturn(Optional.of(benefitDong));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getApplicationHelperInfo(memberId, benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_REGION_LEVEL_MISMATCH);
+    }
+
+}
