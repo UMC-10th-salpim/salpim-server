@@ -90,9 +90,9 @@ public class BenefitService {
         }
 
         RegionLevel targetLevel = switch(regionScope){
-            case USER_DONG -> RegionLevel.DONG;
-            case USER_SIGUNGU -> RegionLevel.SIGUNGU;
-            case USER_SI -> RegionLevel.SIDO;
+            case MEMBER_DONG -> RegionLevel.DONG;
+            case MEMBER_SIGUNGU -> RegionLevel.SIGUNGU;
+            case MEMBER_SIDO -> RegionLevel.SIDO;
             case NONE -> throw new IllegalStateException(
                     "NONE scope is handled before region level mapping."
             );
