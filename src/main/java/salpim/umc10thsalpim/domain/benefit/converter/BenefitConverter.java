@@ -11,7 +11,8 @@ public class BenefitConverter {
     public static BenefitResDTO.GetApplicationHelperInfo toGetApplicationHelperInfo(
             WelfareBenefit welfareBenefit,
             Boolean isOnlineApplicationAvailable,
-            List<ApplicationType> applicationTypeList
+            List<ApplicationType> applicationTypeList,
+            Boolean isRegionSatisfied
     ) {
         return new BenefitResDTO.GetApplicationHelperInfo(
                 welfareBenefit.getId(),
@@ -23,7 +24,8 @@ public class BenefitConverter {
                 welfareBenefit.getOrganization(),
                 isOnlineApplicationAvailable,
                 applicationTypeList,
-                welfareBenefit.getApplicationEndDate()
+                welfareBenefit.getApplicationEndDate(),
+                isRegionSatisfied
         );
     }
 }

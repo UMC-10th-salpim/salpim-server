@@ -17,6 +17,7 @@ public class BenefitResDTO {
             String organization,
             Boolean isOnlineApplicationAvailable,
             List<ApplicationType> applicationTypeList,
-            LocalDate applicationEndDate
+            LocalDate applicationEndDate,
+            Boolean isRegionSatisfied
     ) {}
 }

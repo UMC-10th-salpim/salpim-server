@@ -24,8 +24,11 @@ public class BenefitController {
             @PathVariable Long benefitId
             ){
         BaseSuccessCode code = BenefitSuccessCode.BENEFIT_VIEW;
+
+        Long memberId = 1L; //TODO : get memberId from accessToken
+
         BenefitResDTO.GetApplicationHelperInfo response =
-                benefitService.getApplicationHelperInfo(benefitId);
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
         return ApiResponse.onSuccess(code, response);
 
     }
