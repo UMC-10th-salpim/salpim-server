@@ -11,6 +11,7 @@ import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -49,6 +50,10 @@ class BenefitControllerTest {
                         true,
                         List.of(ApplicationType.ONLINE),
                         LocalDate.of(2026, 12, 31),
+                        true,
+                        AgeConditionStatus.RESTRICTED,
+                        65,
+                        100,
                         true
                 );
 
@@ -61,7 +66,11 @@ class BenefitControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.code").value("BENEFIT200_1"))
                 .andExpect(jsonPath("$.result.benefitId").value(100))
-                .andExpect(jsonPath("$.result.isRegionSatisfied").value(true));
+                .andExpect(jsonPath("$.result.isRegionSatisfied").value(true))
+                .andExpect(jsonPath("$.result.ageConditionStatus").value("RESTRICTED"))
+                .andExpect(jsonPath("$.result.minAge").value(65))
+                .andExpect(jsonPath("$.result.maxAge").value(100))
+                .andExpect(jsonPath("$.result.isAgeSatisfied").value(true));
 
         verify(benefitService).getApplicationHelperInfo(1L, benefitId);
     }

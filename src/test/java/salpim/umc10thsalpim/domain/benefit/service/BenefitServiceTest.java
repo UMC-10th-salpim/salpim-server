@@ -20,9 +20,11 @@ import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 import salpim.umc10thsalpim.domain.benefit.exception.BenefitException;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitErrorCode;
+import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -258,7 +260,7 @@ class BenefitServiceTest {
     }
 
     @Test
-    @DisplayName("지역 제한이 없는 혜택은 지역 조건을 충족한다")
+    @DisplayName("지역 제한이 없는 혜택은 지역 조건을 충족")
     void returnsTrueWhenRegionScopeIsNone() {
         Long memberId = 1L;
         Long benefitId = 100L;
@@ -404,4 +406,281 @@ class BenefitServiceTest {
                 .isEqualTo(BenefitErrorCode.BENEFIT_REGION_LEVEL_MISMATCH);
     }
 
+    @Test
+    @DisplayName("연령 조건을 확인할 수 없는 혜택은 연령 적합 여부 제공X")
+    void returnsNullWhenAgeConditionIsUnknown() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberRegionId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberRegionId)
+                .birthDate(LocalDate.of(1960, 1, 1))
+                .build();
+
+        Region memberRegion = Region.builder()
+                .id(memberRegionId)
+                .name("테스트 지역")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("연령 조건 확인 불가 혜택")
+                .regionId(null)
+                .ageConditionStatus(AgeConditionStatus.UNKNOWN)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.NONE)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberRegionId)).willReturn(Optional.of(memberRegion));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isAgeSatisfied()).isNull();
+    }
+
+    @Test
+    @DisplayName("연령 제한이 없는 혜택은 연령 조건을 충족")
+    void returnsTrueWhenAgeConditionHasNoRestriction() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberRegionId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberRegionId)
+                .birthDate(LocalDate.of(1960, 1, 1))
+                .build();
+
+        Region memberRegion = Region.builder()
+                .id(memberRegionId)
+                .name("테스트 지역")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("연령 제한 없는 혜택")
+                .regionId(null)
+                .ageConditionStatus(AgeConditionStatus.NO_RESTRICTION)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.NONE)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberRegionId)).willReturn(Optional.of(memberRegion));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isAgeSatisfied()).isTrue();
+    }
+
+    @Test
+    @DisplayName("제한 연령 혜택에서 회원 나이가 최소 연령과 같으면 연령 조건을 충족")
+    void returnsTrueWhenAgeEqualsMinAge() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberRegionId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberRegionId)
+                .birthDate(LocalDate.now().minusYears(65))
+                .build();
+
+        Region memberRegion = Region.builder()
+                .id(memberRegionId)
+                .name("테스트 지역")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("65세 이상 혜택")
+                .regionId(null)
+                .ageConditionStatus(AgeConditionStatus.RESTRICTED)
+                .minAge(65)
+                .maxAge(80)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.NONE)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberRegionId)).willReturn(Optional.of(memberRegion));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isAgeSatisfied()).isTrue();
+    }
+
+    @Test
+    @DisplayName("제한 연령 혜택에서 회원 나이가 최대 연령과 같으면 연령 조건을 충족")
+    void returnsTrueWhenAgeEqualsMaxAge() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberRegionId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberRegionId)
+                .birthDate(LocalDate.now().minusYears(80))
+                .build();
+
+        Region memberRegion = Region.builder()
+                .id(memberRegionId)
+                .name("테스트 지역")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("65세부터 80세 혜택")
+                .regionId(null)
+                .ageConditionStatus(AgeConditionStatus.RESTRICTED)
+                .minAge(65)
+                .maxAge(80)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.NONE)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberRegionId)).willReturn(Optional.of(memberRegion));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isAgeSatisfied()).isTrue();
+    }
+
+    @Test
+    @DisplayName("제한 연령 혜택에서 회원 나이가 최소 연령보다 작으면 연령 조건을 불충족")
+    void returnsFalseWhenAgeIsBelowMinAge() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberRegionId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberRegionId)
+                .birthDate(LocalDate.now().minusYears(64))
+                .build();
+
+        Region memberRegion = Region.builder()
+                .id(memberRegionId)
+                .name("테스트 지역")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("65세 이상 혜택")
+                .regionId(null)
+                .ageConditionStatus(AgeConditionStatus.RESTRICTED)
+                .minAge(65)
+                .maxAge(80)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.NONE)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberRegionId)).willReturn(Optional.of(memberRegion));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isAgeSatisfied()).isFalse();
+    }
+
+    @Test
+    @DisplayName("제한 연령 혜택에서 회원 나이가 최대 연령보다 크면 연령 조건을 불충족")
+    void returnsFalseWhenAgeExceedsMaxAge() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberRegionId = 10L;
+
+        Member member = Member.builder()
+                .id(memberId)
+                .regionId(memberRegionId)
+                .birthDate(LocalDate.now().minusYears(81))
+                .build();
+
+        Region memberRegion = Region.builder()
+                .id(memberRegionId)
+                .name("테스트 지역")
+                .regionLevel(RegionLevel.DONG)
+                .build();
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("65세부터 80세 혜택")
+                .regionId(null)
+                .ageConditionStatus(AgeConditionStatus.RESTRICTED)
+                .minAge(65)
+                .maxAge(80)
+                .build();
+
+        BenefitRule rule = BenefitRule.builder()
+                .id(1L)
+                .welfareBenefitId(benefitId)
+                .regionScope(RegionScope.NONE)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberRegionId)).willReturn(Optional.of(memberRegion));
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isAgeSatisfied()).isFalse();
+    }
 }
