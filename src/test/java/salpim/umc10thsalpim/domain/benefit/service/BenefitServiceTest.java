@@ -71,12 +71,12 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("테스트 혜택")
                 .regionId(dongId)
+                .regionScope(RegionScope.MEMBER_DONG)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.MEMBER_DONG)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -123,12 +123,12 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("테스트 혜택")
                 .regionId(sigunguId)
+                .regionScope(RegionScope.MEMBER_SIGUNGU)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.MEMBER_SIGUNGU)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -183,12 +183,12 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("테스트 혜택")
                 .regionId(sidoId)
+                .regionScope(RegionScope.MEMBER_SIDO)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.MEMBER_SIDO)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -237,12 +237,12 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("테스트 혜택")
                 .regionId(benefitDongId)
+                .regionScope(RegionScope.MEMBER_DONG)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.MEMBER_DONG)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -282,12 +282,12 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("전국 대상 테스트 혜택")
                 .regionId(null)
+                .regionScope(RegionScope.NONE)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.NONE)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -326,12 +326,12 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("지역 정보 없는 테스트 혜택")
                 .regionId(null)
+                .regionScope(RegionScope.MEMBER_DONG)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.MEMBER_DONG)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -351,7 +351,7 @@ class BenefitServiceTest {
     }
 
     @Test
-    @DisplayName("혜택 지역 레벨과 신청 규칙 범위가 다르면 예외 발생")
+    @DisplayName("혜택 지역 레벨과 혜택 지역 범위가 다르면 예외 발생")
     void throwsExceptionWhenBenefitRegionLevelDoesNotMatchRegionScope() {
         Long memberId = 1L;
         Long benefitId = 100L;
@@ -381,12 +381,12 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("지역 레벨 불일치 테스트 혜택")
                 .regionId(benefitDongId)
+                .regionScope(RegionScope.MEMBER_SIGUNGU)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.MEMBER_SIGUNGU)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -429,13 +429,13 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("연령 조건 확인 불가 혜택")
                 .regionId(null)
+                .regionScope(RegionScope.NONE)
                 .ageConditionStatus(AgeConditionStatus.UNKNOWN)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.NONE)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -474,13 +474,13 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("연령 제한 없는 혜택")
                 .regionId(null)
+                .regionScope(RegionScope.NONE)
                 .ageConditionStatus(AgeConditionStatus.NO_RESTRICTION)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.NONE)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -519,6 +519,7 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("65세 이상 혜택")
                 .regionId(null)
+                .regionScope(RegionScope.NONE)
                 .ageConditionStatus(AgeConditionStatus.RESTRICTED)
                 .minAge(65)
                 .maxAge(80)
@@ -527,7 +528,6 @@ class BenefitServiceTest {
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.NONE)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -566,6 +566,7 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("65세부터 80세 혜택")
                 .regionId(null)
+                .regionScope(RegionScope.NONE)
                 .ageConditionStatus(AgeConditionStatus.RESTRICTED)
                 .minAge(65)
                 .maxAge(80)
@@ -574,7 +575,6 @@ class BenefitServiceTest {
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.NONE)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -613,6 +613,7 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("65세 이상 혜택")
                 .regionId(null)
+                .regionScope(RegionScope.NONE)
                 .ageConditionStatus(AgeConditionStatus.RESTRICTED)
                 .minAge(65)
                 .maxAge(80)
@@ -621,7 +622,6 @@ class BenefitServiceTest {
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.NONE)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 
@@ -660,6 +660,7 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("65세부터 80세 혜택")
                 .regionId(null)
+                .regionScope(RegionScope.NONE)
                 .ageConditionStatus(AgeConditionStatus.RESTRICTED)
                 .minAge(65)
                 .maxAge(80)
@@ -668,7 +669,6 @@ class BenefitServiceTest {
         BenefitRule rule = BenefitRule.builder()
                 .id(1L)
                 .welfareBenefitId(benefitId)
-                .regionScope(RegionScope.NONE)
                 .applicationType(ApplicationType.ONLINE)
                 .build();
 

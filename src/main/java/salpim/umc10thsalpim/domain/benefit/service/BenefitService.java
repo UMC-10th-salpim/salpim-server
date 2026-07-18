@@ -64,12 +64,11 @@ public class BenefitService {
         Region memberRegion = regionRepository.findById(member.getRegionId())
                 .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
 
-        Boolean isRegionSatisfied = benefitRuleList.stream()
-                .anyMatch(rule -> isRegionSatisfied(
-                        memberRegion,
-                        welfareBenefit.getRegionId(),
-                        rule.getRegionScope()
-                ));
+        Boolean isRegionSatisfied = isRegionSatisfied(
+                memberRegion,
+                welfareBenefit.getRegionId(),
+                welfareBenefit.getRegionScope()
+        );
 
         Boolean isAgeSatisfied = isAgeSatisfied(member, welfareBenefit);
 
