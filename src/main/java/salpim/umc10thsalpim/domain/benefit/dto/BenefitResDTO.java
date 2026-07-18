@@ -1,5 +1,6 @@
 package salpim.umc10thsalpim.domain.benefit.dto;
 
+import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 
 import java.time.LocalDate;
@@ -18,6 +19,10 @@ public class BenefitResDTO {
             Boolean isOnlineApplicationAvailable,
             List<ApplicationType> applicationTypeList,
             LocalDate applicationEndDate,
-            Boolean isRegionSatisfied
+            Boolean isRegionSatisfied,
+            AgeConditionStatus ageConditionStatus,
+            Integer minAge,
+            Integer maxAge,
+            Boolean isAgeSatisfied
     ) {}
 }

@@ -12,7 +12,8 @@ public class BenefitConverter {
             WelfareBenefit welfareBenefit,
             Boolean isOnlineApplicationAvailable,
             List<ApplicationType> applicationTypeList,
-            Boolean isRegionSatisfied
+            Boolean isRegionSatisfied,
+            Boolean isAgeSatisfied
     ) {
         return new BenefitResDTO.GetApplicationHelperInfo(
                 welfareBenefit.getId(),
@@ -25,7 +26,11 @@ public class BenefitConverter {
                 isOnlineApplicationAvailable,
                 applicationTypeList,
                 welfareBenefit.getApplicationEndDate(),
-                isRegionSatisfied
+                isRegionSatisfied,
+                welfareBenefit.getAgeConditionStatus(),
+                welfareBenefit.getMinAge(),
+                welfareBenefit.getMaxAge(),
+                isAgeSatisfied
         );
     }
 }

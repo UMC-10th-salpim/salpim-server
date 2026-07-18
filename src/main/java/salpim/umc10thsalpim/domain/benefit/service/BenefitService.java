@@ -23,6 +23,8 @@ import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 
 @Service
@@ -69,8 +71,11 @@ public class BenefitService {
                         rule.getRegionScope()
                 ));
 
+        Boolean isAgeSatisfied = isAgeSatisfied(member, welfareBenefit);
+
         return BenefitConverter.toGetApplicationHelperInfo(
-                welfareBenefit, isOnlineApplicationAvailable, applicationTypeList, isRegionSatisfied);
+                welfareBenefit, isOnlineApplicationAvailable,
+                applicationTypeList, isRegionSatisfied, isAgeSatisfied);
     }
 
 
@@ -129,5 +134,23 @@ public class BenefitService {
         }
 
         return null;
+    }
+
+    private Boolean isAgeSatisfied(Member member, WelfareBenefit welfareBenefit) {
+        return switch (welfareBenefit.getAgeConditionStatus()) {
+            case UNKNOWN -> null;
+            case NO_RESTRICTION -> true;
+            case RESTRICTED -> {
+                int age = Period.between(member.getBirthDate(), LocalDate.now()).getYears();
+
+                boolean meetsMinAge = welfareBenefit.getMinAge() == null
+                        || age >= welfareBenefit.getMinAge();
+
+                boolean meetsMaxAge = welfareBenefit.getMaxAge() == null
+                        || age <= welfareBenefit.getMaxAge();
+
+                yield meetsMinAge && meetsMaxAge;
+            }
+        };
     }
 }
