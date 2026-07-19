@@ -11,6 +11,8 @@ import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.global.apiPayload.code.GeneralErrorCode;
 import salpim.umc10thsalpim.global.apiPayload.exception.ProjectException;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -28,9 +30,15 @@ public class FacilityService {
         // 관할 행정복지센터가 일치 여부 확인 (카카오맵 VS DB의 사용자 관할행정동)
         boolean isMatched = isMyServiceCenter(member.getServiceCenter(), request.FacilityName());
 
+        //거리 계산
+        String calculatedDistance = calculateDistance(
+                member.getLatitude(), member.getLongitude(),
+                request.latitude(), request.longitude()
+        );
+
         if(isMatched){
-            //중앙복지혜택리스트 조회
-            //지자체복지혜택리스트 조회
+            //중앙복지혜택리스트 조회 --> 지역은 직접 넣어야 함. / 빈 제작 메서드
+            //지자체복지혜택리스트 조회 --> 지역은 직접 넣어야 함. / 빈 제작 메서드
         }
 
         if (!isMatched) {
@@ -40,10 +48,32 @@ public class FacilityService {
         return MapResponseDto.FacilityInfoResponseDto.builder()
                 .name(request.FacilityName())
                 .address(request.address())
-                .hours("운영시간 정보 없음")//임시 하드코딩
-                .phoneNumber("전화번호 정보 없음")
-                .distanceNext("거리 정보 없음")
+                .hour("09:00 - 18:00")
+                .distanceText(calculatedDistance)
                 .build();
+    }
+
+    private String calculateDistance(BigDecimal lat1, BigDecimal lon1, BigDecimal lat2, BigDecimal lon2) {
+        if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+            return "거리 정보 없음";
+        }
+
+        double earthRadius = 6371.0; // 지구 반지름 (km)
+        double dLat = Math.toRadians(lat2.doubleValue() - lat1.doubleValue());
+        double dLon = Math.toRadians(lon2.doubleValue() - lon1.doubleValue());
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1.doubleValue())) * Math.cos(Math.toRadians(lat2.doubleValue())) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = earthRadius * c; // 결과는 km 단위
+
+        // 1km 미만이면 m 단위로, 1km 이상이면 소수점 첫째 자리 km 단위로 반환
+        if (distance < 1.0) {
+            return (int) (distance * 1000) + "m";
+        }
+        return String.format("%.1fkm", distance);
     }
 
     private boolean isMyServiceCenter(String dbCenterName, String kakaoFacilityName){

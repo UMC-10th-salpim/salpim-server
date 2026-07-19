@@ -8,8 +8,9 @@ public class MapResponseDto {
     public record FacilityInfoResponseDto(
             String name,
             String address,
-            String hours,
-            String phoneNumber,
-            String distanceNext
+            String hour,
+            String distanceText,
+            boolean isMyCenter
+            //빈 제작 메서드 반환
     ){}
 }
