@@ -21,7 +21,7 @@ public class LocalWelfareBenefitReqDTO {
         String srchKeyCode,
         String lifeArray,
         String trgterIndvdlArray,
-        String ctpvnM,
+        String ctpvNm,
         String sggNm
     ) {}
 
