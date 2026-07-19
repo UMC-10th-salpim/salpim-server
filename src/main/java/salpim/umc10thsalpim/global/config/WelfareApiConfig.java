@@ -11,12 +11,13 @@ public class WelfareApiConfig {
    // 복지서비스(지자체/중앙) api용 RestClient
    // baseUrl은 각 서비스에서 application.yml 값을 주입받음
    @Bean
-   public RestClient welfareRestClient(){
-      return RestClient.builder().build();
+   public RestClient welfareRestClient(RestClient.Builder restClientBuilder) {
+      return restClientBuilder.build();
    }
 
+   // RestClient.Builder 직접 등록
    @Bean
-   public XmlMapper xmlMapper(){
-      return new XmlMapper();
+   public RestClient.Builder restClientBuilder() {
+      return RestClient.builder();
    }
 }
