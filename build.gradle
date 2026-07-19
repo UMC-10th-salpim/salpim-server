@@ -44,6 +44,8 @@ dependencies {
     // swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
+	// XML Response Passing
+	 implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 }
 
 tasks.named('test') {
