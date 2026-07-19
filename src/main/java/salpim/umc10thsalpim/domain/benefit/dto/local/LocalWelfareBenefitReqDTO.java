@@ -11,6 +11,7 @@ public class LocalWelfareBenefitReqDTO {
      * srchKeyCode: 검색조건 코드
      * lifeArray: 생애주기 코드
      * trgterIndvdlArray: 대상특성 코드
+     * ctpvNm: 시도명
      * sggNm: 시군구명
      * */
     public record LocalWelfareList(
@@ -20,6 +21,7 @@ public class LocalWelfareBenefitReqDTO {
         String srchKeyCode,
         String lifeArray,
         String trgterIndvdlArray,
+        String ctpvnM,
         String sggNm
     ) {}
 
