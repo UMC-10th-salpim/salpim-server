@@ -12,7 +12,7 @@ public class CursorResDTO {
         Boolean hasNext,
         String nextCursor,
         Integer pageSize,
-        Long totalCount
+        Integer totalCount
     ){}
 
 }

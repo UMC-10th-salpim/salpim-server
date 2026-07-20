@@ -27,8 +27,8 @@ public class BenefitController {
     public ApiResponse<CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO>> getSearchResult
     (
             @RequestParam String searchKey,
-            @RequestParam List<Integer> regionIds,
-            @RequestParam List<Integer> categoryIds,
+            @RequestParam List<Long> regionIds,
+            @RequestParam List<Long> categoryIds,
             @RequestParam(name="cursor", defaultValue = "-1") String cursor,
             @RequestParam(name="pageSize", defaultValue = "10") Integer pageSize,
             @RequestParam(name="sort", defaultValue = "popular") String sort

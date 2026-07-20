@@ -15,6 +15,9 @@ public enum BenefitErrorCode implements BaseErrorCode {
     BENEFIT_RULE_NOT_FOUND(HttpStatus.NOT_FOUND,
             "BENEFIT_RULE404",
             "해당 혜택의 신청 규칙을 찾을 수 없습니다."),
+    INVALID_SORT_TYPE(HttpStatus.BAD_REQUEST,
+            "BENEFIT400",
+            "유효하지 않은 정렬 방식입니다.")
     ;
     private final HttpStatus status;
     private final String code;

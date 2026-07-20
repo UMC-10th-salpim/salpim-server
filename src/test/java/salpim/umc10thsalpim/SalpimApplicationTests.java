@@ -12,4 +12,14 @@ class SalpimApplicationTests {
 	void contextLoads() {
 	}
 
+	@Autowired
+	BokjiroApiClient bokjiroApiClient;
+
+	@Test
+	void bokjiroApiTest(){
+		var res = bokjiroApiClient.searchBenefits(1, 10, null, "010");
+		System.out.println(res.getTotalCount());
+		res.getBenefitList().forEach(item -> System.out.println(item.getServId()));
+	}
+
 }
