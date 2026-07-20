@@ -13,7 +13,7 @@ public class BenefitConverter {
                 .data(page.stream()
                         .map(BenefitConverter::toWelfareSearchRes)
                         .toList())
-                .hasNext(nextCursor==null ? false : true)
+                .hasNext(nextCursor!=null)
                 .nextCursor(nextCursor)
                 .totalCount(totalCount)
                 .build();

@@ -1,9 +1,7 @@
 package salpim.umc10thsalpim.domain.benefit.service;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.benefit.converter.BenefitConverter;
@@ -16,7 +14,6 @@ import salpim.umc10thsalpim.global.dto.CursorResDTO;
 import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
 import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -62,10 +59,6 @@ public class BenefitService {
         //DB 매칭 & 카테고리 필터링
         List<WelfareBenefit> matched = servIds.isEmpty()
                 ? List.of() : welfareBenefitRepository.findByExternalIdInAndSource(servIds, SOURCE_NATIONAL);
-        /// test
-//        for (WelfareBenefit wb : matched){
-//            System.out.println(wb.getExternalId());
-//        }
 
         List<WelfareBenefit> filtered = matched.stream()
                 .filter(b -> categoryIds==null || categoryIds.isEmpty()||
@@ -103,11 +96,11 @@ public class BenefitService {
             return benefits;
         }else{
             for (int i=0; i<benefits.size(); i++) {
-                if (benefits.get(i).getId().equals(cursor)) {
+                if (benefits.get(i).getId().toString().equals(cursor)) {
                     return benefits.subList(i+1, benefits.size());
                 }
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 }
