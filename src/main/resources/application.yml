@@ -17,4 +17,6 @@ springdoc:
 
 bokjiro:
   base-url: http://apis.data.go.kr/B554287/NationalWelfareInformationsV001
+  local-base-url: http://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
   service-key: ${BOKJIRO_SERVICE_KEY}
+  local-service-key: ${LOCAL_BOKJIRO_SERVICE_KEY}

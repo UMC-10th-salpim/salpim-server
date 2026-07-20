@@ -40,7 +40,7 @@ public class BenefitService {
         int pageNumber = 1;
         while(servIds.size()<MAX_SERV_NUMBER){
             BokjiroApiDTO.BenefitListRes res =
-                    bokjiroApiClient.searchBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
+                    bokjiroApiClient.searchNationalBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
             res.getBenefitList().forEach(item -> servIds.add(item.getServId()));
             if (pageNumber*API_MAX_SIZE>=res.getTotalCount()){ break; }
             if (pageNumber==1){

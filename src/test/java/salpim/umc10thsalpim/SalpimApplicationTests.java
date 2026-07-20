@@ -17,7 +17,7 @@ class SalpimApplicationTests {
 
 	@Test
 	void bokjiroApiTest(){
-		var res = bokjiroApiClient.searchBenefits(1, 10, null, "010");
+		var res = bokjiroApiClient.searchLocalBenefits(1, 10, null, null, "인천", null);
 		System.out.println(res.getTotalCount());
 		res.getBenefitList().forEach(item -> System.out.println(item.getServId()));
 	}
