@@ -67,9 +67,9 @@ public class AuthReqDTO {
             @Pattern(regexp = "^[0-9-]+$", message = "phoneNumber can contain only numbers and hyphens.")
             String phoneNumber,
 
-            @Schema(example = "qwer1234")
+            @Schema(example = "123456")
             @NotBlank(message = "password is required.")
-            @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$", message = "password must be at least 8 characters and include letters and numbers.")
+            @Pattern(regexp = "^\\d{6}$", message = "password must be exactly 6 digits.")
             String password,
 
             @Schema(example = "고양시 덕양구 화랑로 28")

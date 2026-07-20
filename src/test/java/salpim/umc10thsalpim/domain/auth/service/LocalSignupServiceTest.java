@@ -51,12 +51,12 @@ class LocalSignupServiceTest {
 
     @Test
     void signupSavesMemberWithRegion() {
-        AuthReqDTO.LocalSignup request = validRequest("Password123!", "Seoul");
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
         Region region = region();
 
         when(memberRepository.existsByPhoneNumber("01031768867")).thenReturn(false);
         when(regionRepository.findById(REGION_ID)).thenReturn(Optional.of(region));
-        when(passwordEncoder.encode("Password123!")).thenReturn("encoded-password");
+        when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         localSignupService.signup(request);
@@ -68,7 +68,7 @@ class LocalSignupServiceTest {
 
     @Test
     void signupFailsWhenRegionDoesNotExist() {
-        AuthReqDTO.LocalSignup request = validRequest("Password123!", "Seoul");
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
 
         when(memberRepository.existsByPhoneNumber("01031768867")).thenReturn(false);
         when(regionRepository.findById(REGION_ID)).thenReturn(Optional.empty());
@@ -81,7 +81,7 @@ class LocalSignupServiceTest {
 
     @Test
     void signupFailsWhenRegionIsNotLeaf() {
-        AuthReqDTO.LocalSignup request = validRequest("Password123!", "Seoul");
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
         Region city = Region.create(null, "Goyang", RegionLevel.CITY);
 
         when(memberRepository.existsByPhoneNumber("01031768867")).thenReturn(false);
@@ -104,7 +104,7 @@ class LocalSignupServiceTest {
 
     @Test
     void signupFailsWhenPasswordRecoveryAnswerIsBlank() {
-        AuthReqDTO.LocalSignup request = validRequest("Password123!", " ");
+        AuthReqDTO.LocalSignup request = validRequest("123456", " ");
 
         assertThatThrownBy(() -> localSignupService.signup(request))
                 .isInstanceOfSatisfying(MemberException.class, exception ->
