@@ -2,7 +2,7 @@ name: PR Review Discord Notification
 
 on:
   pull_request:
-    types: [opened, ready_for_review, review_requested]
+    types: [ready_for_review, review_requested]
   workflow_dispatch:
 
 permissions:
