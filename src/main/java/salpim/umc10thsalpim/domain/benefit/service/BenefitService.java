@@ -37,7 +37,6 @@ public class BenefitService {
         List<String> servIds = new ArrayList<>();
         int pageNumber = 1;
         while(servIds.size()<MAX_SERV_NUMBER){
-
             BokjiroApiDTO.BenefitListRes res =
                     bokjiroApiClient.searchNationalBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
 

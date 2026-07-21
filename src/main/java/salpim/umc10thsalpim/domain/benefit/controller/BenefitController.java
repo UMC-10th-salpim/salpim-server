@@ -26,9 +26,9 @@ public class BenefitController {
     @GetMapping("/v1/welfare-benefits/search")
     public ApiResponse<CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO>> getSearchResult
     (
-            @RequestParam String searchKey,
-            @RequestParam List<Long> regionIds,
-            @RequestParam List<Long> categoryIds,
+            @RequestParam(required = false, defaultValue = "") String searchKey,
+            @RequestParam List<Long> regionIds, //필수
+            @RequestParam(required = false) List<Long> categoryIds, //null -> 모든 카테고리
             @RequestParam(name="cursor", defaultValue = "-1") String cursor,
             @RequestParam(name="pageSize", defaultValue = "10") Integer pageSize,
             @RequestParam(name="sort", defaultValue = "popular") String sort
