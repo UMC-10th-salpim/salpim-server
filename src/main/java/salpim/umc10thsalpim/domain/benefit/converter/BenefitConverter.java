@@ -16,6 +16,7 @@ public class BenefitConverter {
                 .hasNext(nextCursor!=null)
                 .nextCursor(nextCursor)
                 .totalCount(totalCount)
+                .pageSize(page.size())
                 .build();
     }
 

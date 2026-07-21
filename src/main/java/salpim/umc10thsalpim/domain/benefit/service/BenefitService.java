@@ -1,7 +1,6 @@
 package salpim.umc10thsalpim.domain.benefit.service;
 
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.benefit.converter.BenefitConverter;
@@ -26,26 +25,25 @@ public class BenefitService {
     private static final int API_MAX_SIZE=500;
     private static final int MAX_SERV_NUMBER=1001;
     private static final String SOURCE_NATIONAL = "NATIONAL";
+    private static final String SOURCE_LOCAL = "LOCAL";
 
     @Transactional(readOnly = true)
     public CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO> getSearchResult(String searchKey, List<Long> regionIds, List<Long> categoryIds, String cursor, Integer pageSize, String sort) {
 
-        PageRequest pageRequest = PageRequest.of(0, pageSize);
-
-        String nextCursor = null;
-        Integer totalCount=0;
+        String nextCursor;
+        Integer totalCount;
 
         //복지로 api 이용해서 검색어에 맞는 혜택 id를 리스트에 넣기
         List<String> servIds = new ArrayList<>();
         int pageNumber = 1;
         while(servIds.size()<MAX_SERV_NUMBER){
+
             BokjiroApiDTO.BenefitListRes res =
                     bokjiroApiClient.searchNationalBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
+
             res.getBenefitList().forEach(item -> servIds.add(item.getServId()));
             if (pageNumber*API_MAX_SIZE>=res.getTotalCount()){ break; }
-            if (pageNumber==1){
-                totalCount = res.getTotalCount();
-            }
+
             pageNumber++;
         }
 
@@ -65,6 +63,8 @@ public class BenefitService {
                         categoryIds.contains(b.getWelfareCategory().getId()))
                 .toList();
 
+        totalCount=filtered.size();
+
         //정렬
         List<WelfareBenefit> sortedBenefits = sortBenefits(filtered, sort, orderIndex);
 
@@ -73,6 +73,7 @@ public class BenefitService {
         List<WelfareBenefit> page = afterCursor.stream().limit(pageSize).toList();
         boolean hasNext = afterCursor.size()>pageSize;
         nextCursor = hasNext ? afterCursor.get(pageSize).getId().toString() : null;
+
 
         return BenefitConverter.toPagination(page, nextCursor, totalCount);
     }
