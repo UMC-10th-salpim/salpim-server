@@ -683,4 +683,150 @@ class BenefitServiceTest {
 
         assertThat(result.isAgeSatisfied()).isFalse();
     }
+
+    @Test
+    @DisplayName("온라인 신청이 가능하고 신청 URL이 있으면 URL을 반환한다")
+    void returnsOnlineApplicationUrl() {
+        Long benefitId = 100L;
+        String applicationUrl = "https://example.com/apply";
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .applicationUrl(applicationUrl)
+                .build();
+
+        BenefitRule onlineRule = BenefitRule.builder()
+                .welfareBenefitId(benefitId)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(onlineRule));
+
+        String result = benefitService.getOnlineApplicationUrl(benefitId);
+
+        assertThat(result).isEqualTo(applicationUrl);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 혜택의 온라인 신청 링크를 조회하면 예외가 발생한다")
+    void throwsExceptionWhenBenefitIsNotFoundForOnlineApplication() {
+        Long benefitId = 100L;
+
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.empty());
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getOnlineApplicationUrl(benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("혜택 신청 규칙이 없으면 온라인 신청 링크 조회 시 예외가 발생한다")
+    void throwsExceptionWhenBenefitRuleIsNotFoundForOnlineApplication() {
+        Long benefitId = 100L;
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .build();
+
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of());
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getOnlineApplicationUrl(benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_RULE_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("온라인 신청 방식이 없으면 온라인 신청 링크 조회 시 예외가 발생한다")
+    void throwsExceptionWhenOnlineApplicationIsNotAvailable() {
+        Long benefitId = 100L;
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .applicationUrl("https://example.com/apply")
+                .build();
+
+        BenefitRule visitRule = BenefitRule.builder()
+                .welfareBenefitId(benefitId)
+                .applicationType(ApplicationType.VISIT)
+                .build();
+
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(visitRule));
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getOnlineApplicationUrl(benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_ONLINE_APPLICATION_NOT_AVAILABLE);
+    }
+
+    @Test
+    @DisplayName("온라인 신청 방식이 있지만 신청 URL이 없으면 예외가 발생한다")
+    void throwsExceptionWhenApplicationUrlIsNotConfigured() {
+        Long benefitId = 100L;
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .build();
+
+        BenefitRule onlineRule = BenefitRule.builder()
+                .welfareBenefitId(benefitId)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(onlineRule));
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getOnlineApplicationUrl(benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_APPLICATION_URL_NOT_CONFIGURED);
+    }
+
+    @Test
+    @DisplayName("온라인 신청 URL 형식이 올바르지 않으면 예외가 발생한다")
+    void throwsExceptionWhenApplicationUrlIsInvalid() {
+        Long benefitId = 100L;
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .applicationUrl("ftp://example.com/apply")
+                .build();
+
+        BenefitRule onlineRule = BenefitRule.builder()
+                .welfareBenefitId(benefitId)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(onlineRule));
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getOnlineApplicationUrl(benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_APPLICATION_URL_INVALID);
+    }
 }

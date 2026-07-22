@@ -74,4 +74,20 @@ class BenefitControllerTest {
 
         verify(benefitService).getApplicationHelperInfo(1L, benefitId);
     }
+
+    @Test
+    @DisplayName("온라인 신청 사이트로 정상 리다이렉트")
+    void redirectsToOnlineApplicationSite() throws Exception {
+        Long benefitId = 100L;
+        String applicationUrl = "https://example.com/apply";
+
+        given(benefitService.getOnlineApplicationUrl(benefitId))
+                .willReturn(applicationUrl);
+
+        mockMvc.perform(get("/api/benefits/{benefitId}/application-link", benefitId))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", applicationUrl));
+
+        verify(benefitService).getOnlineApplicationUrl(benefitId);
+    }
 }
