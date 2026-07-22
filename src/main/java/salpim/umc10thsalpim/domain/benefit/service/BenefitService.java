@@ -204,7 +204,7 @@ public class BenefitService {
             boolean isHttpUrl = "http".equalsIgnoreCase(uri.getScheme())
                     || "https".equalsIgnoreCase(uri.getScheme());
 
-            if (!isHttpUrl) {
+            if (!isHttpUrl || uri.getHost() == null) {
                 throw new BenefitException(BenefitErrorCode.BENEFIT_APPLICATION_URL_INVALID);
             }
 

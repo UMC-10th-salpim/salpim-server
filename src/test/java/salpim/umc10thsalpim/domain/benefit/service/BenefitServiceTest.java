@@ -829,4 +829,33 @@ class BenefitServiceTest {
         assertThat(exception.getErrorCode())
                 .isEqualTo(BenefitErrorCode.BENEFIT_APPLICATION_URL_INVALID);
     }
+
+    @Test
+    @DisplayName("온라인 신청 URL에 host가 없으면 예외가 발생한다")
+    void throwsExceptionWhenApplicationUrlHasNoHost() {
+        Long benefitId = 100L;
+
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .applicationUrl("https:apply")
+                .build();
+
+        BenefitRule onlineRule = BenefitRule.builder()
+                .welfareBenefitId(benefitId)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(welfareBenefitRepository.findById(benefitId))
+                .willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
+                .willReturn(List.of(onlineRule));
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getOnlineApplicationUrl(benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_APPLICATION_URL_INVALID);
+    }
 }
