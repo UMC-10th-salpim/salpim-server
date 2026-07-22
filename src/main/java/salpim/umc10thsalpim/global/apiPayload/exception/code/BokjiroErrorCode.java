@@ -2,11 +2,12 @@ package salpim.umc10thsalpim.global.apiPayload.exception.code;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import salpim.umc10thsalpim.global.apiPayload.code.BaseErrorCode;
 
 @Getter
-@AllArgsConstructor
+@RequiredArgsConstructor
 public enum BokjiroErrorCode implements BaseErrorCode {
 
     BOKJIRO_API_ERROR(HttpStatus.BAD_GATEWAY,
