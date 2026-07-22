@@ -1,6 +1,7 @@
 package salpim.umc10thsalpim.global.infra.bokjiro;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -17,16 +18,18 @@ public class BokjiroApiClient {
     private final WebClient localWebClient;
     private final String nationalServiceKey;
     private final String localServiceKey;
-    private final XmlMapper xmlMapper = new XmlMapper();
+    private final XmlMapper xmlMapper;
 
-    public BokjiroApiClient(@Value("${bokjiro.base-url}") String baseUrl,
+    public BokjiroApiClient(@Qualifier("bokjiroNationalWebClient") WebClient nationalWebClient,
                             @Value("${bokjiro.service-key}") String serviceKey,
-                            @Value("${bokjiro.local-base-url}") String localBaseUrl,
-                            @Value("${bokjiro.local-service-key}") String localServiceKey) {
-        this.nationalWebClient = WebClient.builder().baseUrl(baseUrl).build();
+                            @Qualifier("bokjiroLocalWebClient") WebClient localWebClient,
+                            @Value("${bokjiro.local-service-key}") String localServiceKey,
+                            XmlMapper xmlMapper ) {
         this.nationalServiceKey = serviceKey;
-        this.localWebClient = WebClient.builder().baseUrl(localBaseUrl).build();
         this.localServiceKey = localServiceKey;
+        this.nationalWebClient = nationalWebClient;
+        this.localWebClient = localWebClient;
+        this.xmlMapper = xmlMapper;
     }
 
     public BokjiroApiDTO.BenefitListRes searchNationalBenefits(int pageNo, int pageSize, String searchWrd, String intrsThemaArray){
