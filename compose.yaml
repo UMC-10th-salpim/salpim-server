@@ -17,7 +17,7 @@ services:
       retries: 10
 
   api:
-    image: ghcr.io/umc-10th-salpim/salpim-server:latest
+    image: ghcr.io/umc-10th-salpim/salpim-server:${IMAGE_TAG:?IMAGE_TAG is required}
     container_name: salpim-api
     restart: unless-stopped
     env_file: .env

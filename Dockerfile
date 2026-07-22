@@ -12,7 +12,11 @@ RUN ./gradlew bootJar --no-daemon
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
-COPY --from=builder /app/build/libs/*.jar app.jar
+RUN groupadd --system app && useradd --system --gid app app
+
+COPY --from=builder --chown=app:app /app/build/libs/*.jar app.jar
+
+USER app
 
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
