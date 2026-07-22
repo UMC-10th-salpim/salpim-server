@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/benefits")
+@RequestMapping("/api/benefits")
 @Tag(name = "혜택", description = "복지 혜택 조회 및 신청 지원 API")
 public class BenefitController {
 
