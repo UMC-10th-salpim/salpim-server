@@ -79,7 +79,7 @@ public class BenefitController {
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "400",
-                    description = "온라인 신청을 지원하지 않는 헤택"
+                    description = "온라인 신청을 지원하지 않는 혜택"
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
