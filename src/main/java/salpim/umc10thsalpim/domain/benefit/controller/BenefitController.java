@@ -13,8 +13,12 @@ import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 import salpim.umc10thsalpim.global.apiPayload.code.BaseSuccessCode;
 import salpim.umc10thsalpim.global.dto.CursorResDTO;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.net.URI;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
 @Validated
@@ -61,5 +65,40 @@ public class BenefitController {
                 benefitService.getApplicationHelperInfo(memberId, benefitId);
         return ApiResponse.onSuccess(code, response);
 
+    }
+
+    @GetMapping("/{benefitId}/application-link")
+    @Operation(
+            summary = "온라인 신청 사이트로 이동",
+            description = "온라인 신청이 가능한 복지 혜택의 신청 사이트로 리다이렉트합니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "302",
+                    description = "온라인 신청 사이트 리다이렉트 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "온라인 신청을 지원하지 않는 헤택"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "복지 혜택 또는 신청 규칙을 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "신청 URL이 없거나 형식이 올바르지 않음"
+            )
+    })
+    public ResponseEntity<Void> redirectToOnlineApplication(
+            @Parameter(description = "온라인 신청할 복지 혜택 ID", example = "1")
+            @PathVariable Long benefitId
+    ) {
+        String applicationUrl = benefitService.getOnlineApplicationUrl(benefitId);
+
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .location(URI.create(applicationUrl))
+                .build();
     }
 }
