@@ -1,25 +1,13 @@
 package salpim.umc10thsalpim;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
 
 @SpringBootTest
 class SalpimApplicationTests {
 
 	@Test
 	void contextLoads() {
-	}
-
-	@Autowired
-	BokjiroApiClient bokjiroApiClient;
-
-	@Test
-	void bokjiroApiTest(){
-		var res = bokjiroApiClient.searchLocalBenefits(1, 10, null, null, "인천", null);
-		System.out.println(res.getTotalCount());
-		res.getBenefitList().forEach(item -> System.out.println(item.getServId()));
 	}
 
 }

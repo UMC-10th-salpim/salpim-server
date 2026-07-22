@@ -56,5 +56,8 @@ dependencies {
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+	useJUnitPlatform{
+		//tag가 integration인건 CI에서 실행 안하도록
+		excludeTags 'integration'
+	}
 }
