@@ -31,6 +31,7 @@ public class BokjiroApiDTO {
     public static class BenefitItem {
         private String servId;
         private String servNm;
+        private String inqNum;
     }
 
 }
