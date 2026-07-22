@@ -8,6 +8,8 @@ import salpim.umc10thsalpim.global.apiPayload.exception.code.BokjiroErrorCode;
 import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 import salpim.umc10thsalpim.global.infra.exception.BokjiroException;
 
+import java.time.Duration;
+
 @Component
 public class BokjiroApiClient {
 
@@ -28,21 +30,28 @@ public class BokjiroApiClient {
     }
 
     public BokjiroApiDTO.BenefitListRes searchNationalBenefits(int pageNo, int pageSize, String searchWrd, String intrsThemaArray){
-        String xml =  nationalWebClient.get()
-                .uri(uriBuilder ->uriBuilder.path("/NationalWelfarelistV001")
-                        .queryParam("serviceKey", nationalServiceKey)
-                        .queryParam("callTp", "L")
-                        .queryParam("pageNo", pageNo)
-                        .queryParam("numOfRows", pageSize)
-                        .queryParam("srchKeyCode", "003")
-                        .queryParam("searchWrd", searchWrd)
-                        .queryParam("lifeArray", "006")
-                        .queryParam("intrsThemaArray", intrsThemaArray)
-                        .queryParam("orderBy", "popular")
-                        .build())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        String xml;
+        try{
+            xml =  nationalWebClient.get()
+                    .uri(uriBuilder ->uriBuilder.path("/NationalWelfarelistV001")
+                            .queryParam("serviceKey", nationalServiceKey)
+                            .queryParam("callTp", "L")
+                            .queryParam("pageNo", pageNo)
+                            .queryParam("numOfRows", pageSize)
+                            .queryParam("srchKeyCode", "003")
+                            .queryParam("searchWrd", searchWrd)
+                            .queryParam("lifeArray", "006")
+                            .queryParam("intrsThemaArray", intrsThemaArray)
+                            .queryParam("orderBy", "popular")
+                            .build())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(60))
+                    .block();
+        } catch (Exception e){
+            throw new BokjiroException(BokjiroErrorCode.BOKJIRO_TIME_OUT);
+        }
+
 
         try{
             BokjiroApiDTO.BenefitListRes res =
@@ -59,21 +68,27 @@ public class BokjiroApiClient {
     }
 
     public BokjiroApiDTO.BenefitListRes searchLocalBenefits(int pageNo, int pageSize, String searchWrd, String intrsThemaArray, String ctpvNm, String sggNm){
-        String xml =  localWebClient.get()
-                .uri(uriBuilder ->uriBuilder.path("/LcgvWelfarelist")
-                        .queryParam("serviceKey", localServiceKey)
-                        .queryParam("pageNo", pageNo)
-                        .queryParam("numOfRows", pageSize)
-                        .queryParam("searchWrd", searchWrd)
-                        .queryParam("lifeArray", "006")
-                        .queryParam("intrsThemaArray", intrsThemaArray)
-                        .queryParam("arrgOrd", "002")
-                        .queryParam("ctpvNm", ctpvNm)
-                        .queryParam("sggNm", sggNm)
-                        .build())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        String xml;
+        try{
+            xml =  localWebClient.get()
+                    .uri(uriBuilder ->uriBuilder.path("/LcgvWelfarelist")
+                            .queryParam("serviceKey", localServiceKey)
+                            .queryParam("pageNo", pageNo)
+                            .queryParam("numOfRows", pageSize)
+                            .queryParam("searchWrd", searchWrd)
+                            .queryParam("lifeArray", "006")
+                            .queryParam("intrsThemaArray", intrsThemaArray)
+                            .queryParam("arrgOrd", "002")
+                            .queryParam("ctpvNm", ctpvNm)
+                            .queryParam("sggNm", sggNm)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(60))
+                    .block();
+        } catch(Exception e){
+            throw new BokjiroException(BokjiroErrorCode.BOKJIRO_TIME_OUT);
+        }
 
         try{
             BokjiroApiDTO.BenefitListRes res =
