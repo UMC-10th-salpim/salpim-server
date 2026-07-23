@@ -238,7 +238,7 @@ public class BenefitService {
         List<String> servIds_N = new ArrayList<>();
         List<String> servIds_L = new ArrayList<>();
         int pageNumber = 1;
-        while(servIds_N.size()<MAX_SERV_NUMBER){
+        while(servIds_N.size()<MAX_SERV_NUMBER && servIds_L.size()<MAX_SERV_NUMBER){
             BokjiroApiDTO.BenefitListRes NationalRes =
                     bokjiroApiClient.searchNationalBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
 
@@ -254,7 +254,6 @@ public class BenefitService {
 
             if (pageNumber*API_MAX_SIZE>=NationalRes.getTotalCount()&&
             pageNumber*API_MAX_SIZE>=LocalRes.getTotalCount()){ break; }
-
             pageNumber++;
         }
 
