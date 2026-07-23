@@ -27,6 +27,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEMBER404_NOT_FOUND",
             "해당 사용자를 찾을 수 없습니다."),
+    MEMBER_REGION_NOT_SET(HttpStatus.BAD_REQUEST,
+            "MEMBER400_1",
+            "회원의 지역 정보가 설정되지 않았습니다.")
     ;
 
     private final HttpStatus status;
