@@ -2,62 +2,74 @@ package salpim.umc10thsalpim.domain.member.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.global.entity.BaseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Builder
 @Entity
-@Table(name = "member")
 @Getter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Member {
+@Table(name = "member",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_member_phone_number", columnNames = "phone_number"),
+                @UniqueConstraint(name = "uk_member_login_type_kakao_id", columnNames = {"login_type", "kakao_id"})
+        })
+public class Member extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "login_type", nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(name = "login_type")
-    private SocialProvider loginType; // SocialProvider ENUM 필요
+    private SocialProvider loginType;
 
     @Column(name = "phone_number")
     private String phoneNumber;
 
+    @Column(name = "password")
     private String password;
 
     @Column(name = "kakao_id")
     private String kakaoId;
 
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "birth_date")
+    @Column(name = "birth_date", nullable = false)
     private LocalDate birthDate;
 
+    @Column(name = "gender", nullable = false)
     @Enumerated(EnumType.STRING)
-    private Gender gender; // Gender ENUM 필요
+    private Gender gender;
 
-    @Column(name = "road_address")
+    @Column(name = "road_address", nullable = false)
     private String roadAddress;
 
     @Column(name = "detail_address")
     private String detailAddress;
 
-    @Column(precision = 10, scale = 7, nullable = false)
+    @Column(name = "latitude", nullable = false, precision = 10, scale = 7)
     private BigDecimal latitude;
 
-    @Column(precision = 10, scale = 7, nullable = false)
+    @Column(name = "longitude", nullable = false, precision = 10, scale = 7)
     private BigDecimal longitude;
 
-    // 연관관계 매핑 (지연 로딩 적용)
-    //@ManyToOne(fetch = FetchType.LAZY)
-    //@JoinColumn(name = "region_id", nullable = false)
-    //private Region region;
+    @Column(name = "region_id", nullable = false)
+    private Long regionId;
 
-    // 💡 참고: 제공해주신 ERD 원본에는 없지만, 방금 전 우리가 카카오맵 시설 매칭 로직을 위해
-    // 추가하기로 논의했던 '관할 행정동(hemdNm)' 컬럼을 포함해 두었습니다.
-    @Column(name = "jurisdiction_center", length = 50)
-    private String serviceCenter;
+    @Column(name = "password_recovery_answer", nullable = false)
+    private String passwordRecoveryAnswer;
+
+    @Column(name = "welfare_center")
+    private String welfareCenter;
 }

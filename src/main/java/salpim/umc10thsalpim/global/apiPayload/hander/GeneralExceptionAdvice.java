@@ -1,5 +1,6 @@
 package salpim.umc10thsalpim.global.apiPayload.hander;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -51,6 +52,26 @@ public class GeneralExceptionAdvice {
 
         BaseErrorCode code = GeneralErrorCode.BAD_REQUEST;
 
+        return ResponseEntity.status(code.getStatus())
+                .body(ApiResponse.onFailure(code, errors));
+    }
+
+    // @RequestParam, @PathVariable 등 개별 파라미터 검증 실패 예외
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleConstraintViolation(
+            ConstraintViolationException e
+    ) {
+        // 검증 실패한 변수명과 실패 이유를 담을 Map
+        Map<String, String> errors = new HashMap<>();
+
+        e.getConstraintViolations().forEach(violation -> {
+            // prop ertyPath는 "메서드명.파라미터명" 형태라서 마지막 부분만 파라미터명으로 사용
+            String path = violation.getPropertyPath().toString();
+            String field = path.substring(path.lastIndexOf('.') + 1);
+            errors.put(field, violation.getMessage());
+        });
+
+        BaseErrorCode code = GeneralErrorCode.BAD_REQUEST;
         return ResponseEntity.status(code.getStatus())
                 .body(ApiResponse.onFailure(code, errors));
     }

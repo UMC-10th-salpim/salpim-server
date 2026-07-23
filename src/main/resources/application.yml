@@ -5,9 +5,6 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
-springdoc:
-  override-with-generic-response: false
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,3 +12,17 @@ springdoc:
     properties:
       hibernate:
         format_sql: true
+
+springdoc:
+  override-with-generic-response: false
+
+welfare:
+  api:
+    CentralKey: ${WELFARE_CENTRAL_API_KEY}
+    LocalKey: ${WELFARE_LOCAL_API_KEY}
+
+bokjiro:
+  base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
+  local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
+  service-key: ${WELFARE_CENTRAL_API_KEY}
+  local-service-key: ${WELFARE_LOCAL_API_KEY}

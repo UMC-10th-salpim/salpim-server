@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:salpim;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+bokjiro:
+  base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
+  local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
+  service-key: d82d49a27b00335c1f2272aa292f18a39415c7b823c150114efdda7634feaeb1
+  local-service-key: aa7f2a8813d64696313f762d1d7d6a3b52ceac2e63e585fcd56bd085463bb01d
+
+welfare:
+  api:
+    CentralKey: d82d49a27b00335c1f2272aa292f18a39415c7b823c150114efdda7634feaeb1
+    LocalKey: aa7f2a8813d64696313f762d1d7d6a3b52ceac2e63e585fcd56bd085463bb01d

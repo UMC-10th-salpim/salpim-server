@@ -25,8 +25,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 
+    //WebClient 사용을 위한 WebFlux 라이브러리
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    //공공데이터 API의 XML 응답을 자바 객체로 파싱하기 위한 Jackson XML 라이브러리
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+
     // jpa
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 
     // lombok
@@ -41,8 +46,20 @@ dependencies {
     // junit5
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+	// h2 for testing
+	testRuntimeOnly 'com.h2database:h2'
+
     // swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
+	// webClient
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// xml parsing
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+
+	//validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 }
 
