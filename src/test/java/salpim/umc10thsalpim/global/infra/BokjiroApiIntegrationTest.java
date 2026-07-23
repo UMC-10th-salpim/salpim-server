@@ -17,8 +17,17 @@ public class BokjiroApiIntegrationTest {
     BokjiroApiClient bokjiroApiClient;
 
     @Test
-    @DisplayName("복지로 api 연결 확인")
-    void bokjiroApiTest(){
+    @DisplayName("중앙부처 복지로 api 연결 확인")
+    void nationalBokjiroApiTest(){
+        var res = bokjiroApiClient.searchNationalBenefits(1, 10, null, null);
+        assertThat(res.getTotalCount()).isPositive();
+        assertThat(res.getBenefitList()).isNotEmpty();
+        assertThat(res.getBenefitList().get(0).getServId()).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("지자체 복지로 api 연결 확인")
+    void localBokjiroApiTest(){
         var res = bokjiroApiClient.searchLocalBenefits(1, 10, null, null, "인천", null);
         assertThat(res.getTotalCount()).isPositive();
         assertThat(res.getBenefitList()).isNotEmpty();
