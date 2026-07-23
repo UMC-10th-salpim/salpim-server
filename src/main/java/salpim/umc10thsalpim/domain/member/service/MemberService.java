@@ -25,15 +25,13 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public MemberResDTO.MyPageInfo getMyPage(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+        Member member = getMemberOrThrow(memberId);
 
         if(member.getRegionId() == null) {
             throw new MemberException(MemberErrorCode.MEMBER_REGION_NOT_SET);
         }
 
-        Region memberRegion = regionRepository.findById(member.getRegionId())
-                .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+        Region memberRegion = getRegionOrThrow(member.getRegionId());
 
         Region sido = findAncestorRegion(memberRegion, RegionLevel.SIDO);
         Region sigungu = findAncestorRegion(memberRegion, RegionLevel.SIGUNGU);
@@ -47,11 +45,9 @@ public class MemberService {
 
     @Transactional
     public void updateProfile(Long memberId, MemberReqDTO.UpdateProfile request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+        Member member = getMemberOrThrow(memberId);
 
-        Region region = regionRepository.findById(request.regionId())
-                .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+        Region region = getRegionOrThrow(request.regionId());
 
         if(region.getRegionLevel() != RegionLevel.DONG) {
             throw new RegionException(RegionErrorCode.REGION_LEVEL_INVALID);
@@ -79,10 +75,19 @@ public class MemberService {
                 throw new RegionException(RegionErrorCode.REGION_HIERARCHY_INVALID);
             }
 
-            currentRegion = regionRepository.findById(parentId)
-                    .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+            currentRegion = getRegionOrThrow(parentId);
         }
 
         return currentRegion;
+    }
+
+    private Member getMemberOrThrow(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private Region getRegionOrThrow(Long regionId) {
+        return regionRepository.findById(regionId)
+                .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
     }
 }
