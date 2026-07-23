@@ -30,6 +30,5 @@ public class RecommendationOption extends BaseEntity {
     private String searchKey;
 
     @JoinColumn(name = "category_id")
-    @ManyToOne(fetch = FetchType.LAZY)
-    private WelfareCategory welfareCategory;
+    private Long categoryId;
 }
