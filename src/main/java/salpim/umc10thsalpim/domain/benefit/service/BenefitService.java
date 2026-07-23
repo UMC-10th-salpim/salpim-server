@@ -31,6 +31,8 @@ import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.List;
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,20 +60,14 @@ public class BenefitService {
         WelfareBenefit welfareBenefit = welfareBenefitRepository.findById(welfareBenefitId)
                 .orElseThrow(() -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND));
 
-        List<BenefitRule> benefitRuleList = benefitRuleRepository.findAllByWelfareBenefitId(welfareBenefitId);
+        List<BenefitRule> benefitRules = getBenefitRulesOrThrow(welfareBenefitId);
 
-        if(benefitRuleList.isEmpty()){
-            throw new BenefitException(BenefitErrorCode.BENEFIT_RULE_NOT_FOUND);
-        }
-
-        List<ApplicationType> applicationTypeList = benefitRuleList.stream()
+        List<ApplicationType> applicationTypeList = benefitRules.stream()
                 .map(BenefitRule::getApplicationType)
                 .distinct()
                 .toList();
 
-        Boolean isOnlineApplicationAvailable = benefitRuleList.stream()
-                .anyMatch(benefitRule ->
-                        benefitRule.getApplicationType() == ApplicationType.ONLINE);
+        Boolean isOnlineApplicationAvailable = isOnlineApplicationAvailable(benefitRules);
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
@@ -90,6 +86,22 @@ public class BenefitService {
         return BenefitConverter.toGetApplicationHelperInfo(
                 welfareBenefit, isOnlineApplicationAvailable,
                 applicationTypeList, isRegionSatisfied, isAgeSatisfied);
+    }
+
+    @Transactional(readOnly = true)
+    public String getOnlineApplicationUrl(Long welfareBenefitId) {
+        WelfareBenefit welfareBenefit = welfareBenefitRepository.findById(welfareBenefitId)
+                .orElseThrow(() -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND));
+
+        List<BenefitRule> benefitRules = getBenefitRulesOrThrow(welfareBenefitId);
+
+        boolean isOnlineApplicationAvailable = isOnlineApplicationAvailable(benefitRules);
+
+        if(!isOnlineApplicationAvailable){
+            throw new BenefitException(BenefitErrorCode.BENEFIT_ONLINE_APPLICATION_NOT_AVAILABLE);
+        }
+
+        return validateApplicationUrl(welfareBenefit.getApplicationUrl());
     }
 
 
@@ -166,6 +178,47 @@ public class BenefitService {
                 yield meetsMinAge && meetsMaxAge;
             }
         };
+    }
+
+    private String validateApplicationUrl(String applicationUrl){
+        if(applicationUrl == null || applicationUrl.isBlank()){
+            throw new BenefitException(
+                    BenefitErrorCode.BENEFIT_APPLICATION_URL_NOT_CONFIGURED
+            );
+        }
+
+        try {
+            URI uri = URI.create(applicationUrl);
+
+            boolean isHttpUrl = "http".equalsIgnoreCase(uri.getScheme())
+                    || "https".equalsIgnoreCase(uri.getScheme());
+
+            if (!isHttpUrl || uri.getHost() == null) {
+                throw new BenefitException(BenefitErrorCode.BENEFIT_APPLICATION_URL_INVALID);
+            }
+
+            return applicationUrl;
+        }
+        catch (IllegalArgumentException exception) {
+            throw new BenefitException(
+                    BenefitErrorCode.BENEFIT_APPLICATION_URL_INVALID
+            );
+        }
+    }
+
+    private List<BenefitRule> getBenefitRulesOrThrow(Long welfareBenefitId) {
+        List<BenefitRule> benefitRules = benefitRuleRepository.findAllByWelfareBenefitId(welfareBenefitId);
+
+        if(benefitRules.isEmpty()) {
+            throw new BenefitException(BenefitErrorCode.BENEFIT_RULE_NOT_FOUND);
+        }
+
+        return benefitRules;
+    }
+
+    private boolean isOnlineApplicationAvailable(List<BenefitRule> benefitRules) {
+        return benefitRules.stream()
+                .anyMatch(benefitRule -> benefitRule.getApplicationType() == ApplicationType.ONLINE);
     }
 
     @Transactional(readOnly = true)
