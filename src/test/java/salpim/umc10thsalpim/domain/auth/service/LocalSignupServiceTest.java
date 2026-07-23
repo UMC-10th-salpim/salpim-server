@@ -50,7 +50,7 @@ class LocalSignupServiceTest {
     private LocalSignupService localSignupService;
 
     @Test
-    void signupSavesMemberWithRegion() {
+    void signupSavesMemberWithRegionAndEupMyeonDongAsWelfareCenter() {
         AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
         Region region = region();
 
@@ -64,6 +64,7 @@ class LocalSignupServiceTest {
         ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
         verify(memberRepository).save(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getRegion()).isSameAs(region);
+        assertThat(memberCaptor.getValue().getWelfareCenter()).isEqualTo("Hwajeon");
     }
 
     @Test

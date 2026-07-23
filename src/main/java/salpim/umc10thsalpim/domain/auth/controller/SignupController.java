@@ -57,7 +57,10 @@ public class SignupController {
                 .body(ApiResponse.onSuccess(AuthSuccessCode.GEOCODED, response));
     }
 
-    @Operation(summary = "로컬 회원가입 API")
+    @Operation(
+            summary = "로컬 회원가입 API",
+            description = "행정구역 조회 API에서 발급받은 regionId를 전달하면, 해당 읍·면·동 이름을 회원의 welfareCenter에 저장합니다."
+    )
     @PostMapping("/local")
     public ResponseEntity<ApiResponse<Void>> signupLocal(
             @Valid @RequestBody AuthReqDTO.LocalSignup request

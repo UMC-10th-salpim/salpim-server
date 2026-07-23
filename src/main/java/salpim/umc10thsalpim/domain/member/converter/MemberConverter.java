@@ -31,6 +31,7 @@ public final class MemberConverter {
                 .longitude(BigDecimal.valueOf(request.longitude()))
                 .region(region)
                 .passwordRecoveryAnswer(request.passwordAnswer().trim())
+                .welfareCenter(region.getName())
                 .build();
     }
 

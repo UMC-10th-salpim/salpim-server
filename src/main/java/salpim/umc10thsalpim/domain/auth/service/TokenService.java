@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -77,6 +78,25 @@ public class TokenService {
                 .expiration(expiredAt)
                 .signWith(getSecretKey())
                 .compact();
+    }
+
+    public Long validateAccessTokenAndGetMemberId(String token) {
+        try {
+            var claims = Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            if (!Objects.equals(TokenPurpose.ACCESS.name(), claims.get(CLAIM_PURPOSE, String.class))) {
+                throw new AuthException(AuthErrorCode.INVALID_TOKEN);
+            }
+            return Long.parseLong(claims.getSubject());
+        } catch (AuthException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AuthException(AuthErrorCode.INVALID_TOKEN);
+        }
     }
 
     private SecretKey getSecretKey() {
