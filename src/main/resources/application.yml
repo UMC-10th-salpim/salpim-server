@@ -31,3 +31,9 @@ jwt:
   access-token-expiration-millis: ${JWT_ACCESS_TOKEN_EXPIRATION_MILLIS:3600000}
   refresh-token-expiration-millis: ${JWT_REFRESH_TOKEN_EXPIRATION_MILLIS:1209600000}
   signup-token-expiration-millis: ${JWT_SIGNUP_TOKEN_EXPIRATION_MILLIS:600000}
+
+bokjiro:
+  base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
+  local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
+  service-key: ${BOKJIRO_SERVICE_KEY}
+  local-service-key: ${LOCAL_BOKJIRO_SERVICE_KEY}

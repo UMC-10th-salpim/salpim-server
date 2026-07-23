@@ -75,12 +75,14 @@ public class Member extends BaseEntity {
     )
     private Region region;
 
+    @Column(name = "region_id", insertable = false, updatable = false)
+    private Long regionId;
+
     @Column(name = "password_recovery_answer")
     private String passwordRecoveryAnswer;
 
     @Column(name = "welfare_center")
     private String welfareCenter;
-
     @PrePersist
     @PreUpdate
     public void validateLoginTypeFields() {
@@ -109,5 +111,9 @@ public class Member extends BaseEntity {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    public Long getRegionId() {
+        return region != null ? region.getId() : regionId;
     }
 }
