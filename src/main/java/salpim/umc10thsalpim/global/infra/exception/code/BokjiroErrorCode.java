@@ -1,6 +1,5 @@
-package salpim.umc10thsalpim.global.apiPayload.exception.code;
+package salpim.umc10thsalpim.global.infra.exception.code;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

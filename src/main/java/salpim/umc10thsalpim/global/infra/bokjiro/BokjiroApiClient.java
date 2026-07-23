@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import salpim.umc10thsalpim.global.apiPayload.exception.code.BokjiroErrorCode;
+import salpim.umc10thsalpim.global.infra.exception.code.BokjiroErrorCode;
 import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 import salpim.umc10thsalpim.global.infra.exception.BokjiroException;
 

@@ -8,11 +8,11 @@ import lombok.NoArgsConstructor;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.global.entity.BaseEntity;
 
+@Builder
 @Entity
 @Getter
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "region")
 public class Region extends BaseEntity {
 
@@ -20,14 +20,13 @@ public class Region extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "parent_id")
+    private Long parentId;
+
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "region_level", nullable = false)
+    @Enumerated(EnumType.STRING)
     private RegionLevel regionLevel;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
-    private Region parent;
 }

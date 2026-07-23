@@ -1,4 +1,4 @@
-package salpim.umc10thsalpim.global.apiPayload.exception.code;
+package salpim.umc10thsalpim.domain.benefit.exception.code;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -9,11 +9,10 @@ import salpim.umc10thsalpim.global.apiPayload.code.BaseSuccessCode;
 @RequiredArgsConstructor
 public enum BenefitSuccessCode implements BaseSuccessCode {
 
-    BENEFIT_LIST_GET_SUCCESS(
-            HttpStatus.OK,
-            "BENEFIT200",
-            "성공적으로 혜택 목록이 조회되었습니다."
-    );
+    BENEFIT_VIEW(HttpStatus.OK,
+            "BENEFIT200_1",
+            "성공적으로 혜택을 조회했습니다"),
+    ;
 
     private final HttpStatus status;
     private final String code;
