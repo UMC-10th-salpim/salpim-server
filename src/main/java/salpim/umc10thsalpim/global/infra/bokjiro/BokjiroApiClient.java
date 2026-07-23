@@ -60,6 +60,10 @@ public class BokjiroApiClient {
             BokjiroApiDTO.BenefitListRes res =
                     xmlMapper.readValue(xml, BokjiroApiDTO.BenefitListRes.class);
 
+            if ("40".equals(res.getResultCode())) {
+                return res;
+            }
+
             if (!"0".equals(res.getResultCode())) {
                 throw new BokjiroException(BokjiroErrorCode.BOKJIRO_API_ERROR);
             }
@@ -96,6 +100,10 @@ public class BokjiroApiClient {
         try{
             BokjiroApiDTO.BenefitListRes res =
                     xmlMapper.readValue(xml, BokjiroApiDTO.BenefitListRes.class);
+
+            if ("40".equals(res.getResultCode())) {
+                return res;
+            }
 
             if (!"0".equals(res.getResultCode())) {
                 throw new BokjiroException(BokjiroErrorCode.BOKJIRO_API_ERROR);
