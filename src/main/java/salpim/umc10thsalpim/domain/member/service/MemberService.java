@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.member.converter.MemberConverter;
+import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
@@ -41,6 +42,30 @@ public class MemberService {
                 member,
                 sido.getName(),
                 sigungu.getName()
+        );
+    }
+
+    @Transactional
+    public void updateProfile(Long memberId, MemberReqDTO.UpdateProfile request) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        Region region = regionRepository.findById(request.regionId())
+                .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+
+        if(region.getRegionLevel() != RegionLevel.DONG) {
+            throw new RegionException(RegionErrorCode.REGION_LEVEL_INVALID);
+        }
+
+        member.updateProfile(
+                request.name(),
+                request.birthDate(),
+                request.gender(),
+                request.roadAddress(),
+                request.detailAddress(),
+                request.latitude(),
+                request.longitude(),
+                region
         );
     }
 

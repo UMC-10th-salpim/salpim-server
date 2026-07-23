@@ -24,6 +24,9 @@ public enum RegionErrorCode implements BaseErrorCode {
     REGION_HIERARCHY_INVALID(HttpStatus.INTERNAL_SERVER_ERROR,
             "REGION500_1",
             "지역의 계층 정보가 올바르지 않습니다."),
+    REGION_LEVEL_INVALID(HttpStatus.BAD_REQUEST,
+            "REGION400_1",
+            "동 단위 지역만 설정할 수 있습니다."),
     ;
 
     private final HttpStatus status;
