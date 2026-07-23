@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
-import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitSuccessCode;
 import salpim.umc10thsalpim.domain.recommendation.dto.RecommendationResDTO;
 import salpim.umc10thsalpim.domain.recommendation.exception.code.RecommendationSuccessCode;
 import salpim.umc10thsalpim.domain.recommendation.service.RecommendationService;
@@ -55,7 +54,7 @@ public class RecommendationController {
 
         Long memberId = 1L; //TODO : get memberId from accessToken
 
-        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_VIEW, recommendationService.getRecommendationResult(optionId, memberId, cursor, pageSize));
+        return ApiResponse.onSuccess(RecommendationSuccessCode.RECOMMENDATION_GET_SUCCESS, recommendationService.getRecommendationResult(optionId, memberId, cursor, pageSize));
     }
 
 }
