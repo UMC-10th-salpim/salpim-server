@@ -60,7 +60,7 @@ class BenefitControllerTest {
         given(benefitService.getApplicationHelperInfo(1L, benefitId))
                 .willReturn(response);
 
-        mockMvc.perform(get("/api/v1/benefits/{benefitId}/application-helper", benefitId)
+        mockMvc.perform(get("/api/benefits/{benefitId}/application-helper", benefitId)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))

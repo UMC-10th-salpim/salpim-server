@@ -1,7 +1,7 @@
 package salpim.umc10thsalpim.global.infra;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,7 +10,7 @@ import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-@Tag("integration") //태그 지워야 실행됨
+@Disabled("외부 API 및 환경 변수 필요")
 public class BokjiroApiIntegrationTest {
 
     @Autowired
