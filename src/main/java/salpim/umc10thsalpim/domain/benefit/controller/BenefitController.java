@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -49,7 +50,7 @@ public class BenefitController {
     (
             @RequestParam(required = false, defaultValue = "")
             String searchKey,
-            @RequestParam List<Long> regionIds, //필수
+            @RequestParam @Size(min = 2, max = 2) List<Long> regionIds, //필수
             @RequestParam(required = false) List<Long> categoryIds, //null -> 모든 카테고리
             @RequestParam(name="cursor", defaultValue = "-1") String cursor,
             @RequestParam(name="pageSize", defaultValue = "10") @Positive Integer pageSize,
