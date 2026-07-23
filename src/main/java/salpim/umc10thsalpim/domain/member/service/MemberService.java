@@ -1,6 +1,7 @@
 package salpim.umc10thsalpim.domain.member.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -11,6 +12,7 @@ import salpim.umc10thsalpim.domain.member.converter.MemberConverter;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
+import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -27,6 +29,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final RegionRepository regionRepository;
     private final PhoneVerificationService phoneVerificationService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public MemberResDTO.MyPageInfo getMyPage(Long memberId) {
@@ -70,6 +73,42 @@ public class MemberService {
                 request.longitude(),
                 region
         );
+    }
+
+    @Transactional(readOnly = true)
+    public MemberResDTO.PasswordVerificationResult verifyCurrentPassword(
+            Long memberId,
+            MemberReqDTO.VerifyCurrentPassword request
+    ) {
+        Member member = getLocalMemberOrThrow(memberId);
+
+        validateCurrentPassword(member, request.currentPassword());
+
+        return new MemberResDTO.PasswordVerificationResult(true);
+    }
+
+    @Transactional(readOnly = true)
+    public MemberResDTO.PasswordVerificationResult verifyRecoveryAnswer(
+            Long memberId,
+            MemberReqDTO.VerifyRecoveryAnswer request
+    ) {
+        Member member = getLocalMemberOrThrow(memberId);
+
+        validateRecoveryAnswer(member, request.recoveryAnswer());
+
+        return new MemberResDTO.PasswordVerificationResult(true);
+    }
+
+    @Transactional
+    public void changePassword(
+            Long memberId,
+            MemberReqDTO.ChangePassword request
+    ) {
+        Member member = getLocalMemberOrThrow(memberId);
+
+        validatePasswordVerification(member, request);
+
+        member.changePassword(passwordEncoder.encode(request.newPassword()));
     }
 
     private Region findAncestorRegion(Region region, RegionLevel targetLevel) {
@@ -129,4 +168,61 @@ public class MemberService {
         return regionRepository.findById(regionId)
                 .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
     }
+
+    private Member getLocalMemberOrThrow(Long memberId) {
+        Member member = getMemberOrThrow(memberId);
+
+        if(member.getLoginType() != SocialProvider.LOCAL){
+            throw new MemberException(MemberErrorCode.PASSWORD_CHANGE_NOT_SUPPORTED);
+        }
+
+        return member;
+    }
+
+    private void validateCurrentPassword(Member member, String currentPassword) {
+        if(!passwordEncoder.matches(currentPassword, member.getPassword())) {
+            throw new MemberException(MemberErrorCode.PASSWORD_MISMATCH);
+        }
+    }
+
+    private void validateRecoveryAnswer(Member member, String recoveryAnswer) {
+        if (!passwordEncoder.matches(
+                recoveryAnswer,
+                member.getPasswordRecoveryAnswer()
+        )) {
+            throw new MemberException(MemberErrorCode.RECOVERY_ANSWER_MISMATCH);
+        }
+    }
+
+    private void validatePasswordVerification(
+            Member member, MemberReqDTO.ChangePassword request
+    ) {
+        if (request.verificationMethod() == null) {
+            throw new MemberException(MemberErrorCode.INVALID_PASSWORD_VERIFICATION);
+        }
+
+        boolean hasCurrentPassword = StringUtils.hasText(request.currentPassword());
+        boolean hasRecoveryAnswer = StringUtils.hasText(request.recoveryAnswer());
+
+        switch (request.verificationMethod()) {
+            case CURRENT_PASSWORD -> {
+                if (!hasCurrentPassword || hasRecoveryAnswer) {
+                    throw new MemberException(MemberErrorCode.INVALID_PASSWORD_VERIFICATION);
+                }
+
+                validateCurrentPassword(member, request.currentPassword());
+            }
+            case RECOVERY_ANSWER -> {
+                if (!hasRecoveryAnswer || hasCurrentPassword) {
+                    throw new MemberException(MemberErrorCode.INVALID_PASSWORD_VERIFICATION);
+                }
+
+                validateRecoveryAnswer(member, request.recoveryAnswer());
+            }
+
+
+        }
+
+    }
+
 }
