@@ -41,7 +41,7 @@ public class BenefitService {
     private final BokjiroApiClient bokjiroApiClient;
 
     private static final int API_MAX_SIZE=500;
-    private static final int MAX_SERV_NUMBER=1001;
+    private static final int MAX_SERV_NUMBER=2000;
     private static final String SOURCE_NATIONAL = "NATIONAL";
     private static final String SOURCE_LOCAL = "LOCAL";
 
@@ -174,29 +174,45 @@ public class BenefitService {
         String nextCursor;
         Integer totalCount;
 
+        //지자체 복지 검색에 쓸 리스트
+        List<Region> regions=regionRepository.findAllById(regionIds);
+
+        //조회수를 담을 list
+        Map<String, Integer> viewCountMap =  new HashMap<>();
+
+
         //복지로 api 이용해서 검색어에 맞는 혜택 id를 리스트에 넣기
-        List<String> servIds = new ArrayList<>();
+        List<String> servIds_N = new ArrayList<>();
+        List<String> servIds_L = new ArrayList<>();
         int pageNumber = 1;
-        while(servIds.size()<MAX_SERV_NUMBER){
-            BokjiroApiDTO.BenefitListRes res =
+        while(servIds_N.size()<MAX_SERV_NUMBER){
+            BokjiroApiDTO.BenefitListRes NationalRes =
                     bokjiroApiClient.searchNationalBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
 
-            res.getBenefitList().forEach(item -> servIds.add(item.getServId()));
-            if (pageNumber*API_MAX_SIZE>=res.getTotalCount()){ break; }
+            BokjiroApiDTO.BenefitListRes LocalRes =
+                    bokjiroApiClient.searchLocalBenefits(pageNumber, API_MAX_SIZE, searchKey, null, regions.get(0).getName(), regions.get(1).getName());
+
+            NationalRes.getBenefitList().forEach(item -> {servIds_N.add(item.getServId());
+                viewCountMap.put(SOURCE_NATIONAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));
+            });
+            LocalRes.getBenefitList().forEach(item -> {servIds_L.add(item.getServId());
+                viewCountMap.put(SOURCE_LOCAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));
+            });
+
+            if (pageNumber*API_MAX_SIZE>=NationalRes.getTotalCount()&&
+            pageNumber*API_MAX_SIZE>=LocalRes.getTotalCount()){ break; }
 
             pageNumber++;
         }
 
-        //순서 저장하는 리스트 생성
-        Map<String, Integer> orderIndex = new HashMap<>();
-        int i = 0;
-        for (String servId : servIds) {
-            orderIndex.put(servId, i++);
-        }
-
         //DB 매칭 & 카테고리 필터링
-        List<WelfareBenefit> matched = servIds.isEmpty()
-                ? List.of() : welfareBenefitRepository.findByExternalIdInAndSource(servIds, SOURCE_NATIONAL);
+        List<WelfareBenefit> matched = new ArrayList<>();
+        if (!servIds_N.isEmpty()) {
+            matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_N, SOURCE_NATIONAL));
+        }
+        if (!servIds_L.isEmpty()) {
+            matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_L, SOURCE_LOCAL));
+        }
 
         List<WelfareBenefit> filtered = matched.stream()
                 .filter(b -> categoryIds==null || categoryIds.isEmpty()||
@@ -206,7 +222,7 @@ public class BenefitService {
         totalCount=filtered.size();
 
         //정렬
-        List<WelfareBenefit> sortedBenefits = sortBenefits(filtered, sort, orderIndex);
+        List<WelfareBenefit> sortedBenefits = sortBenefits(filtered, sort, viewCountMap);
 
         //페이징
         List<WelfareBenefit> afterCursor = applyCursor(sortedBenefits, cursor);
@@ -227,10 +243,12 @@ public class BenefitService {
     }
 
     private List<WelfareBenefit> sortBenefits(List<WelfareBenefit> benefits,
-                                              String sort, Map<String, Integer> orderIndex) {
+                                              String sort, Map<String, Integer> viewCountMap) {
         Comparator<WelfareBenefit> comparator = switch (sort.toLowerCase()) {
             case "popular" -> Comparator
-                    .comparing((WelfareBenefit b) -> orderIndex.get(b.getExternalId()));
+                    .comparing((WelfareBenefit b) -> viewCountMap.getOrDefault(b.getSource() + ":" + b.getExternalId(), 0),
+                            Comparator.reverseOrder())
+                    .thenComparing(WelfareBenefit::getId); //동일하다면 id순 정렬
             case "deadline" -> Comparator
                     .comparing(WelfareBenefit::getApplicationEndDate,
                             Comparator.nullsLast(Comparator.naturalOrder())) // 마감 가까운 순, 비어있으면 뒤로
