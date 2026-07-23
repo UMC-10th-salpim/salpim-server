@@ -2,6 +2,8 @@ package salpim.umc10thsalpim.domain.region.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
@@ -10,8 +12,10 @@ import salpim.umc10thsalpim.global.entity.BaseEntity;
 import java.util.ArrayList;
 import java.util.List;
 
+@Builder
 @Entity
 @Getter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "region",
         uniqueConstraints = {
@@ -33,6 +37,10 @@ public class Region extends BaseEntity {
     )
     private Region parent;
 
+    @Column(name = "parent_id", insertable = false, updatable = false)
+    private Long parentId;
+
+    @Builder.Default
     @OneToMany(mappedBy = "parent")
     private List<Region> children = new ArrayList<>();
 
@@ -51,5 +59,9 @@ public class Region extends BaseEntity {
 
     public static Region create(Region parent, String name, RegionLevel regionLevel) {
         return new Region(parent, name, regionLevel);
+    }
+
+    public Long getParentId() {
+        return parent != null ? parent.getId() : parentId;
     }
 }

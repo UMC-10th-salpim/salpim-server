@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
+import salpim.umc10thsalpim.domain.benefit.enums.RegionScope;
 import salpim.umc10thsalpim.global.entity.BaseEntity;
 
 import java.time.LocalDate;
@@ -46,6 +48,10 @@ public class WelfareBenefit extends BaseEntity {
     @Column(name = "region_id")
     private Long regionId;
 
+    @Column(name = "region_scope", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RegionScope regionScope;
+
     @Column(name = "category_id")
     private Long categoryId;
 
@@ -63,4 +69,15 @@ public class WelfareBenefit extends BaseEntity {
 
     @Column(name = "synced_at")
     private LocalDateTime syncedAt;
+
+    @Column(name = "min_age")
+    private Integer minAge;
+
+    @Column(name = "max_age")
+    private Integer maxAge;
+
+    @Column(name = "age_condition_status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private AgeConditionStatus ageConditionStatus = AgeConditionStatus.UNKNOWN;
 }

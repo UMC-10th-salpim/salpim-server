@@ -4,5 +4,7 @@ public enum RegionLevel {
     SIDO,
     CITY,
     GU_GUN,
-    EUP_MYEON_DONG
+    EUP_MYEON_DONG,
+    SIGUNGU,
+    DONG
 }

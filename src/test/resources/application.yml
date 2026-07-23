@@ -23,3 +23,9 @@ jwt:
   secret-key: test-jwt-secret-key-must-be-at-least-32-bytes
   access-token-expiration-millis: 3600000
   refresh-token-expiration-millis: 1209600000
+
+bokjiro:
+  base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
+  local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
+  service-key: test-service-key
+  local-service-key: test-local-service-key

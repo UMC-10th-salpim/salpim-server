@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.entity.RefreshToken;
 import salpim.umc10thsalpim.domain.auth.repository.RefreshTokenRepository;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
+import salpim.umc10thsalpim.domain.benefit.enums.RegionScope;
 import salpim.umc10thsalpim.domain.benefit.repository.WelfareBenefitRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
@@ -62,6 +63,7 @@ class MemberWithdrawalServiceTest {
                 .source("test")
                 .title("benefit")
                 .content("content")
+                .regionScope(RegionScope.NONE)
                 .build());
         Member member = memberRepository.save(member(region, "01011112222"));
         RefreshToken refreshToken = refreshTokenRepository.save(RefreshToken.builder()
