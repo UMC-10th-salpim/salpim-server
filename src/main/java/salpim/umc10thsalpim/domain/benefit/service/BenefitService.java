@@ -60,20 +60,14 @@ public class BenefitService {
         WelfareBenefit welfareBenefit = welfareBenefitRepository.findById(welfareBenefitId)
                 .orElseThrow(() -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND));
 
-        List<BenefitRule> benefitRuleList = benefitRuleRepository.findAllByWelfareBenefitId(welfareBenefitId);
+        List<BenefitRule> benefitRules = getBenefitRulesOrThrow(welfareBenefitId);
 
-        if(benefitRuleList.isEmpty()){
-            throw new BenefitException(BenefitErrorCode.BENEFIT_RULE_NOT_FOUND);
-        }
-
-        List<ApplicationType> applicationTypeList = benefitRuleList.stream()
+        List<ApplicationType> applicationTypeList = benefitRules.stream()
                 .map(BenefitRule::getApplicationType)
                 .distinct()
                 .toList();
 
-        Boolean isOnlineApplicationAvailable = benefitRuleList.stream()
-                .anyMatch(benefitRule ->
-                        benefitRule.getApplicationType() == ApplicationType.ONLINE);
+        Boolean isOnlineApplicationAvailable = isOnlineApplicationAvailable(benefitRules);
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
@@ -99,14 +93,9 @@ public class BenefitService {
         WelfareBenefit welfareBenefit = welfareBenefitRepository.findById(welfareBenefitId)
                 .orElseThrow(() -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND));
 
-        List<BenefitRule> benefitRules = benefitRuleRepository.findAllByWelfareBenefitId(welfareBenefitId);
+        List<BenefitRule> benefitRules = getBenefitRulesOrThrow(welfareBenefitId);
 
-        if (benefitRules.isEmpty()){
-            throw new BenefitException(BenefitErrorCode.BENEFIT_RULE_NOT_FOUND);
-        }
-
-        boolean isOnlineApplicationAvailable = benefitRules.stream()
-                .anyMatch(benefitRule -> benefitRule.getApplicationType() == ApplicationType.ONLINE);
+        boolean isOnlineApplicationAvailable = isOnlineApplicationAvailable(benefitRules);
 
         if(!isOnlineApplicationAvailable){
             throw new BenefitException(BenefitErrorCode.BENEFIT_ONLINE_APPLICATION_NOT_AVAILABLE);
@@ -215,6 +204,21 @@ public class BenefitService {
                     BenefitErrorCode.BENEFIT_APPLICATION_URL_INVALID
             );
         }
+    }
+
+    private List<BenefitRule> getBenefitRulesOrThrow(Long welfareBenefitId) {
+        List<BenefitRule> benefitRules = benefitRuleRepository.findAllByWelfareBenefitId(welfareBenefitId);
+
+        if(benefitRules.isEmpty()) {
+            throw new BenefitException(BenefitErrorCode.BENEFIT_RULE_NOT_FOUND);
+        }
+
+        return benefitRules;
+    }
+
+    private boolean isOnlineApplicationAvailable(List<BenefitRule> benefitRules) {
+        return benefitRules.stream()
+                .anyMatch(benefitRule -> benefitRule.getApplicationType() == ApplicationType.ONLINE);
     }
 
     @Transactional(readOnly = true)

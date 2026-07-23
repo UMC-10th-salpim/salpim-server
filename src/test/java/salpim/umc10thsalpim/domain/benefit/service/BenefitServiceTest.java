@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.domain.benefit.service;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -47,6 +48,16 @@ class BenefitServiceTest {
 
     @InjectMocks
     private BenefitService benefitService;
+
+    private BenefitRule onlineRule;
+
+    @BeforeEach
+    void setUp() {
+        onlineRule = BenefitRule.builder()
+                .welfareBenefitId(100L)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+    }
 
     @Test
     @DisplayName("회원 동과 헤택 동이 같으면 지역 조건 충족")
@@ -695,11 +706,6 @@ class BenefitServiceTest {
                 .applicationUrl(applicationUrl)
                 .build();
 
-        BenefitRule onlineRule = BenefitRule.builder()
-                .welfareBenefitId(benefitId)
-                .applicationType(ApplicationType.ONLINE)
-                .build();
-
         given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
         given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
                 .willReturn(List.of(onlineRule));
@@ -784,11 +790,6 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .build();
 
-        BenefitRule onlineRule = BenefitRule.builder()
-                .welfareBenefitId(benefitId)
-                .applicationType(ApplicationType.ONLINE)
-                .build();
-
         given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
         given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
                 .willReturn(List.of(onlineRule));
@@ -812,11 +813,6 @@ class BenefitServiceTest {
                 .applicationUrl("ftp://example.com/apply")
                 .build();
 
-        BenefitRule onlineRule = BenefitRule.builder()
-                .welfareBenefitId(benefitId)
-                .applicationType(ApplicationType.ONLINE)
-                .build();
-
         given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
         given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
                 .willReturn(List.of(onlineRule));
@@ -838,11 +834,6 @@ class BenefitServiceTest {
         WelfareBenefit benefit = WelfareBenefit.builder()
                 .id(benefitId)
                 .applicationUrl("https:apply")
-                .build();
-
-        BenefitRule onlineRule = BenefitRule.builder()
-                .welfareBenefitId(benefitId)
-                .applicationType(ApplicationType.ONLINE)
                 .build();
 
         given(welfareBenefitRepository.findById(benefitId))
