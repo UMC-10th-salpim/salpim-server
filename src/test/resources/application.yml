@@ -7,9 +7,3 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-
-bokjiro:
-  base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
-  local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
-  service-key: ${BOKJIRO_SERVICE_KEY}
-  local-service-key: ${LOCAL_BOKJIRO_SERVICE_KEY}
