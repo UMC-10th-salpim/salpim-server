@@ -143,7 +143,7 @@ public class BenefitService {
         return memberRegionAtTargetLevel != null && memberRegionAtTargetLevel.getId().equals(benefitRegionId);
     }
 
-    private Region findAncestorRegion(Region region, RegionLevel targetLevel){
+    public Region findAncestorRegion(Region region, RegionLevel targetLevel){
         Region current = region;
 
         while(current != null){
