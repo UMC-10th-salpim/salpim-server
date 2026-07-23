@@ -13,6 +13,11 @@ public enum RecommendationSuccessCode implements BaseSuccessCode {
             HttpStatus.OK,
             "RECOMMENDATION200_1",
             "선택지들의 정보 조회가 성공적으로 완료되었습니다."
+    ),
+    RECOMMENDATION_GET_SUCCESS(
+            HttpStatus.OK,
+            "RECOMMENDATION200_2",
+            "살피미 추천 혜택 리스트 조회가 성공적으로 완료되었습니다."
     );
 
     private final HttpStatus status;
