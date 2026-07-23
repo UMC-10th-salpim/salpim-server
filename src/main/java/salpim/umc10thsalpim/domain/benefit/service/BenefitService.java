@@ -280,7 +280,7 @@ public class BenefitService {
         List<WelfareBenefit> afterCursor = applyCursor(sortedBenefits, cursor);
         List<WelfareBenefit> page = afterCursor.stream().limit(pageSize).toList();
         boolean hasNext = afterCursor.size()>pageSize;
-        nextCursor = hasNext ? afterCursor.get(pageSize).getId().toString() : null;
+        nextCursor = hasNext ? page.get(page.size()-1).getId().toString() : null;
 
         List<Long> pageCategoryIds = page.stream()
                 .map(WelfareBenefit::getCategoryId)
