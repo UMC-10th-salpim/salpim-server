@@ -1,9 +1,13 @@
 name: PR Review Discord Notification
 
 on:
-  pull_request:
-    types: [ready_for_review, review_requested]
+  pull_request_target:
+    types: [opened, ready_for_review, review_requested]
   workflow_dispatch:
+
+concurrency:
+  group: pr-review-notify-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -57,33 +61,48 @@ jobs:
               }
             }
 
-            let reviewers = [];
+            await new Promise((resolve) => setTimeout(resolve, 30000));
 
-            if (context.payload.action === "review_requested") {
-              const requestedReviewer = context.payload.requested_reviewer;
-              if (requestedReviewer) {
-                reviewers = [requestedReviewer];
-              }
-            } else {
-              reviewers = pr.requested_reviewers ?? [];
-            }
+            const { owner, repo } = context.repo;
+
+            const requestedReviewers = await github.rest.pulls.listRequestedReviewers({
+              owner,
+              repo,
+              pull_number: pr.number
+            });
+
+            const reviewers = requestedReviewers.data.users ?? [];
 
             if (reviewers.length === 0) {
               console.log("No requested reviewers. Skipping.");
               return;
             }
 
+            const mentions = [];
+            const unmappedReviewers = [];
+
             for (const reviewer of reviewers) {
               const discordId = reviewerMap[reviewer.login];
 
               if (!discordId) {
-                console.log(`No Discord mapping for ${reviewer.login}`);
+                unmappedReviewers.push(reviewer.login);
                 continue;
               }
 
-              await sendDiscord(
-                `<@${discordId}> PR 리뷰 요청이 왔어요.\n\n` +
-                `**${pr.title}**\n` +
-                `${pr.html_url}`
-              );
+              mentions.push(`<@${discordId}>`);
             }
+
+            if (unmappedReviewers.length > 0) {
+              console.log(`No Discord mapping for: ${unmappedReviewers.join(", ")}`);
+            }
+
+            if (mentions.length === 0) {
+              console.log("No mapped Discord reviewers. Skipping.");
+              return;
+            }
+
+            await sendDiscord(
+              `${mentions.join(" ")} PR 리뷰 요청이 왔어요.\n\n` +
+              `**${pr.title}**\n` +
+              `${pr.html_url}`
+            );
