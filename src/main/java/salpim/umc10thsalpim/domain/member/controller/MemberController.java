@@ -3,14 +3,18 @@ package salpim.umc10thsalpim.domain.member.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberSuccessCode;
 import salpim.umc10thsalpim.domain.member.service.MemberService;
@@ -54,5 +58,24 @@ public class MemberController {
                 MemberSuccessCode.MEMBER_MY_PAGE_VIEW,
                 memberService.getMyPage(memberId)
         );
+    }
+
+    @PutMapping("/users/me")
+    @Operation(
+            summary = "개인정보 수정",
+            description = "회원의 이름, 생년월일, 성별, 주소, 거주지역 정보를 수정합니다."
+    )
+    public ApiResponse<Void> updateProfile(
+            @Valid @RequestBody MemberReqDTO.UpdateProfile request
+    ) {
+        Long memberId = 1L; //TODO: get memberId from accessToken
+
+        memberService.updateProfile(memberId, request);
+
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_PROFILE_UPDATED,
+                null
+        );
+
     }
 }
