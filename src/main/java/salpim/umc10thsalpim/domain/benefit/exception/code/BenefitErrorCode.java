@@ -20,8 +20,12 @@ public enum BenefitErrorCode implements BaseErrorCode {
             "해당 혜택의 지역 조건 정보가 설정되지 않았습니다."),
     BENEFIT_REGION_LEVEL_MISMATCH(HttpStatus.INTERNAL_SERVER_ERROR,
             "BENEFIT500_2",
-            "혜택의 지역이 신청 규칙의 지역 범위와 일치하지 않습니다.")
+            "혜택의 지역이 신청 규칙의 지역 범위와 일치하지 않습니다."),
+    INVALID_SORT_TYPE(HttpStatus.BAD_REQUEST,
+            "BENEFIT400",
+            "유효하지 않은 정렬 방식입니다.")
     ;
+
     private final HttpStatus status;
     private final String code;
     private final String message;

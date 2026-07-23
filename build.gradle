@@ -45,8 +45,20 @@ dependencies {
     // swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
+	// webClient
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+	// xml parsing
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+
+	//validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+	useJUnitPlatform{
+		//tag가 integration인건 CI에서 실행 안하도록
+		excludeTags 'integration'
+	}
 }

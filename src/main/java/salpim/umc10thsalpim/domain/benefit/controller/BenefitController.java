@@ -1,28 +1,44 @@
 package salpim.umc10thsalpim.domain.benefit.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitSuccessCode;
 import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 import salpim.umc10thsalpim.global.apiPayload.code.BaseSuccessCode;
+import salpim.umc10thsalpim.global.dto.CursorResDTO;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 
 @RestController
+@Validated
 @RequiredArgsConstructor
 @RequestMapping("/api/benefits")
 @Tag(name = "혜택", description = "복지 혜택 조회 및 신청 지원 API")
 public class BenefitController {
 
     private final BenefitService benefitService;
+
+    //직접 찾기 검색 api
+    @GetMapping("/search")
+    public ApiResponse<CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO>> getSearchResult
+    (
+            @RequestParam(required = false, defaultValue = "")
+            String searchKey,
+            @RequestParam List<Long> regionIds, //필수
+            @RequestParam(required = false) List<Long> categoryIds, //null -> 모든 카테고리
+            @RequestParam(name="cursor", defaultValue = "-1") String cursor,
+            @RequestParam(name="pageSize", defaultValue = "10") @Positive Integer pageSize,
+            @RequestParam(name="sort", defaultValue = "popular") String sort
+    ) {
+        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_VIEW, benefitService.getSearchResult(searchKey, regionIds, categoryIds, cursor, pageSize, sort));
+    }
 
     @GetMapping("/{benefitId}/application-helper")
     @Operation(

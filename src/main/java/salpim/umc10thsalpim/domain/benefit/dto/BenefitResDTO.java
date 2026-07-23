@@ -5,8 +5,16 @@ import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 
 import java.time.LocalDate;
 import java.util.List;
+import lombok.Builder;
 
 public class BenefitResDTO {
+
+    @Builder
+    public record WelfareSearchResultDTO(
+            Long benefitId,
+            String benefitTitle,
+            String benefitCategory
+    ) {}
 
     public record GetApplicationHelperInfo(
             Long benefitId,
@@ -25,4 +33,5 @@ public class BenefitResDTO {
             Integer maxAge,
             Boolean isAgeSatisfied
     ) {}
+
 }
