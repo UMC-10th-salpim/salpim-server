@@ -7,4 +7,8 @@ public class MemberResDTO {
             String sido,
             String sigungu
     ) {}
+
+    public record PasswordVerificationResult(
+            boolean isVerified
+    ) {}
 }
