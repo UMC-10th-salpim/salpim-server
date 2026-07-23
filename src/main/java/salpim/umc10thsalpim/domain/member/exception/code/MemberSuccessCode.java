@@ -15,6 +15,12 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     MEMBER_PROFILE_UPDATED(HttpStatus.OK,
             "MEMBER200_2",
             "회원 정보를 성공적으로 수정했습니다."),
+    MEMBER_PASSWORD_VERIFIED(HttpStatus.OK,
+            "MEMBER200_3",
+            "비밀번호를 성공적으로 확인했습니다."),
+    MEMBER_PASSWORD_CHANGED(HttpStatus.OK,
+            "MEMBER200_4",
+            "비밀번호를 성공적으로 변경했습니다."),
     ;
 
     private final HttpStatus status;

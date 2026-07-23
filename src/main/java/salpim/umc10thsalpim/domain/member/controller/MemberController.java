@@ -126,4 +126,54 @@ public class MemberController {
         return ResponseEntity.status(AuthSuccessCode.PHONE_VERIFIED.getStatus())
                 .body(ApiResponse.onSuccess(AuthSuccessCode.PHONE_VERIFIED, response));
     }
+
+    @PostMapping("/users/me/password/verify")
+    @Operation(
+            summary = "현재 비밀번호 확인",
+            description = "입력한 현재 비밀번호가 회원 정보와 일치하는지 확인합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<MemberResDTO.PasswordVerificationResult> verifyCurrentPassword(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody MemberReqDTO.VerifyCurrentPassword request
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_PASSWORD_VERIFIED,
+                memberService.verifyCurrentPassword(memberId, request)
+        );
+    }
+
+    @PostMapping("/users/me/password/recovery/verify")
+    @Operation(
+            summary = "비밀번호 복구 답변 확인",
+            description = "비밀번호 찾기 답변이 회원 정보와 일치하는지 확인합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<MemberResDTO.PasswordVerificationResult> verifyRecoveryAnswer(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody MemberReqDTO.VerifyRecoveryAnswer request
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_PASSWORD_VERIFIED,
+                memberService.verifyRecoveryAnswer(memberId, request)
+        );
+    }
+
+    @PutMapping("/users/me/password")
+    @Operation(
+            summary = "비밀번호 변경",
+            description = "현재 비밀번호 또는 복구 답변을 재검증한 뒤 새 비밀번호로 변경합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<Void> changePassword(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody MemberReqDTO.ChangePassword request
+    ) {
+        memberService.changePassword(memberId, request);
+
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_PASSWORD_CHANGED,
+                null
+        );
+    }
 }
