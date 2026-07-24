@@ -31,8 +31,8 @@ public class MemberReqDTO {
             BigDecimal latitude,
 
             @NotNull
-            @DecimalMin(value = "-90.0")
-            @DecimalMax(value = "90.0")
+            @DecimalMin(value = "-180.0")
+            @DecimalMax(value = "180.0")
             @Digits(integer = 3, fraction = 7)
             BigDecimal longitude,
 
