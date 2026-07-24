@@ -36,7 +36,7 @@ public class RecommendationService {
     private final BenefitService benefitService;
 
     public RecommendationResDTO.recommendationOptionsDTO getRecommendationOptions(Long categoryId) {
-        List<RecommendationOption>  recommendationOptions = recommendationRepository.findAllByCategoryId(categoryId);
+        List<RecommendationOption>  recommendationOptions = recommendationRepository.findAllByCategoryIdOrderByOptionOrderAsc(categoryId);
         return RecommendationConverter.toRecommedationOptionRes(recommendationOptions);
     }
 

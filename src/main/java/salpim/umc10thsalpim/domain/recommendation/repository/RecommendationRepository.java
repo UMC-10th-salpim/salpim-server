@@ -6,5 +6,5 @@ import salpim.umc10thsalpim.domain.recommendation.entity.RecommendationOption;
 import java.util.List;
 
 public interface RecommendationRepository extends JpaRepository<RecommendationOption, Long> {
-    List<RecommendationOption> findAllByCategoryId(Long categoryId);
+    List<RecommendationOption> findAllByCategoryIdOrderByOptionOrderAsc(Long categoryId);
 }
