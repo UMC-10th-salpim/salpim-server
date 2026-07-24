@@ -28,6 +28,6 @@ public class RecommendationOption extends BaseEntity {
     @Column(name = "search_key")
     private String searchKey;
 
-    @JoinColumn(name = "category_id")
+    @Column(name = "category_id")
     private Long categoryId;
 }
