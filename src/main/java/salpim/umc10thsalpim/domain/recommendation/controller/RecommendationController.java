@@ -26,7 +26,7 @@ public class RecommendationController {
     @Operation(
             summary = "2단계 질문 리스트 조회",
             description = """
-                선택한 1단계 선택지의 카테고리를를 path variable로 주면
+                선택한 1단계 선택지의 카테고리를 path variable로 주면
                 2단계 선택지들의 id와 선택지 내용, 순서를 가진 리스트를 보낸다.
                 """
     )
@@ -47,14 +47,14 @@ public class RecommendationController {
                 """
     )
     public ApiResponse<CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO>> getRecommendationResult(
-            @RequestParam(name = "optionId") Long  optionId,
+            @RequestParam(name = "optionId") Long  lastOptionId,
             @RequestParam(name="cursor", defaultValue = "-1") String cursor,
             @RequestParam(name="pageSize", defaultValue = "10") @Positive Integer pageSize
     ){
 
         Long memberId = 1L; //TODO : get memberId from accessToken
 
-        return ApiResponse.onSuccess(RecommendationSuccessCode.RECOMMENDATION_GET_SUCCESS, recommendationService.getRecommendationResult(optionId, memberId, cursor, pageSize));
+        return ApiResponse.onSuccess(RecommendationSuccessCode.RECOMMENDATION_GET_SUCCESS, recommendationService.getRecommendationResult(lastOptionId, memberId, cursor, pageSize));
     }
 
 }
