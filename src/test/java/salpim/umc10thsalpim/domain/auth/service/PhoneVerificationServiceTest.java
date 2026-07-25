@@ -66,6 +66,12 @@ class PhoneVerificationServiceTest {
 
         phoneVerificationService.sendPhoneChangeVerificationCode(MEMBER_ID, PHONE_NUMBER);
 
+        verify(phoneVerificationRepository).deleteByPhoneNumberAndPurpose(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        );
+        verify(phoneVerificationRepository).flush();
+
         ArgumentCaptor<PhoneVerification> verificationCaptor = ArgumentCaptor.forClass(
                 PhoneVerification.class
         );

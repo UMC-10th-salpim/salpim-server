@@ -69,7 +69,7 @@ public final class MemberConverter {
         );
     }
 
-    private static String normalizeNullableText(String value) {
+    public static String normalizeNullableText(String value) {
         if (value == null || value.trim().isEmpty()) {
             return null;
         }

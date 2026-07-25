@@ -62,6 +62,12 @@ public class PhoneVerificationService {
             throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
         }
 
+        phoneVerificationRepository.deleteByPhoneNumberAndPurpose(
+                normalizedPhoneNumber,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        );
+        phoneVerificationRepository.flush();
+
         sendVerificationCode(
                 member,
                 normalizedPhoneNumber,

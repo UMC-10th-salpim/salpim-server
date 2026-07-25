@@ -162,6 +162,35 @@ class MemberServiceTest {
     }
 
     @Test
+    @DisplayName("개인정보 수정 시 텍스트 입력값을 정규화한다")
+    void normalizesTextFieldsWhenUpdatingProfile() {
+        Member member = createMember(DONG_ID);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        MemberReqDTO.UpdateProfile request = new MemberReqDTO.UpdateProfile(
+                " 김철수 ",
+                LocalDate.of(1960, 5, 10),
+                Gender.MALE,
+                " 인천광역시 미추홀구 새 주소 ",
+                "   ",
+                new BigDecimal("37.4520000"),
+                new BigDecimal("126.6510000"),
+                10L,
+                null,
+                null
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(regionRepository.findById(10L)).willReturn(Optional.of(newDong));
+
+        memberService.updateProfile(MEMBER_ID, request);
+
+        assertThat(member.getName()).isEqualTo("김철수");
+        assertThat(member.getRoadAddress()).isEqualTo("인천광역시 미추홀구 새 주소");
+        assertThat(member.getDetailAddress()).isNull();
+        verifyNoInteractions(phoneVerificationService);
+    }
+
+    @Test
     @DisplayName("전화번호와 인증 토큰을 함께 전달하면 전화번호를 변경한다")
     void updateProfileWithPhoneNumberSuccess() {
         Member member = createMember(DONG_ID);

@@ -61,11 +61,11 @@ public class MemberService {
         updatePhoneNumberIfRequested(member, request);
 
         member.updateProfile(
-                request.name(),
+                request.name().trim(),
                 request.birthDate(),
                 request.gender(),
-                request.roadAddress(),
-                request.detailAddress(),
+                request.roadAddress().trim(),
+                MemberConverter.normalizeNullableText(request.detailAddress()),
                 request.latitude(),
                 request.longitude(),
                 region
