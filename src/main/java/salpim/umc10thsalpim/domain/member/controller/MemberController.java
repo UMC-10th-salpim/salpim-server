@@ -14,6 +14,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
+import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthSuccessCode;
+import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberSuccessCode;
@@ -31,6 +36,7 @@ public class MemberController {
 
     private final MemberWithdrawalService memberWithdrawalService;
     private final MemberService memberService;
+    private final PhoneVerificationService phoneVerificationService;
 
     @Operation(
             summary = "회원 탈퇴 API",
@@ -75,6 +81,45 @@ public class MemberController {
                 MemberSuccessCode.MEMBER_PROFILE_UPDATED,
                 null
         );
+    }
 
+    @PostMapping("/users/me/phone-verification/send")
+    @Operation(
+            summary = "전화번호 변경 인증번호 발송",
+            description = "변경할 전화번호로 인증번호를 발송합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ResponseEntity<ApiResponse<Void>> sendPhoneChangeVerificationCode(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody AuthReqDTO.PhoneSend request
+    ) {
+        phoneVerificationService.sendPhoneChangeVerificationCode(
+                memberId,
+                request.phoneNumber()
+        );
+
+        return ResponseEntity.status(AuthSuccessCode.PHONE_VERIFICATION_SENT.getStatus())
+                .body(ApiResponse.onSuccess(AuthSuccessCode.PHONE_VERIFICATION_SENT, null));
+    }
+
+    @PostMapping("/users/me/phone-verification/verify")
+    @Operation(
+            summary = "전화번호 변경 인증번호 검증",
+            description = "인증번호를 검증하고 개인정보 수정에 사용할 인증 토큰을 발급합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ResponseEntity<ApiResponse<AuthResDTO.PhoneChangeVerifyResult>> verifyPhoneChangeCode(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody AuthReqDTO.PhoneVerify request
+    ) {
+        AuthResDTO.PhoneChangeVerifyResult response = phoneVerificationService
+                .verifyPhoneChangeCode(
+                        memberId,
+                        request.phoneNumber(),
+                        request.code()
+                );
+
+        return ResponseEntity.status(AuthSuccessCode.PHONE_VERIFIED.getStatus())
+                .body(ApiResponse.onSuccess(AuthSuccessCode.PHONE_VERIFIED, response));
     }
 }
