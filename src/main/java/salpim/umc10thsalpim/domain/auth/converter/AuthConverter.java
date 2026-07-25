@@ -3,6 +3,8 @@ package salpim.umc10thsalpim.domain.auth.converter;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.dto.GeocodingClientResDTO;
 import salpim.umc10thsalpim.domain.auth.entity.PhoneVerification;
+import salpim.umc10thsalpim.domain.auth.enums.PhoneVerificationPurpose;
+import salpim.umc10thsalpim.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
 
@@ -12,12 +14,16 @@ public final class AuthConverter {
     }
 
     public static PhoneVerification toPhoneVerification(
+            Member member,
             String phoneNumber,
+            PhoneVerificationPurpose purpose,
             String code,
             LocalDateTime expiredAt
     ) {
         return PhoneVerification.builder()
+                .member(member)
                 .phoneNumber(phoneNumber)
+                .purpose(purpose)
                 .code(code)
                 .expiredAt(expiredAt)
                 .verified(false)

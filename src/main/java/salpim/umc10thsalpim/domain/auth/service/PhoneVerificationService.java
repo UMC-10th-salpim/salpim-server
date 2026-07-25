@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.converter.AuthConverter;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.entity.PhoneVerification;
+import salpim.umc10thsalpim.domain.auth.enums.PhoneVerificationPurpose;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.repository.PhoneVerificationRepository;
@@ -41,12 +42,21 @@ public class PhoneVerificationService {
         String code = generateVerificationCode();
         LocalDateTime expiredAt = LocalDateTime.now().plusMinutes(VERIFICATION_EXPIRATION_MINUTES);
 
-        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(normalizedPhoneNumber)
+        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumberAndPurpose(
+                        normalizedPhoneNumber,
+                        PhoneVerificationPurpose.SIGNUP
+                )
                 .map(existingVerification -> {
                     existingVerification.updateCode(code, expiredAt);
                     return existingVerification;
                 })
-                .orElseGet(() -> AuthConverter.toPhoneVerification(normalizedPhoneNumber, code, expiredAt));
+                .orElseGet(() -> AuthConverter.toPhoneVerification(
+                        null,
+                        normalizedPhoneNumber,
+                        PhoneVerificationPurpose.SIGNUP,
+                        code,
+                        expiredAt
+                ));
 
         phoneVerificationRepository.save(phoneVerification);
         log.info("[DEV] phone verification code. maskedPhoneNumber={}, code={}", maskPhoneNumber(normalizedPhoneNumber), code);
@@ -56,7 +66,10 @@ public class PhoneVerificationService {
     public AuthResDTO.PhoneVerifyResult verifyCode(String phoneNumber, String code) {
         String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
 
-        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(normalizedPhoneNumber)
+        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumberAndPurpose(
+                        normalizedPhoneNumber,
+                        PhoneVerificationPurpose.SIGNUP
+                )
                 .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_VERIFICATION_CODE));
 
         if (phoneVerification.getExpiredAt().isBefore(LocalDateTime.now())) {
@@ -74,7 +87,10 @@ public class PhoneVerificationService {
     public void validateVerifiedPhoneNumber(String phoneNumber) {
         String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
 
-        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumber(normalizedPhoneNumber)
+        PhoneVerification phoneVerification = phoneVerificationRepository.findByPhoneNumberAndPurpose(
+                        normalizedPhoneNumber,
+                        PhoneVerificationPurpose.SIGNUP
+                )
                 .orElseThrow(() -> new AuthException(AuthErrorCode.PHONE_NOT_VERIFIED));
 
         if (!Boolean.TRUE.equals(phoneVerification.getVerified())) {
@@ -88,7 +104,10 @@ public class PhoneVerificationService {
 
     @Transactional
     public void deleteVerification(String phoneNumber) {
-        phoneVerificationRepository.deleteByPhoneNumber(normalizePhoneNumber(phoneNumber));
+        phoneVerificationRepository.deleteByPhoneNumberAndPurpose(
+                normalizePhoneNumber(phoneNumber),
+                PhoneVerificationPurpose.SIGNUP
+        );
     }
 
     private String generateVerificationCode() {

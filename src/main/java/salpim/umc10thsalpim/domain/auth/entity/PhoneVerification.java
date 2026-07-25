@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import salpim.umc10thsalpim.domain.auth.enums.PhoneVerificationPurpose;
+import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.global.entity.BaseEntity;
 
 import java.time.LocalDateTime;
@@ -15,14 +17,20 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "phone_verification")
+@Table(
+        name = "phone_verification",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_phone_verification_phone_purpose",
+                columnNames = {"phone_number", "purpose"}
+        )
+)
 public class PhoneVerification extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "phone_number", nullable = false, unique = true)
+    @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
     @Column(name = "code", nullable = false)
@@ -34,10 +42,30 @@ public class PhoneVerification extends BaseEntity {
     @Column(name = "verified", nullable = false)
     private Boolean verified;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id")
+    private Member member;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purpose", nullable = false)
+    private PhoneVerificationPurpose purpose;
+
+    @Column(name = "verification_token_hash", length = 255)
+    private String verificationTokenHash;
+
+    @Column(name = "token_expired_at")
+    private LocalDateTime tokenExpiredAt;
+
+    @Column(name = "used_at")
+    private LocalDateTime usedAt;
+
     public void updateCode(String code, LocalDateTime expiredAt) {
         this.code = code;
         this.expiredAt = expiredAt;
         this.verified = false;
+        this.verificationTokenHash = null;
+        this.tokenExpiredAt = null;
+        this.usedAt = null;
     }
 
     public void verify() {
