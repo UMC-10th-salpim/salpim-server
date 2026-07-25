@@ -25,9 +25,21 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 
+    // validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // jwt
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
     // jpa
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testRuntimeOnly 'com.h2database:h2'
 
     // lombok
 	compileOnly 'org.projectlombok:lombok'
@@ -50,9 +62,6 @@ dependencies {
 
 	// xml parsing
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
-
-	//validation
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 }
 

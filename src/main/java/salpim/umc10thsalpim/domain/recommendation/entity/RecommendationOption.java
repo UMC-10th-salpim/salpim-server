@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import salpim.umc10thsalpim.domain.benefit.entity.WelfareCategory;
 import salpim.umc10thsalpim.global.entity.BaseEntity;
 
 @Entity
@@ -29,7 +28,6 @@ public class RecommendationOption extends BaseEntity {
     @Column(name = "search_key")
     private String searchKey;
 
-    @JoinColumn(name = "category_id")
-    @ManyToOne(fetch = FetchType.LAZY)
-    private WelfareCategory welfareCategory;
+    @Column(name = "category_id")
+    private Long categoryId;
 }
