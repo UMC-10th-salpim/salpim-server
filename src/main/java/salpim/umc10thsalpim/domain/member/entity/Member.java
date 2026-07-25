@@ -83,6 +83,7 @@ public class Member extends BaseEntity {
 
     @Column(name = "welfare_center")
     private String welfareCenter;
+
     @PrePersist
     @PreUpdate
     public void validateLoginTypeFields() {
@@ -115,5 +116,29 @@ public class Member extends BaseEntity {
 
     public Long getRegionId() {
         return region != null ? region.getId() : regionId;
+    }
+
+    public void updateProfile(
+            String name,
+            LocalDate birthDate,
+            Gender gender,
+            String roadAddress,
+            String detailAddress,
+            BigDecimal latitude,
+            BigDecimal longitude,
+            Region region
+    ) {
+        this.name = name;
+        this.birthDate = birthDate;
+        this.gender = gender;
+        this.roadAddress = roadAddress;
+        this.detailAddress = detailAddress;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.region = region;
+    }
+
+    public void updatePhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

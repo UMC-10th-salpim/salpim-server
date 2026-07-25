@@ -1,6 +1,7 @@
 package salpim.umc10thsalpim.domain.member.converter;
 
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
+import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.region.entity.Region;
@@ -56,7 +57,19 @@ public final class MemberConverter {
                 .build();
     }
 
-    private static String normalizeNullableText(String value) {
+    public static MemberResDTO.MyPageInfo toMyPageInfo(
+            Member member,
+            String sido,
+            String sigungu
+    ) {
+        return new MemberResDTO.MyPageInfo(
+                member.getName(),
+                sido,
+                sigungu
+        );
+    }
+
+    public static String normalizeNullableText(String value) {
         if (value == null || value.trim().isEmpty()) {
             return null;
         }
