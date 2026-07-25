@@ -82,4 +82,8 @@ public class PhoneVerification extends BaseEntity {
         this.usedAt = null;
     }
 
+    public void consumeVerificationToken() {
+        this.usedAt = LocalDateTime.now();
+    }
+
 }

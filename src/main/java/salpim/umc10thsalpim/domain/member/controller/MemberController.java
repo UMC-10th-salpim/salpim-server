@@ -55,7 +55,8 @@ public class MemberController {
     @GetMapping("/users/me")
     @Operation(
             summary = "마이페이지 조회",
-            description = "회원 이름과 시도, 시군구 정보를 조회합니다."
+            description = "회원 이름과 시도, 시군구 정보를 조회합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
     )
     public ApiResponse<MemberResDTO.MyPageInfo> getMyPage(
             @AuthenticationPrincipal Long memberId
@@ -69,7 +70,10 @@ public class MemberController {
     @PutMapping("/users/me")
     @Operation(
             summary = "개인정보 수정",
-            description = "회원의 이름, 생년월일, 성별, 주소, 거주지역 정보를 수정합니다."
+            description = "회원의 이름, 생년월일, 성별, 주소, 거주 지역 정보를 수정합니다. "
+                    + "전화번호를 변경하지 않으면 phoneNumber와 phoneVerificationToken을 보내지 않습니다. "
+                    + "전화번호 변경 시 두 값을 함께 전달해야 합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
     )
     public ApiResponse<Void> updateProfile(
             @AuthenticationPrincipal Long memberId,

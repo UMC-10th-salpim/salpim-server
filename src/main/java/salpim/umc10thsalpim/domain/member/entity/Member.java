@@ -137,4 +137,8 @@ public class Member extends BaseEntity {
         this.longitude = longitude;
         this.region = region;
     }
+
+    public void updatePhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
 }

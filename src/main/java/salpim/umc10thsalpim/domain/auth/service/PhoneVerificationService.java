@@ -177,6 +177,47 @@ public class PhoneVerificationService {
         );
     }
 
+    @Transactional
+    public String validateAndConsumePhoneChangeToken(
+            Member member,
+            String phoneNumber,
+            String phoneVerificationToken
+    ) {
+        String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
+
+        PhoneVerification phoneVerification = phoneVerificationRepository
+                .findByMemberAndPhoneNumberAndPurpose(
+                        member,
+                        normalizedPhoneNumber,
+                        PhoneVerificationPurpose.PHONE_CHANGE
+                )
+                .orElseThrow(() -> new AuthException(
+                        AuthErrorCode.INVALID_PHONE_VERIFICATION_TOKEN
+                ));
+
+        if (!Boolean.TRUE.equals(phoneVerification.getVerified())
+                || phoneVerification.getVerificationTokenHash() == null
+                || phoneVerification.getTokenExpiredAt() == null
+                || phoneVerification.getUsedAt() != null) {
+            throw new AuthException(AuthErrorCode.INVALID_PHONE_VERIFICATION_TOKEN);
+        }
+
+        if (phoneVerification.getTokenExpiredAt().isBefore(LocalDateTime.now())) {
+            throw new AuthException(AuthErrorCode.EXPIRED_PHONE_VERIFICATION_TOKEN);
+        }
+
+        if (!passwordEncoder.matches(
+                phoneVerificationToken,
+                phoneVerification.getVerificationTokenHash()
+        )) {
+            throw new AuthException(AuthErrorCode.INVALID_PHONE_VERIFICATION_TOKEN);
+        }
+
+        phoneVerification.consumeVerificationToken();
+
+        return normalizedPhoneNumber;
+    }
+
     private Optional<PhoneVerification> findVerification(
             Member member,
             String phoneNumber,

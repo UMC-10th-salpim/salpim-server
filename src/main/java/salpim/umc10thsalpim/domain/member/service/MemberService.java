@@ -3,6 +3,10 @@ package salpim.umc10thsalpim.domain.member.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import salpim.umc10thsalpim.domain.auth.exception.AuthException;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
 import salpim.umc10thsalpim.domain.member.converter.MemberConverter;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
@@ -22,6 +26,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final RegionRepository regionRepository;
+    private final PhoneVerificationService phoneVerificationService;
 
     @Transactional(readOnly = true)
     public MemberResDTO.MyPageInfo getMyPage(Long memberId) {
@@ -49,9 +54,11 @@ public class MemberService {
 
         Region region = getRegionOrThrow(request.regionId());
 
-        if(region.getRegionLevel() != RegionLevel.DONG) {
+        if (region.getRegionLevel() != RegionLevel.DONG) {
             throw new RegionException(RegionErrorCode.REGION_LEVEL_INVALID);
         }
+
+        updatePhoneNumberIfRequested(member, request);
 
         member.updateProfile(
                 request.name(),
@@ -79,6 +86,38 @@ public class MemberService {
         }
 
         return currentRegion;
+    }
+
+    private void updatePhoneNumberIfRequested(
+            Member member,
+            MemberReqDTO.UpdateProfile request
+    ) {
+        boolean hasPhoneNumber = StringUtils.hasText(request.phoneNumber());
+        boolean hasVerificationToken = StringUtils.hasText(request.phoneVerificationToken());
+
+        if (!hasPhoneNumber && !hasVerificationToken) {
+            return;
+        }
+
+        if (!hasPhoneNumber || !hasVerificationToken) {
+            throw new AuthException(AuthErrorCode.PHONE_CHANGE_REQUEST_INVALID);
+        }
+
+        String normalizedPhoneNumber = phoneVerificationService
+                .validateAndConsumePhoneChangeToken(
+                        member,
+                        request.phoneNumber(),
+                        request.phoneVerificationToken()
+                );
+
+        if (memberRepository.existsByPhoneNumberAndIdNot(
+                normalizedPhoneNumber,
+                member.getId()
+        )) {
+            throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
+        }
+
+        member.updatePhoneNumber(normalizedPhoneNumber);
     }
 
     private Member getMemberOrThrow(Long memberId) {

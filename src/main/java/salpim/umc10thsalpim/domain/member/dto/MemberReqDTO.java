@@ -38,6 +38,11 @@ public class MemberReqDTO {
 
             @NotNull
             @Positive
-            Long regionId
+            Long regionId,
+
+            @Pattern(regexp = "^[0-9-]+$")
+            String phoneNumber,
+
+            String phoneVerificationToken
     ){}
 }
