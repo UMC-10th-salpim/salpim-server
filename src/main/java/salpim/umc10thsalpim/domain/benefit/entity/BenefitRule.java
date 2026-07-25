@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
-import salpim.umc10thsalpim.domain.benefit.enums.RegionScope;
 import salpim.umc10thsalpim.global.entity.BaseEntity;
 
 @Builder
@@ -26,10 +25,6 @@ public class BenefitRule extends BaseEntity {
 
     @Column(name = "facility_type_id")
     private Long facilityTypeId;
-
-    @Column(name = "region_scope", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private RegionScope regionScope;
 
     @Column(name = "application_type", nullable = false)
     @Enumerated(EnumType.STRING)
