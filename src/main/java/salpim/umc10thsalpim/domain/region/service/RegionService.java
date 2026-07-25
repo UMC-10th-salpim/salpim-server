@@ -1,0 +1,93 @@
+package salpim.umc10thsalpim.domain.region.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import salpim.umc10thsalpim.domain.region.converter.RegionConverter;
+import salpim.umc10thsalpim.domain.region.dto.RegionReqDTO;
+import salpim.umc10thsalpim.domain.region.dto.RegionResDTO;
+import salpim.umc10thsalpim.domain.region.entity.Region;
+import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
+import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
+import salpim.umc10thsalpim.domain.region.exception.RegionException;
+import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class RegionService {
+
+    private final RegionRepository regionRepository;
+
+    @Transactional
+    public RegionResDTO.ResolveResult resolve(RegionReqDTO.Resolve request) {
+        String city = normalizeOptional(request.city());
+        String district = normalizeOptional(request.district());
+        String eupMyeonDong = normalizeRequired(request.eupMyeonDong());
+
+        List<String> regionNames = new ArrayList<>();
+        Region parent = null;
+
+        if (StringUtils.hasText(city)) {
+            parent = findOrCreateRegion(null, city, RegionLevel.CITY);
+            regionNames.add(parent.getName());
+        }
+
+        if (StringUtils.hasText(district)) {
+            parent = findOrCreateRegion(parent, district, RegionLevel.GU_GUN);
+            regionNames.add(parent.getName());
+        }
+
+        Region leafRegion = findOrCreateRegion(parent, eupMyeonDong, RegionLevel.EUP_MYEON_DONG);
+        regionNames.add(leafRegion.getName());
+
+        return RegionConverter.toResolveResult(leafRegion, String.join(" ", regionNames));
+    }
+
+    private Region findOrCreateRegion(Region parent, String name, RegionLevel regionLevel) {
+        if (parent == null) {
+            return regionRepository.findByParentIsNullAndNameAndRegionLevel(name, regionLevel)
+                    .orElseGet(() -> saveRegionWithRetry(null, name, regionLevel));
+        }
+        return regionRepository.findByParentAndNameAndRegionLevel(parent, name, regionLevel)
+                .orElseGet(() -> saveRegionWithRetry(parent, name, regionLevel));
+    }
+
+    private Region saveRegionWithRetry(Region parent, String name, RegionLevel regionLevel) {
+        try {
+            return regionRepository.saveAndFlush(Region.create(parent, name, regionLevel));
+        } catch (DataIntegrityViolationException e) {
+            if (parent == null) {
+                return regionRepository.findByParentIsNullAndNameAndRegionLevel(name, regionLevel)
+                        .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_CONFLICT_RETRY_FAILED));
+            }
+            return regionRepository.findByParentAndNameAndRegionLevel(parent, name, regionLevel)
+                    .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_CONFLICT_RETRY_FAILED));
+        }
+    }
+
+    private String normalizeRequired(String value) {
+        String normalized = normalizeOptional(value);
+        if (!StringUtils.hasText(normalized)) {
+            throw new RegionException(RegionErrorCode.INVALID_REGION_REQUEST);
+        }
+        return normalized;
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = value.trim().replaceAll("\\s+", " ");
+        if (!StringUtils.hasText(normalized)) {
+            return null;
+        }
+        return normalized;
+    }
+}
