@@ -10,6 +10,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
+import salpim.umc10thsalpim.domain.auth.service.TokenService;
+import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
 
@@ -32,6 +34,12 @@ class BenefitControllerTest {
 
     @MockitoBean
     private JpaMetamodelMappingContext jpaMappingContext;
+
+    @MockitoBean
+    private TokenService tokenService;
+
+    @MockitoBean
+    private MemberRepository memberRepository;
 
     @Test
     @DisplayName("신청 도우미 정보 정상 조회")
