@@ -46,4 +46,12 @@ public final class AuthConverter {
                 .longitude(coordinate.longitude())
                 .build();
     }
+
+    public static AuthResDTO.PhoneChangeVerifyResult toPhoneChangeVerifyResult(
+            String phoneVerificationToken
+    ) {
+        return AuthResDTO.PhoneChangeVerifyResult.builder()
+                .phoneVerificationToken(phoneVerificationToken)
+                .build();
+    }
 }

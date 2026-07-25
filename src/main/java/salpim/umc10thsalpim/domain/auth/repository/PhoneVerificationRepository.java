@@ -14,5 +14,11 @@ public interface PhoneVerificationRepository extends JpaRepository<PhoneVerifica
             PhoneVerificationPurpose purpose
     );
 
+    Optional<PhoneVerification> findByMemberAndPhoneNumberAndPurpose(
+            Member member,
+            String phoneNumber,
+            PhoneVerificationPurpose purpose
+    );
+
     void deleteByPhoneNumberAndPurpose(String phoneNumber, PhoneVerificationPurpose purpose);
 }

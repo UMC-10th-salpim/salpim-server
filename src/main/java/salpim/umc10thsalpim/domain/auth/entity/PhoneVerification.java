@@ -71,4 +71,15 @@ public class PhoneVerification extends BaseEntity {
     public void verify() {
         this.verified = true;
     }
+
+    public void verifyAndIssueToken(
+            String verificationTokenHash,
+            LocalDateTime tokenExpiredAt
+    ) {
+        this.verified = true;
+        this.verificationTokenHash = verificationTokenHash;
+        this.tokenExpiredAt = tokenExpiredAt;
+        this.usedAt = null;
+    }
+
 }
