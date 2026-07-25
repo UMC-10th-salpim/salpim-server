@@ -2,9 +2,11 @@ package salpim.umc10thsalpim.domain.map.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import salpim.umc10thsalpim.domain.map.dto.MapRequestDto;
 import salpim.umc10thsalpim.domain.map.dto.MapResponseDto;
@@ -21,10 +23,10 @@ public class FacilityController {
     private final FacilityService facilityService;
 
     @GetMapping("/details")
+    @SecurityRequirement(name = "JWT TOKEN")
     @Operation(summary = "시설 상세 정보 조회", description = "시설 이름과 유저의 관할동을 비교하여 정보를 반환하며, 혜택 리스트는 커서 기반 페이징으로 응답합니다.")
     public ApiResponse<MapResponseDto.FacilityInfoResponseDto> getFacilityDetails(
-        @Parameter(description = "회원 ID", example = "1")
-        @RequestParam("memberId") Long memberId,
+        @AuthenticationPrincipal Long memberId,
 
         @Valid @ParameterObject @ModelAttribute MapRequestDto.FacilityInfoRequest request,
 
