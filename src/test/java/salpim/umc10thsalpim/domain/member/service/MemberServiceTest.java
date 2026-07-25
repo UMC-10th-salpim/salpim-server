@@ -449,6 +449,23 @@ class MemberServiceTest {
     }
 
     @Test
+    @DisplayName("복구 답변 입력값의 앞뒤 공백을 제거하고 검증한다")
+    void trimsRecoveryAnswerBeforeVerification() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.VerifyRecoveryAnswer request =
+                new MemberReqDTO.VerifyRecoveryAnswer(" answer ");
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("answer", "encoded-answer")).willReturn(true);
+
+        MemberResDTO.PasswordVerificationResult result =
+                memberService.verifyRecoveryAnswer(MEMBER_ID, request);
+
+        assertThat(result.isVerified()).isTrue();
+        verify(passwordEncoder).matches("answer", "encoded-answer");
+    }
+
+    @Test
     @DisplayName("복구 답변이 일치하지 않으면 예외가 발생한다")
     void throwsExceptionWhenRecoveryAnswerDoesNotMatch() {
         Member member = createLocalMember("encoded-password", "encoded-answer");

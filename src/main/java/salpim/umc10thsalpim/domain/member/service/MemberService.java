@@ -187,7 +187,7 @@ public class MemberService {
 
     private void validateRecoveryAnswer(Member member, String recoveryAnswer) {
         if (!passwordEncoder.matches(
-                recoveryAnswer,
+                recoveryAnswer.trim(),
                 member.getPasswordRecoveryAnswer()
         )) {
             throw new MemberException(MemberErrorCode.RECOVERY_ANSWER_MISMATCH);
