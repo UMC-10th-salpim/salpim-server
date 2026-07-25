@@ -8,11 +8,12 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = "jwt")
-public class JwtProperties {
+@ConfigurationProperties(prefix = "kakao")
+public class KakaoProperties {
 
-    private String secretKey;
-    private Long accessTokenExpirationMillis;
-    private Long refreshTokenExpirationMillis;
-    private Long signupTokenExpirationMillis;
+    private String clientId;
+    private String clientSecret;
+    private String redirectUri;
+    private String tokenUri;
+    private String userInfoUri;
 }

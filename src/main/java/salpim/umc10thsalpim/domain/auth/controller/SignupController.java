@@ -10,6 +10,7 @@ import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.exception.AuthSuccessCode;
 import salpim.umc10thsalpim.domain.auth.service.GeocodingService;
+import salpim.umc10thsalpim.domain.auth.service.KakaoAuthService;
 import salpim.umc10thsalpim.domain.auth.service.LocalSignupService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
@@ -23,6 +24,7 @@ public class SignupController {
     private final PhoneVerificationService phoneVerificationService;
     private final GeocodingService geocodingService;
     private final LocalSignupService localSignupService;
+    private final KakaoAuthService kakaoAuthService;
 
     @Operation(summary = "전화번호 인증번호 발송 API")
     @PostMapping("/phone/send")
@@ -66,6 +68,17 @@ public class SignupController {
             @Valid @RequestBody AuthReqDTO.LocalSignup request
     ) {
         localSignupService.signup(request);
+        return ResponseEntity.status(AuthSuccessCode.SIGNUP_COMPLETED.getStatus())
+                .body(ApiResponse.onSuccess(AuthSuccessCode.SIGNUP_COMPLETED, null));
+    }
+
+    @Operation(summary = "카카오 회원가입 API")
+    @PostMapping("/kakao")
+    public ResponseEntity<ApiResponse<Void>> signupKakao(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @Valid @RequestBody AuthReqDTO.KakaoSignup request
+    ) {
+        kakaoAuthService.signup(authorizationHeader, request);
         return ResponseEntity.status(AuthSuccessCode.SIGNUP_COMPLETED.getStatus())
                 .body(ApiResponse.onSuccess(AuthSuccessCode.SIGNUP_COMPLETED, null));
     }

@@ -17,10 +17,8 @@ import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.exception.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
-import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 
 import java.time.LocalDate;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,7 +36,7 @@ class LocalSignupServiceTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private RegionRepository regionRepository;
+    private SignupValidationService signupValidationService;
 
     @Mock
     private PhoneVerificationService phoneVerificationService;
@@ -54,8 +52,8 @@ class LocalSignupServiceTest {
         AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
         Region region = region();
 
-        when(memberRepository.existsByPhoneNumber("01031768867")).thenReturn(false);
-        when(regionRepository.findById(REGION_ID)).thenReturn(Optional.of(region));
+        when(signupValidationService.normalizePhoneNumber("010-3176-8867")).thenReturn("01031768867");
+        when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(region);
         when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -71,8 +69,9 @@ class LocalSignupServiceTest {
     void signupFailsWhenRegionDoesNotExist() {
         AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
 
-        when(memberRepository.existsByPhoneNumber("01031768867")).thenReturn(false);
-        when(regionRepository.findById(REGION_ID)).thenReturn(Optional.empty());
+        when(signupValidationService.normalizePhoneNumber("010-3176-8867")).thenReturn("01031768867");
+        when(signupValidationService.findLeafRegion(REGION_ID))
+                .thenThrow(new RegionException(RegionErrorCode.REGION_NOT_FOUND));
 
         assertThatThrownBy(() -> localSignupService.signup(request))
                 .isInstanceOfSatisfying(RegionException.class, exception ->
@@ -83,10 +82,10 @@ class LocalSignupServiceTest {
     @Test
     void signupFailsWhenRegionIsNotLeaf() {
         AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
-        Region city = Region.create(null, "Goyang", RegionLevel.CITY);
 
-        when(memberRepository.existsByPhoneNumber("01031768867")).thenReturn(false);
-        when(regionRepository.findById(REGION_ID)).thenReturn(Optional.of(city));
+        when(signupValidationService.normalizePhoneNumber("010-3176-8867")).thenReturn("01031768867");
+        when(signupValidationService.findLeafRegion(REGION_ID))
+                .thenThrow(new RegionException(RegionErrorCode.REGION_NOT_LEAF));
 
         assertThatThrownBy(() -> localSignupService.signup(request))
                 .isInstanceOfSatisfying(RegionException.class, exception ->

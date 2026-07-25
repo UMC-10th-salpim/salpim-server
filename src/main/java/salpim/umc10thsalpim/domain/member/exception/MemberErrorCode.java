@@ -24,6 +24,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEMBER404_NOT_FOUND",
             "회원을 찾을 수 없습니다."),
+    DUPLICATE_KAKAO_ACCOUNT(HttpStatus.CONFLICT,
+            "MEMBER409_KAKAO",
+            "이미 가입된 카카오 계정입니다."),
     ;
 
     private final HttpStatus status;
