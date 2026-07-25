@@ -32,8 +32,17 @@ public class LocalSignupService {
         Region region = signupValidationService.findLeafRegion(request.regionId());
 
         String encodedPassword = passwordEncoder.encode(request.password());
+        String encodedPasswordRecoveryAnswer = passwordEncoder.encode(
+                request.passwordAnswer().trim()
+        );
         memberRepository.save(
-                MemberConverter.toLocalMember(request, normalizedPhoneNumber, encodedPassword, region)
+                MemberConverter.toLocalMember(
+                        request,
+                        normalizedPhoneNumber,
+                        encodedPassword,
+                        encodedPasswordRecoveryAnswer,
+                        region
+                )
         );
         phoneVerificationService.deleteVerification(normalizedPhoneNumber);
     }
