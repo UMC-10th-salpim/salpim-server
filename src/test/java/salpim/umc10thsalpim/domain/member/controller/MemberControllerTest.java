@@ -10,9 +10,11 @@ import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
+import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.member.service.MemberService;
 import salpim.umc10thsalpim.domain.member.service.MemberWithdrawalService;
 
@@ -41,6 +43,12 @@ class MemberControllerTest {
 
     @MockitoBean
     private MemberWithdrawalService memberWithdrawalService;
+
+    @MockitoBean
+    private TokenService tokenService;
+
+    @MockitoBean
+    private MemberRepository memberRepository;
 
     @MockitoBean
     private JpaMetamodelMappingContext jpaMappingContext;
