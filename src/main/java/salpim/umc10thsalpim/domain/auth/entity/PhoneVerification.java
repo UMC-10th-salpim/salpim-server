@@ -39,6 +39,9 @@ public class PhoneVerification extends BaseEntity {
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
 
+    @Column(name = "sent_at", nullable = false)
+    private LocalDateTime sentAt;
+
     @Column(name = "verified", nullable = false)
     private Boolean verified;
 
@@ -59,9 +62,14 @@ public class PhoneVerification extends BaseEntity {
     @Column(name = "used_at")
     private LocalDateTime usedAt;
 
-    public void updateCode(String code, LocalDateTime expiredAt) {
+    public void updateCode(
+            String code,
+            LocalDateTime expiredAt,
+            LocalDateTime sentAt
+    ) {
         this.code = code;
         this.expiredAt = expiredAt;
+        this.sentAt = sentAt;
         this.verified = false;
         this.verificationTokenHash = null;
         this.tokenExpiredAt = null;

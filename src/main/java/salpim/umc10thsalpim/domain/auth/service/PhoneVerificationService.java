@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.domain.auth.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.converter.AuthConverter;
@@ -29,6 +30,7 @@ import java.util.Optional;
 public class PhoneVerificationService {
 
     private static final long VERIFICATION_EXPIRATION_MINUTES = 5L;
+    private static final long VERIFICATION_RESEND_INTERVAL_SECONDS = 60L;
     private static final long PHONE_CHANGE_TOKEN_EXPIRATION_MINUTES = 10L;
     private static final int VERIFICATION_CODE_BOUND = 1_000_000;
     private static final int PHONE_CHANGE_TOKEN_BYTE_LENGTH = 32;
@@ -46,6 +48,11 @@ public class PhoneVerificationService {
             throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
         }
 
+        validateResendInterval(
+                normalizedPhoneNumber,
+                PhoneVerificationPurpose.SIGNUP
+        );
+
         sendVerificationCode(
                 null,
                 normalizedPhoneNumber,
@@ -61,6 +68,11 @@ public class PhoneVerificationService {
         if (memberRepository.existsByPhoneNumberAndIdNot(normalizedPhoneNumber, memberId)) {
             throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
         }
+
+        validateResendInterval(
+                normalizedPhoneNumber,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        );
 
         phoneVerificationRepository.deleteByPhoneNumberAndPurpose(
                 normalizedPhoneNumber,
@@ -156,7 +168,8 @@ public class PhoneVerificationService {
             PhoneVerificationPurpose purpose
     ) {
         String code = generateVerificationCode();
-        LocalDateTime expiredAt = LocalDateTime.now()
+        LocalDateTime sentAt = LocalDateTime.now();
+        LocalDateTime expiredAt = sentAt
                 .plusMinutes(VERIFICATION_EXPIRATION_MINUTES);
 
         PhoneVerification phoneVerification = findVerification(
@@ -164,17 +177,22 @@ public class PhoneVerificationService {
                 normalizedPhoneNumber,
                 purpose
         ).map(existingVerification -> {
-            existingVerification.updateCode(code, expiredAt);
+            existingVerification.updateCode(code, expiredAt, sentAt);
             return existingVerification;
         }).orElseGet(() -> AuthConverter.toPhoneVerification(
                 member,
                 normalizedPhoneNumber,
                 purpose,
                 code,
-                expiredAt
+                expiredAt,
+                sentAt
         ));
 
-        phoneVerificationRepository.save(phoneVerification);
+        try {
+            phoneVerificationRepository.saveAndFlush(phoneVerification);
+        } catch (DataIntegrityViolationException exception) {
+            throw new AuthException(AuthErrorCode.PHONE_VERIFICATION_RESEND_TOO_SOON);
+        }
 
         log.info(
                 "[DEV] phone verification code. maskedPhoneNumber={}, code={}",
@@ -235,6 +253,20 @@ public class PhoneVerificationService {
             case PHONE_CHANGE -> phoneVerificationRepository
                     .findByMemberAndPhoneNumberAndPurpose(member, phoneNumber, purpose);
         };
+    }
+
+    private void validateResendInterval(
+            String phoneNumber,
+            PhoneVerificationPurpose purpose
+    ) {
+        phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(phoneNumber, purpose)
+                .filter(phoneVerification -> phoneVerification.getSentAt() != null
+                        && phoneVerification.getSentAt()
+                                .plusSeconds(VERIFICATION_RESEND_INTERVAL_SECONDS)
+                                .isAfter(LocalDateTime.now()))
+                .ifPresent(phoneVerification -> {
+                    throw new AuthException(AuthErrorCode.PHONE_VERIFICATION_RESEND_TOO_SOON);
+                });
     }
 
     private void validateVerificationCode(

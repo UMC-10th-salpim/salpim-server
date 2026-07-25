@@ -18,7 +18,8 @@ public final class AuthConverter {
             String phoneNumber,
             PhoneVerificationPurpose purpose,
             String code,
-            LocalDateTime expiredAt
+            LocalDateTime expiredAt,
+            LocalDateTime sentAt
     ) {
         return PhoneVerification.builder()
                 .member(member)
@@ -26,6 +27,7 @@ public final class AuthConverter {
                 .purpose(purpose)
                 .code(code)
                 .expiredAt(expiredAt)
+                .sentAt(sentAt)
                 .verified(false)
                 .build();
     }

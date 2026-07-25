@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.dao.DataIntegrityViolationException;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.entity.PhoneVerification;
 import salpim.umc10thsalpim.domain.auth.enums.PhoneVerificationPurpose;
@@ -22,10 +23,12 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
 import static org.mockito.BDDMockito.verifyNoInteractions;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class PhoneVerificationServiceTest {
@@ -58,6 +61,91 @@ class PhoneVerificationServiceTest {
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
         given(memberRepository.existsByPhoneNumberAndIdNot(NORMALIZED_PHONE_NUMBER, MEMBER_ID))
                 .willReturn(false);
+        given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        )).willReturn(Optional.empty());
+
+        phoneVerificationService.sendPhoneChangeVerificationCode(MEMBER_ID, PHONE_NUMBER);
+
+        verify(phoneVerificationRepository).deleteByPhoneNumberAndPurpose(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        );
+        verify(phoneVerificationRepository).flush();
+
+        ArgumentCaptor<PhoneVerification> verificationCaptor = ArgumentCaptor.forClass(
+                PhoneVerification.class
+        );
+        verify(phoneVerificationRepository).saveAndFlush(verificationCaptor.capture());
+
+        PhoneVerification savedVerification = verificationCaptor.getValue();
+        assertThat(savedVerification.getMember()).isSameAs(member);
+        assertThat(savedVerification.getPhoneNumber()).isEqualTo(NORMALIZED_PHONE_NUMBER);
+        assertThat(savedVerification.getPurpose()).isEqualTo(PhoneVerificationPurpose.PHONE_CHANGE);
+        assertThat(savedVerification.getCode()).hasSize(6).containsOnlyDigits();
+        assertThat(savedVerification.getVerified()).isFalse();
+        assertThat(savedVerification.getSentAt()).isAfter(beforeRequest);
+        assertThat(savedVerification.getExpiredAt()).isAfter(beforeRequest.plusMinutes(4));
+    }
+
+    @Test
+    @DisplayName("1분 이내에는 전화번호 변경 인증번호를 재발송할 수 없다")
+    void throwsExceptionWhenPhoneChangeCodeIsRequestedWithinOneMinute() {
+        Member member = createMember();
+        PhoneVerification verification = createRecentlySentVerification(
+                member,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(memberRepository.existsByPhoneNumberAndIdNot(NORMALIZED_PHONE_NUMBER, MEMBER_ID))
+                .willReturn(false);
+        given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        )).willReturn(Optional.of(verification));
+
+        AuthException exception = assertThrows(
+                AuthException.class,
+                () -> phoneVerificationService.sendPhoneChangeVerificationCode(
+                        MEMBER_ID,
+                        PHONE_NUMBER
+                )
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(AuthErrorCode.PHONE_VERIFICATION_RESEND_TOO_SOON);
+        verify(phoneVerificationRepository, never()).deleteByPhoneNumberAndPurpose(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        );
+        verify(phoneVerificationRepository, never()).flush();
+    }
+
+    @Test
+    @DisplayName("1분이 지나면 전화번호 변경 인증번호를 재발송하고 기존 인증을 폐기한다")
+    void resendsPhoneChangeCodeAfterOneMinute() {
+        Member member = createMember();
+        PhoneVerification previousVerification = PhoneVerification.builder()
+                .member(member)
+                .phoneNumber(NORMALIZED_PHONE_NUMBER)
+                .purpose(PhoneVerificationPurpose.PHONE_CHANGE)
+                .code(VERIFICATION_CODE)
+                .expiredAt(LocalDateTime.now().plusMinutes(4))
+                .sentAt(LocalDateTime.now().minusSeconds(61))
+                .verified(true)
+                .verificationTokenHash(TOKEN_HASH)
+                .tokenExpiredAt(LocalDateTime.now().plusMinutes(4))
+                .build();
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(memberRepository.existsByPhoneNumberAndIdNot(NORMALIZED_PHONE_NUMBER, MEMBER_ID))
+                .willReturn(false);
+        given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.PHONE_CHANGE
+        )).willReturn(Optional.of(previousVerification));
         given(phoneVerificationRepository.findByMemberAndPhoneNumberAndPurpose(
                 member,
                 NORMALIZED_PHONE_NUMBER,
@@ -75,15 +163,56 @@ class PhoneVerificationServiceTest {
         ArgumentCaptor<PhoneVerification> verificationCaptor = ArgumentCaptor.forClass(
                 PhoneVerification.class
         );
-        verify(phoneVerificationRepository).save(verificationCaptor.capture());
+        verify(phoneVerificationRepository).saveAndFlush(verificationCaptor.capture());
 
         PhoneVerification savedVerification = verificationCaptor.getValue();
-        assertThat(savedVerification.getMember()).isSameAs(member);
-        assertThat(savedVerification.getPhoneNumber()).isEqualTo(NORMALIZED_PHONE_NUMBER);
-        assertThat(savedVerification.getPurpose()).isEqualTo(PhoneVerificationPurpose.PHONE_CHANGE);
-        assertThat(savedVerification.getCode()).hasSize(6).containsOnlyDigits();
+        assertThat(savedVerification).isNotSameAs(previousVerification);
         assertThat(savedVerification.getVerified()).isFalse();
-        assertThat(savedVerification.getExpiredAt()).isAfter(beforeRequest.plusMinutes(4));
+        assertThat(savedVerification.getVerificationTokenHash()).isNull();
+        assertThat(savedVerification.getSentAt()).isAfter(previousVerification.getSentAt());
+    }
+
+    @Test
+    @DisplayName("1분 이내에는 회원가입 인증번호를 재발송할 수 없다")
+    void throwsExceptionWhenSignupCodeIsRequestedWithinOneMinute() {
+        PhoneVerification verification = createRecentlySentVerification(
+                null,
+                PhoneVerificationPurpose.SIGNUP
+        );
+
+        given(memberRepository.existsByPhoneNumber(NORMALIZED_PHONE_NUMBER)).willReturn(false);
+        given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.SIGNUP
+        )).willReturn(Optional.of(verification));
+
+        AuthException exception = assertThrows(
+                AuthException.class,
+                () -> phoneVerificationService.sendVerificationCode(PHONE_NUMBER)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(AuthErrorCode.PHONE_VERIFICATION_RESEND_TOO_SOON);
+    }
+
+    @Test
+    @DisplayName("동시에 첫 인증번호를 발송하면 유니크 충돌을 재발송 제한으로 처리한다")
+    void throwsResendLimitExceptionWhenInitialVerificationSaveConflicts() {
+        given(memberRepository.existsByPhoneNumber(NORMALIZED_PHONE_NUMBER)).willReturn(false);
+        given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.SIGNUP
+        )).willReturn(Optional.empty());
+        given(phoneVerificationRepository.saveAndFlush(any(PhoneVerification.class)))
+                .willThrow(new DataIntegrityViolationException("duplicate verification"));
+
+        AuthException exception = assertThrows(
+                AuthException.class,
+                () -> phoneVerificationService.sendVerificationCode(PHONE_NUMBER)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(AuthErrorCode.PHONE_VERIFICATION_RESEND_TOO_SOON);
     }
 
     @Test
@@ -307,6 +436,22 @@ class PhoneVerificationServiceTest {
                 .verificationTokenHash(verificationTokenHash)
                 .tokenExpiredAt(tokenExpiredAt)
                 .usedAt(usedAt)
+                .sentAt(LocalDateTime.now().minusMinutes(1))
+                .build();
+    }
+
+    private PhoneVerification createRecentlySentVerification(
+            Member member,
+            PhoneVerificationPurpose purpose
+    ) {
+        return PhoneVerification.builder()
+                .member(member)
+                .phoneNumber(NORMALIZED_PHONE_NUMBER)
+                .purpose(purpose)
+                .code(VERIFICATION_CODE)
+                .expiredAt(LocalDateTime.now().plusMinutes(5))
+                .sentAt(LocalDateTime.now())
+                .verified(false)
                 .build();
     }
 }

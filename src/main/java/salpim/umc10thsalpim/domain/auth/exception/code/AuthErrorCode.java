@@ -60,6 +60,9 @@ public enum AuthErrorCode implements BaseErrorCode {
     EXPIRED_PHONE_VERIFICATION_TOKEN(HttpStatus.BAD_REQUEST,
             "AUTH400_PHONE_VERIFICATION_TOKEN_EXPIRED",
             "전화번호 변경 인증 토큰이 만료되었습니다."),
+    PHONE_VERIFICATION_RESEND_TOO_SOON(HttpStatus.TOO_MANY_REQUESTS,
+            "AUTH429_PHONE_VERIFICATION_RESEND",
+            "인증번호는 1분 후에 다시 요청할 수 있습니다."),
     ;
 
     private final HttpStatus status;

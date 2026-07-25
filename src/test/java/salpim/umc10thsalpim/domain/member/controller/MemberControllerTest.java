@@ -21,6 +21,8 @@ import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
+import salpim.umc10thsalpim.domain.auth.exception.AuthException;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
@@ -34,6 +36,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -194,6 +197,22 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON400"));
 
         verifyNoInteractions(phoneVerificationService);
+    }
+
+    @Test
+    @DisplayName("1분 이내 재발송 요청은 제한한다")
+    void sendPhoneChangeVerificationCodeFailsWhenRequestedWithinOneMinute() throws Exception {
+        AuthReqDTO.PhoneSend request = new AuthReqDTO.PhoneSend("010-1234-5678");
+        willThrow(new AuthException(AuthErrorCode.PHONE_VERIFICATION_RESEND_TOO_SOON))
+                .given(phoneVerificationService)
+                .sendPhoneChangeVerificationCode(MEMBER_ID, request.phoneNumber());
+
+        mockMvc.perform(post("/api/users/me/phone-verification/send")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH429_PHONE_VERIFICATION_RESEND"));
     }
 
     @Test
