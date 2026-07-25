@@ -120,7 +120,9 @@ class MemberControllerTest {
                 "202호",
                 new BigDecimal("37.4520000"),
                 new BigDecimal("126.6510000"),
-                10L
+                10L,
+                null,
+                null
         );
 
         mockMvc.perform(put("/api/users/me")
@@ -144,7 +146,9 @@ class MemberControllerTest {
                 "202호",
                 new BigDecimal("37.4520000"),
                 new BigDecimal("126.6510000"),
-                10L
+                10L,
+                null,
+                null
         );
 
         mockMvc.perform(put("/api/users/me")
@@ -168,7 +172,9 @@ class MemberControllerTest {
                 "202호",
                 new BigDecimal("91.0000000"),
                 new BigDecimal("126.6510000"),
-                10L
+                10L,
+                null,
+                null
         );
 
         mockMvc.perform(put("/api/users/me")
@@ -190,7 +196,9 @@ class MemberControllerTest {
                 "202호",
                 new BigDecimal("37.4520000"),
                 new BigDecimal("126.6510000"),
-                10L
+                10L,
+                null,
+                null
         );
     }
 

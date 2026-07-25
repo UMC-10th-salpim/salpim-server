@@ -6,6 +6,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import salpim.umc10thsalpim.domain.auth.exception.AuthException;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
@@ -26,6 +29,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.verify;
+import static org.mockito.BDDMockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -40,6 +45,9 @@ class MemberServiceTest {
 
     @Mock
     private RegionRepository regionRepository;
+
+    @Mock
+    private PhoneVerificationService phoneVerificationService;
 
     @InjectMocks
     private MemberService memberService;
@@ -150,6 +158,118 @@ class MemberServiceTest {
         assertThat(member.getLatitude()).isEqualByComparingTo(request.latitude());
         assertThat(member.getLongitude()).isEqualByComparingTo(request.longitude());
         assertThat(member.getRegionId()).isEqualTo(request.regionId());
+        verifyNoInteractions(phoneVerificationService);
+    }
+
+    @Test
+    @DisplayName("전화번호와 인증 토큰을 함께 전달하면 전화번호를 변경한다")
+    void updateProfileWithPhoneNumberSuccess() {
+        Member member = createMember(DONG_ID);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        MemberReqDTO.UpdateProfile request = createUpdateRequest(
+                10L,
+                "010-1234-5678",
+                "phone-verification-token"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(regionRepository.findById(10L)).willReturn(Optional.of(newDong));
+        given(phoneVerificationService.validateAndConsumePhoneChangeToken(
+                member,
+                request.phoneNumber(),
+                request.phoneVerificationToken()
+        )).willReturn("01012345678");
+        given(memberRepository.existsByPhoneNumberAndIdNot("01012345678", MEMBER_ID))
+                .willReturn(false);
+
+        memberService.updateProfile(MEMBER_ID, request);
+
+        assertThat(member.getPhoneNumber()).isEqualTo("01012345678");
+        verify(phoneVerificationService).validateAndConsumePhoneChangeToken(
+                member,
+                request.phoneNumber(),
+                request.phoneVerificationToken()
+        );
+    }
+
+    @Test
+    @DisplayName("전화번호만 전달하면 개인정보 수정에 실패한다")
+    void throwsExceptionWhenOnlyPhoneNumberIsProvided() {
+        Member member = createMember(DONG_ID);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        MemberReqDTO.UpdateProfile request = createUpdateRequest(10L, "010-1234-5678", null);
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(regionRepository.findById(10L)).willReturn(Optional.of(newDong));
+
+        AuthException exception = assertThrows(
+                AuthException.class,
+                () -> memberService.updateProfile(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(AuthErrorCode.PHONE_CHANGE_REQUEST_INVALID);
+        verifyNoInteractions(phoneVerificationService);
+    }
+
+    @Test
+    @DisplayName("인증 토큰만 전달하면 개인정보 수정에 실패한다")
+    void throwsExceptionWhenOnlyPhoneVerificationTokenIsProvided() {
+        Member member = createMember(DONG_ID);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        MemberReqDTO.UpdateProfile request = createUpdateRequest(
+                10L,
+                null,
+                "phone-verification-token"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(regionRepository.findById(10L)).willReturn(Optional.of(newDong));
+
+        AuthException exception = assertThrows(
+                AuthException.class,
+                () -> memberService.updateProfile(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(AuthErrorCode.PHONE_CHANGE_REQUEST_INVALID);
+        verifyNoInteractions(phoneVerificationService);
+    }
+
+    @Test
+    @DisplayName("이미 사용 중인 전화번호로는 개인정보를 수정할 수 없다")
+    void throwsExceptionWhenPhoneNumberAlreadyExists() {
+        Member member = createMember(DONG_ID);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        MemberReqDTO.UpdateProfile request = createUpdateRequest(
+                10L,
+                "010-1234-5678",
+                "phone-verification-token"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(regionRepository.findById(10L)).willReturn(Optional.of(newDong));
+        given(phoneVerificationService.validateAndConsumePhoneChangeToken(
+                member,
+                request.phoneNumber(),
+                request.phoneVerificationToken()
+        )).willReturn("01012345678");
+        given(memberRepository.existsByPhoneNumberAndIdNot("01012345678", MEMBER_ID))
+                .willReturn(true);
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.updateProfile(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
+        verify(phoneVerificationService).validateAndConsumePhoneChangeToken(
+                member,
+                request.phoneNumber(),
+                request.phoneVerificationToken()
+        );
+        assertThat(member.getPhoneNumber()).isNull();
     }
 
     @Test
@@ -218,6 +338,14 @@ class MemberServiceTest {
     }
 
     private MemberReqDTO.UpdateProfile createUpdateRequest(Long regionId) {
+        return createUpdateRequest(regionId, null, null);
+    }
+
+    private MemberReqDTO.UpdateProfile createUpdateRequest(
+            Long regionId,
+            String phoneNumber,
+            String phoneVerificationToken
+    ) {
         return new MemberReqDTO.UpdateProfile(
                 "김철수",
                 LocalDate.of(1960, 5, 10),
@@ -226,7 +354,9 @@ class MemberServiceTest {
                 "202호",
                 new BigDecimal("37.4520000"),
                 new BigDecimal("126.6510000"),
-                regionId
+                regionId,
+                phoneNumber,
+                phoneVerificationToken
         );
     }
 }
