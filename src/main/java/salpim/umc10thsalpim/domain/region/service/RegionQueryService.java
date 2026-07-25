@@ -9,6 +9,9 @@ import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -27,8 +30,13 @@ public class RegionQueryService {
 
         String sido = null;
         String sigungu = null;
+        Set<Long> visitedIds = new HashSet<>();
 
         while (current != null) {
+            if (!visitedIds.add(current.getId())) {
+                throw new RegionException(RegionErrorCode.INVALID_REGION_REQUEST);
+            }
+
             if (current.getRegionLevel() == RegionLevel.SIDO) {
                 sido = current.getName();
             } else if (current.getRegionLevel() == RegionLevel.SIGUNGU) {
@@ -39,7 +47,9 @@ public class RegionQueryService {
                 break;
             }
 
-            current = regionRepository.findById(current.getParentId()).orElse(null);
+            Long parentId = current.getParentId();
+            current = regionRepository.findById(parentId)
+                    .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
         }
 
         return new String[]{sido, sigungu};

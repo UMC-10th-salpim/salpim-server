@@ -5,7 +5,7 @@ import lombok.Builder;
 
 import java.util.List;
 
-public class MapResponseDto {
+public class MapResponseDTO {
 
     @Builder
     public record FacilityInfoResponseDto(

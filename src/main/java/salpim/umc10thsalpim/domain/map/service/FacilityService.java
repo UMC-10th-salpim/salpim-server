@@ -3,11 +3,10 @@ package salpim.umc10thsalpim.domain.map.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.map.converter.WelfareConverter;
 import salpim.umc10thsalpim.domain.map.dto.ExternalWelfareResponse;
-import salpim.umc10thsalpim.domain.map.dto.MapRequestDto;
-import salpim.umc10thsalpim.domain.map.dto.MapResponseDto;
+import salpim.umc10thsalpim.domain.map.dto.MapRequestDTO;
+import salpim.umc10thsalpim.domain.map.dto.MapResponseDTO;
 import salpim.umc10thsalpim.domain.map.exception.MapException;
 import salpim.umc10thsalpim.domain.map.exception.code.MapErrorCode;
 import salpim.umc10thsalpim.domain.member.entity.Member;
@@ -24,7 +23,6 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class FacilityService {
 
     private final MemberRepository memberRepository;
@@ -32,18 +30,18 @@ public class FacilityService {
     private final WelfareApiClient welfareApiClient;
     private final WelfareConverter welfareConverter;
 
-    public MapResponseDto.FacilityInfoResponseDto getFacilityInfo(
+    public MapResponseDTO.FacilityInfoResponseDto getFacilityInfo(
             Long memberId,
-            MapRequestDto.FacilityInfoRequest request
+            MapRequestDTO.FacilityInfoRequest request
     ) {
         String cursor = request.cursor();
         int size = (request.size() != null && request.size() > 0) ? request.size() : 10;
         return getFacilityInfo(memberId, request, cursor, size);
     }
 
-    public MapResponseDto.FacilityInfoResponseDto getFacilityInfo(
+    public MapResponseDTO.FacilityInfoResponseDto getFacilityInfo(
             Long memberId,
-            MapRequestDto.FacilityInfoRequest request,
+            MapRequestDTO.FacilityInfoRequest request,
             String cursor,
             int size
     ) {
@@ -67,7 +65,7 @@ public class FacilityService {
                 request.latitude(), request.longitude()
         );
 
-        List<MapResponseDto.BenefitDto> totalBenefits = new ArrayList<>();
+        List<MapResponseDTO.BenefitDto> totalBenefits = new ArrayList<>();
 
         // 중앙 혜택 리스트 추가
         ExternalWelfareResponse centralResponse = welfareApiClient.fetchRawCentralBenefits();
@@ -86,7 +84,7 @@ public class FacilityService {
         }
 
         // 메모리 기반 커서 페이징 처리
-        MapResponseDto.BenefitPageDto benefitPageDto = paginateBenefits(totalBenefits, cursor, size);
+        MapResponseDTO.BenefitPageDto benefitPageDto = paginateBenefits(totalBenefits, cursor, size);
 
         return welfareConverter.toFacilityInfoResponseDto(request, calculatedDistance, isMatched, benefitPageDto);
     }
@@ -94,8 +92,8 @@ public class FacilityService {
     /**
      * 메모리 커서 페이징 처리 메서드
      */
-    public MapResponseDto.BenefitPageDto paginateBenefits(
-            List<MapResponseDto.BenefitDto> allBenefits,
+    public MapResponseDTO.BenefitPageDto paginateBenefits(
+            List<MapResponseDTO.BenefitDto> allBenefits,
             String cursor,
             int size
     ) {
@@ -104,7 +102,7 @@ public class FacilityService {
         int pageSizeLimit = (size <= 0) ? 10 : size;
 
         if (allBenefits == null || allBenefits.isEmpty()) {
-            return MapResponseDto.BenefitPageDto.builder()
+            return MapResponseDTO.BenefitPageDto.builder()
                     .data(Collections.emptyList())
                     .hasNext(false)
                     .nextCursor(null)
@@ -128,7 +126,7 @@ public class FacilityService {
                 startIndex = foundIndex + 1;
             } else {
                 // (방어 로직) 전달받은 cursor와 일치하는 ID가 리스트 내에 존재하지 않을 경우 빈 페이지 안전하게 반환
-                return MapResponseDto.BenefitPageDto.builder()
+                return MapResponseDTO.BenefitPageDto.builder()
                         .data(Collections.emptyList())
                         .hasNext(false)
                         .nextCursor(null)
@@ -140,7 +138,7 @@ public class FacilityService {
 
         // startIndex가 totalCount 이상이면 남은 데이터가 없음
         if (startIndex >= totalCount) {
-            return MapResponseDto.BenefitPageDto.builder()
+            return MapResponseDTO.BenefitPageDto.builder()
                     .data(Collections.emptyList())
                     .hasNext(false)
                     .nextCursor(null)
@@ -151,7 +149,7 @@ public class FacilityService {
 
         // 3. 메모리 슬라이싱 (size + 1 기법)
         int endIndex = Math.min(startIndex + pageSizeLimit + 1, totalCount);
-        List<MapResponseDto.BenefitDto> slicedList = new ArrayList<>(allBenefits.subList(startIndex, endIndex));
+        List<MapResponseDTO.BenefitDto> slicedList = new ArrayList<>(allBenefits.subList(startIndex, endIndex));
 
         // 4. 페이징 메타데이터 연산
         boolean hasNext = false;
@@ -168,7 +166,7 @@ public class FacilityService {
         int pageSize = slicedList.size();
 
         // 5. 최종 조립
-        return MapResponseDto.BenefitPageDto.builder()
+        return MapResponseDTO.BenefitPageDto.builder()
                 .data(slicedList)
                 .hasNext(hasNext)
                 .nextCursor(nextCursor)
