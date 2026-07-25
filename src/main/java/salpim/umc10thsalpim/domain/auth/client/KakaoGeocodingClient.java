@@ -7,7 +7,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import salpim.umc10thsalpim.domain.auth.config.GeocodingProperties;
 import salpim.umc10thsalpim.domain.auth.dto.KakaoGeocodingResDTO;
-import salpim.umc10thsalpim.domain.auth.exception.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.dto.GeocodingClientResDTO;
 

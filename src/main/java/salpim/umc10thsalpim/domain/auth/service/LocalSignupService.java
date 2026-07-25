@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.member.converter.MemberConverter;
-import salpim.umc10thsalpim.domain.member.exception.MemberErrorCode;
+import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.region.entity.Region;

@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
-import salpim.umc10thsalpim.domain.auth.exception.AuthSuccessCode;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthSuccessCode;
 import salpim.umc10thsalpim.domain.auth.service.GeocodingService;
 import salpim.umc10thsalpim.domain.auth.service.KakaoAuthService;
 import salpim.umc10thsalpim.domain.auth.service.LocalSignupService;

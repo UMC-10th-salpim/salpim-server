@@ -14,7 +14,7 @@ import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
 import salpim.umc10thsalpim.domain.auth.entity.RefreshToken;
 import salpim.umc10thsalpim.domain.auth.enums.NextStep;
 import salpim.umc10thsalpim.domain.auth.enums.TokenPurpose;
-import salpim.umc10thsalpim.domain.auth.exception.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.repository.RefreshTokenRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;

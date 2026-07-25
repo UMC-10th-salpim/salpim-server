@@ -9,7 +9,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import salpim.umc10thsalpim.domain.auth.config.KakaoProperties;
 import salpim.umc10thsalpim.domain.auth.dto.KakaoOAuthResDTO;
-import salpim.umc10thsalpim.domain.auth.exception.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 
 @Component

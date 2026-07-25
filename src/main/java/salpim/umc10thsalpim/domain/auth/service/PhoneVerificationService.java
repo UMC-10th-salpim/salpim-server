@@ -8,9 +8,9 @@ import salpim.umc10thsalpim.domain.auth.converter.AuthConverter;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.entity.PhoneVerification;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
-import salpim.umc10thsalpim.domain.auth.exception.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.repository.PhoneVerificationRepository;
-import salpim.umc10thsalpim.domain.member.exception.MemberErrorCode;
+import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 

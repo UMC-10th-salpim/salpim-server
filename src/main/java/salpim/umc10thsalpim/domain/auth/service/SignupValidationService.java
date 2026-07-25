@@ -3,12 +3,12 @@ package salpim.umc10thsalpim.domain.auth.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import salpim.umc10thsalpim.domain.member.exception.MemberErrorCode;
+import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
-import salpim.umc10thsalpim.domain.region.exception.RegionErrorCode;
+import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 

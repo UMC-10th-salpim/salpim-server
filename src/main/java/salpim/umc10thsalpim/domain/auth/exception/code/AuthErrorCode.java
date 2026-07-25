@@ -1,4 +1,4 @@
-package salpim.umc10thsalpim.domain.auth.exception;
+package salpim.umc10thsalpim.domain.auth.exception.code;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

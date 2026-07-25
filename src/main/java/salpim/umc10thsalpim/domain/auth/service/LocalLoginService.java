@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
-import salpim.umc10thsalpim.domain.auth.exception.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;

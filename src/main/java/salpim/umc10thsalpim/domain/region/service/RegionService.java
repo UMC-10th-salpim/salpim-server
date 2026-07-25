@@ -10,7 +10,7 @@ import salpim.umc10thsalpim.domain.region.dto.RegionReqDTO;
 import salpim.umc10thsalpim.domain.region.dto.RegionResDTO;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
-import salpim.umc10thsalpim.domain.region.exception.RegionErrorCode;
+import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 

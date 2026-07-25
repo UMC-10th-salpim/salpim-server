@@ -3,7 +3,7 @@ package salpim.umc10thsalpim.domain.member.entity;
 import org.junit.jupiter.api.Test;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
-import salpim.umc10thsalpim.domain.member.exception.MemberErrorCode;
+import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;

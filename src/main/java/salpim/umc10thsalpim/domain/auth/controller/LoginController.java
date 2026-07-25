@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.enums.NextStep;
-import salpim.umc10thsalpim.domain.auth.exception.AuthSuccessCode;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthSuccessCode;
 import salpim.umc10thsalpim.domain.auth.service.KakaoAuthService;
 import salpim.umc10thsalpim.domain.auth.service.LocalLoginService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;

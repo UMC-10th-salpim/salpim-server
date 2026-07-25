@@ -10,12 +10,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
-import salpim.umc10thsalpim.domain.member.exception.MemberErrorCode;
+import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
-import salpim.umc10thsalpim.domain.region.exception.RegionErrorCode;
+import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
 
 import java.time.LocalDate;
