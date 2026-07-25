@@ -51,9 +51,9 @@ public class MemberController {
             summary = "마이페이지 조회",
             description = "회원 이름과 시도, 시군구 정보를 조회합니다."
     )
-    public ApiResponse<MemberResDTO.MyPageInfo> getMyPage() {
-        Long memberId = 1L; // TODO: get memberId from accessToken
-
+    public ApiResponse<MemberResDTO.MyPageInfo> getMyPage(
+            @AuthenticationPrincipal Long memberId
+    ) {
         return ApiResponse.onSuccess(
                 MemberSuccessCode.MEMBER_MY_PAGE_VIEW,
                 memberService.getMyPage(memberId)
@@ -66,10 +66,9 @@ public class MemberController {
             description = "회원의 이름, 생년월일, 성별, 주소, 거주지역 정보를 수정합니다."
     )
     public ApiResponse<Void> updateProfile(
+            @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody MemberReqDTO.UpdateProfile request
     ) {
-        Long memberId = 1L; //TODO: get memberId from accessToken
-
         memberService.updateProfile(memberId, request);
 
         return ApiResponse.onSuccess(

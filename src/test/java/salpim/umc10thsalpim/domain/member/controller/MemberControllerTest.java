@@ -2,14 +2,21 @@ package salpim.umc10thsalpim.domain.member.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.servlet.Filter;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
@@ -17,9 +24,11 @@ import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.member.service.MemberService;
 import salpim.umc10thsalpim.domain.member.service.MemberWithdrawalService;
+import salpim.umc10thsalpim.global.apiPayload.hander.GeneralExceptionAdvice;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -33,11 +42,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class MemberControllerTest {
 
     @Autowired
+    private MemberController memberController;
+
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule());
 
+    private static final Long MEMBER_ID = 1L;
     @MockitoBean
     private MemberService memberService;
 
@@ -53,13 +65,22 @@ class MemberControllerTest {
     @MockitoBean
     private JpaMetamodelMappingContext jpaMappingContext;
 
+    @BeforeEach
+    void setUpMockMvc() {
+        mockMvc = MockMvcBuilders.standaloneSetup(memberController)
+                .setControllerAdvice(new GeneralExceptionAdvice())
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
+                .addFilters(authenticatedMemberFilter())
+                .build();
+    }
+
     @Test
     @DisplayName("마이페이지 정보를 정상 조회한다")
     void getMyPageSuccess() throws Exception {
         MemberResDTO.MyPageInfo response =
                 new MemberResDTO.MyPageInfo("홍길동", "인천광역시", "미추홀구");
 
-        given(memberService.getMyPage(1L)).willReturn(response);
+        given(memberService.getMyPage(MEMBER_ID)).willReturn(response);
 
         mockMvc.perform(get("/api/users/me")
                         .accept(MediaType.APPLICATION_JSON))
@@ -70,7 +91,7 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.result.sido").value("인천광역시"))
                 .andExpect(jsonPath("$.result.sigungu").value("미추홀구"));
 
-        verify(memberService).getMyPage(1L);
+        verify(memberService).getMyPage(MEMBER_ID);
     }
 
     @Test
@@ -85,7 +106,7 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.code").value("MEMBER200_2"));
 
-        verify(memberService).updateProfile(1L, request);
+        verify(memberService).updateProfile(MEMBER_ID, request);
     }
 
     @Test
@@ -172,4 +193,19 @@ class MemberControllerTest {
                 10L
         );
     }
+
+    private Filter authenticatedMemberFilter() {
+        return (request, response, filterChain) -> {
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(new UsernamePasswordAuthenticationToken(MEMBER_ID, null, List.of()));
+            SecurityContextHolder.setContext(context);
+
+            try {
+                filterChain.doFilter(request, response);
+            } finally {
+                SecurityContextHolder.clearContext();
+            }
+        };
+    }
+
 }

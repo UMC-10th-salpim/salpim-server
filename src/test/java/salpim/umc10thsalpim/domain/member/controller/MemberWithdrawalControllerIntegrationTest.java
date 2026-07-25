@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,6 +60,12 @@ class MemberWithdrawalControllerIntegrationTest {
     @Test
     void withdrawRequiresAuthentication() throws Exception {
         mockMvc.perform(delete("/api/members/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void myPageRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isUnauthorized());
     }
 
