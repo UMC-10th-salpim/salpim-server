@@ -16,7 +16,7 @@ import salpim.umc10thsalpim.global.apiPayload.code.GeneralSuccessCode;
 @Tag(name = "Member", description = "회원 관련 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/members")
+@RequestMapping("/api/members")
 public class MemberController {
 
     private final MemberWithdrawalService memberWithdrawalService;

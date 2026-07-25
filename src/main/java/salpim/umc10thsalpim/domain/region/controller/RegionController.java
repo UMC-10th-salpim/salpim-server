@@ -18,7 +18,7 @@ import salpim.umc10thsalpim.global.apiPayload.code.GeneralSuccessCode;
 @Tag(name = "Region", description = "Region API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/regions")
+@RequestMapping("/api/regions")
 public class RegionController {
 
     private final RegionService regionService;

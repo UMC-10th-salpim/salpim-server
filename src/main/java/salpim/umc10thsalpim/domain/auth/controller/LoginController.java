@@ -20,7 +20,7 @@ import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 @Tag(name = "Login", description = "Login API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/login")
+@RequestMapping("/api/login")
 public class LoginController {
 
     private final LocalLoginService localLoginService;

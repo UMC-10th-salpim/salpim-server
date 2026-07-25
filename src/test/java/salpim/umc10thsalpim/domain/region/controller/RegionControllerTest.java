@@ -43,7 +43,7 @@ class RegionControllerTest {
         when(regionService.resolve(any(RegionReqDTO.Resolve.class)))
                 .thenReturn(new RegionResDTO.ResolveResult(13L, "Hwajeon", "Goyang Deogyang Hwajeon"));
 
-        mockMvc.perform(post("/api/v1/regions/resolve")
+        mockMvc.perform(post("/api/regions/resolve")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -62,7 +62,7 @@ class RegionControllerTest {
 
     @Test
     void resolveFailsWhenEupMyeonDongIsBlank() throws Exception {
-        mockMvc.perform(post("/api/v1/regions/resolve")
+        mockMvc.perform(post("/api/regions/resolve")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

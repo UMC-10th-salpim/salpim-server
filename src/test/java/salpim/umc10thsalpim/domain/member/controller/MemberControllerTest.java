@@ -58,7 +58,7 @@ class MemberControllerTest {
 
     @Test
     void withdrawRequiresAuthentication() throws Exception {
-        mockMvc.perform(delete("/api/v1/members/me"))
+        mockMvc.perform(delete("/api/members/me"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -68,7 +68,7 @@ class MemberControllerTest {
         Member member = memberRepository.save(member(region));
         AuthResDTO.TokenResult tokenResult = tokenService.issueLoginTokens(member);
 
-        mockMvc.perform(delete("/api/v1/members/me")
+        mockMvc.perform(delete("/api/members/me")
                         .header("Authorization", "Bearer " + tokenResult.accessToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess", is(true)))
@@ -76,7 +76,7 @@ class MemberControllerTest {
 
         assertThat(memberRepository.existsById(member.getId())).isFalse();
 
-        mockMvc.perform(delete("/api/v1/members/me")
+        mockMvc.perform(delete("/api/members/me")
                         .header("Authorization", "Bearer " + tokenResult.accessToken()))
                 .andExpect(status().isUnauthorized());
     }

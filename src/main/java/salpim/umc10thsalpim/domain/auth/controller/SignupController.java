@@ -18,7 +18,7 @@ import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 @Tag(name = "Signup", description = "회원가입 관련 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/signup")
+@RequestMapping("/api/signup")
 public class SignupController {
 
     private final PhoneVerificationService phoneVerificationService;
