@@ -35,6 +35,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/members/me").authenticated()
+                        .requestMatchers("/api/benefits/*/application-helper").authenticated()
+                        .requestMatchers("/api/recommendations/result").authenticated()
+                        .requestMatchers("/api/map/details").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

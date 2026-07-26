@@ -13,7 +13,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import salpim.umc10thsalpim.domain.region.dto.RegionReqDTO;
 import salpim.umc10thsalpim.domain.region.dto.RegionResDTO;
 import salpim.umc10thsalpim.domain.region.service.RegionService;
-import salpim.umc10thsalpim.global.apiPayload.hander.GeneralExceptionAdvice;
+import salpim.umc10thsalpim.global.apiPayload.handler.GeneralExceptionAdvice;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
