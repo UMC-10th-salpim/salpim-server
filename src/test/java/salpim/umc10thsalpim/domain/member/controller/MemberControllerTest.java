@@ -27,6 +27,7 @@ import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
+import salpim.umc10thsalpim.domain.member.enums.PasswordVerificationMethod;
 import salpim.umc10thsalpim.domain.member.service.MemberService;
 import salpim.umc10thsalpim.domain.member.service.MemberWithdrawalService;
 import salpim.umc10thsalpim.global.apiPayload.hander.GeneralExceptionAdvice;
@@ -284,6 +285,108 @@ class MemberControllerTest {
         );
 
         mockMvc.perform(put("/api/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON400"));
+
+        verifyNoInteractions(memberService);
+    }
+
+    @Test
+    @DisplayName("현재 비밀번호를 정상 확인한다")
+    void verifyCurrentPasswordSuccess() throws Exception {
+        MemberReqDTO.VerifyCurrentPassword request =
+                new MemberReqDTO.VerifyCurrentPassword("123456");
+
+        MemberResDTO.PasswordVerificationResult response =
+                new MemberResDTO.PasswordVerificationResult(true);
+
+        given(memberService.verifyCurrentPassword(1L, request))
+                .willReturn(response);
+
+        mockMvc.perform(post("/api/users/me/password/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("MEMBER200_3"))
+                .andExpect(jsonPath("$.result.isVerified").value(true));
+
+        verify(memberService).verifyCurrentPassword(1L, request);
+    }
+
+    @Test
+    @DisplayName("비밀번호 복구 답변을 정상 확인한다")
+    void verifyRecoveryAnswerSuccess() throws Exception {
+        MemberReqDTO.VerifyRecoveryAnswer request =
+                new MemberReqDTO.VerifyRecoveryAnswer("봄");
+
+        MemberResDTO.PasswordVerificationResult response =
+                new MemberResDTO.PasswordVerificationResult(true);
+
+        given(memberService.verifyRecoveryAnswer(1L, request))
+                .willReturn(response);
+
+        mockMvc.perform(post("/api/users/me/password/recovery/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("MEMBER200_3"))
+                .andExpect(jsonPath("$.result.isVerified").value(true));
+
+        verify(memberService).verifyRecoveryAnswer(1L, request);
+    }
+
+    @Test
+    @DisplayName("현재 비밀번호 검증 방식으로 비밀번호를 정상 변경한다")
+    void changePasswordSuccess() throws Exception {
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.CURRENT_PASSWORD,
+                "123456",
+                null,
+                "654321"
+        );
+
+        mockMvc.perform(put("/api/users/me/password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("MEMBER200_4"));
+
+        verify(memberService).changePassword(1L, request);
+    }
+
+    @Test
+    @DisplayName("현재 비밀번호가 6자리가 아니면 확인에 실패한다")
+    void verifyCurrentPasswordFailsWhenPasswordLengthIsInvalid() throws Exception {
+        MemberReqDTO.VerifyCurrentPassword request =
+                new MemberReqDTO.VerifyCurrentPassword("12345");
+
+        mockMvc.perform(post("/api/users/me/password/verify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON400"));
+
+        verifyNoInteractions(memberService);
+    }
+
+    @Test
+    @DisplayName("새 비밀번호가 없으면 비밀번호 변경에 실패한다")
+    void changePasswordFailsWhenNewPasswordIsMissing() throws Exception {
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.CURRENT_PASSWORD,
+                "123456",
+                null,
+                null
+        );
+
+        mockMvc.perform(put("/api/users/me/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())

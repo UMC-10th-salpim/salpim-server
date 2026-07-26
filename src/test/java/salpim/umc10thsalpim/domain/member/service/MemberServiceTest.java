@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
@@ -13,6 +14,8 @@ import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
+import salpim.umc10thsalpim.domain.member.enums.PasswordVerificationMethod;
+import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -29,8 +32,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.verify;
-import static org.mockito.BDDMockito.verifyNoInteractions;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -48,6 +51,9 @@ class MemberServiceTest {
 
     @Mock
     private PhoneVerificationService phoneVerificationService;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private MemberService memberService;
@@ -387,5 +393,223 @@ class MemberServiceTest {
                 phoneNumber,
                 phoneVerificationToken
         );
+    }
+
+    @Test
+    @DisplayName("현재 비밀번호가 일치하면 검증에 성공한다")
+    void verifyCurrentPasswordSuccess() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.VerifyCurrentPassword request =
+                new MemberReqDTO.VerifyCurrentPassword("123456");
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("123456", "encoded-password")).willReturn(true);
+
+        MemberResDTO.PasswordVerificationResult result =
+                memberService.verifyCurrentPassword(MEMBER_ID, request);
+
+        assertThat(result.isVerified()).isTrue();
+        verify(passwordEncoder).matches("123456", "encoded-password");
+    }
+
+    @Test
+    @DisplayName("현재 비밀번호가 일치하지 않으면 예외가 발생한다")
+    void throwsExceptionWhenCurrentPasswordDoesNotMatch() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.VerifyCurrentPassword request =
+                new MemberReqDTO.VerifyCurrentPassword("123456");
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("123456", "encoded-password")).willReturn(false);
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.verifyCurrentPassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.PASSWORD_MISMATCH);
+    }
+
+    @Test
+    @DisplayName("복구 답변이 일치하면 검증에 성공한다")
+    void verifyRecoveryAnswerSuccess() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.VerifyRecoveryAnswer request =
+                new MemberReqDTO.VerifyRecoveryAnswer("봄");
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("봄", "encoded-answer")).willReturn(true);
+
+        MemberResDTO.PasswordVerificationResult result =
+                memberService.verifyRecoveryAnswer(MEMBER_ID, request);
+
+        assertThat(result.isVerified()).isTrue();
+        verify(passwordEncoder).matches("봄", "encoded-answer");
+    }
+
+    @Test
+    @DisplayName("복구 답변 입력값의 앞뒤 공백을 제거하고 검증한다")
+    void trimsRecoveryAnswerBeforeVerification() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.VerifyRecoveryAnswer request =
+                new MemberReqDTO.VerifyRecoveryAnswer(" answer ");
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("answer", "encoded-answer")).willReturn(true);
+
+        MemberResDTO.PasswordVerificationResult result =
+                memberService.verifyRecoveryAnswer(MEMBER_ID, request);
+
+        assertThat(result.isVerified()).isTrue();
+        verify(passwordEncoder).matches("answer", "encoded-answer");
+    }
+
+    @Test
+    @DisplayName("복구 답변이 일치하지 않으면 예외가 발생한다")
+    void throwsExceptionWhenRecoveryAnswerDoesNotMatch() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.VerifyRecoveryAnswer request =
+                new MemberReqDTO.VerifyRecoveryAnswer("여름");
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("여름", "encoded-answer")).willReturn(false);
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.verifyRecoveryAnswer(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.RECOVERY_ANSWER_MISMATCH);
+    }
+
+    @Test
+    @DisplayName("카카오 로그인 회원이 비밀번호를 검증하면 예외가 발생한다")
+    void throwsExceptionWhenKakaoMemberVerifiesPassword() {
+        Member member = Member.builder()
+                .id(MEMBER_ID)
+                .loginType(SocialProvider.KAKAO)
+                .build();
+
+        MemberReqDTO.VerifyCurrentPassword request =
+                new MemberReqDTO.VerifyCurrentPassword("123456");
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.verifyCurrentPassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.PASSWORD_CHANGE_NOT_SUPPORTED);
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("현재 비밀번호 검증 방식으로 비밀번호를 변경한다")
+    void changePasswordWithCurrentPasswordSuccess() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.CURRENT_PASSWORD,
+                "123456",
+                null,
+                "654321"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("123456", "encoded-password")).willReturn(true);
+        given(passwordEncoder.encode("654321")).willReturn("new-encoded-password");
+
+        memberService.changePassword(MEMBER_ID, request);
+
+        assertThat(member.getPassword()).isEqualTo("new-encoded-password");
+        verify(passwordEncoder).matches("123456", "encoded-password");
+        verify(passwordEncoder).encode("654321");
+    }
+
+    @Test
+    @DisplayName("복구 답변 검증 방식으로 비밀번호를 변경한다")
+    void changePasswordWithRecoveryAnswerSuccess() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.RECOVERY_ANSWER,
+                null,
+                "봄",
+                "654321"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("봄", "encoded-answer")).willReturn(true);
+        given(passwordEncoder.encode("654321")).willReturn("new-encoded-password");
+
+        memberService.changePassword(MEMBER_ID, request);
+
+        assertThat(member.getPassword()).isEqualTo("new-encoded-password");
+        verify(passwordEncoder).matches("봄", "encoded-answer");
+        verify(passwordEncoder).encode("654321");
+    }
+
+    @Test
+    @DisplayName("검증 방식에 맞는 값을 보내지 않으면 비밀번호 변경에 실패한다")
+    void throwsExceptionWhenVerificationValueIsMissing() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.CURRENT_PASSWORD,
+                null,
+                null,
+                "654321"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.changePassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.INVALID_PASSWORD_VERIFICATION);
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("현재 비밀번호와 복구 답변을 함께 보내면 비밀번호 변경에 실패한다")
+    void throwsExceptionWhenBothVerificationValuesAreProvided() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.CURRENT_PASSWORD,
+                "123456",
+                "봄",
+                "654321"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.changePassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.INVALID_PASSWORD_VERIFICATION);
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    private Member createLocalMember(
+            String encodedPassword,
+            String encodedRecoveryAnswer
+    ) {
+        return Member.builder()
+                .id(MEMBER_ID)
+                .loginType(SocialProvider.LOCAL)
+                .password(encodedPassword)
+                .passwordRecoveryAnswer(encodedRecoveryAnswer)
+                .build();
     }
 }

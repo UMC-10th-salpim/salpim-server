@@ -17,6 +17,7 @@ public final class MemberConverter {
             AuthReqDTO.LocalSignup request,
             String normalizedPhoneNumber,
             String encodedPassword,
+            String encodedPasswordRecoveryAnswer,
             Region region
     ) {
         return Member.builder()
@@ -31,7 +32,7 @@ public final class MemberConverter {
                 .latitude(BigDecimal.valueOf(request.latitude()))
                 .longitude(BigDecimal.valueOf(request.longitude()))
                 .region(region)
-                .passwordRecoveryAnswer(request.passwordAnswer().trim())
+                .passwordRecoveryAnswer(encodedPasswordRecoveryAnswer)
                 .welfareCenter(region.getName())
                 .build();
     }

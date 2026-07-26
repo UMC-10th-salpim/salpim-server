@@ -2,6 +2,7 @@ package salpim.umc10thsalpim.domain.member.dto;
 
 import jakarta.validation.constraints.*;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
+import salpim.umc10thsalpim.domain.member.enums.PasswordVerificationMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,4 +46,31 @@ public class MemberReqDTO {
 
             String phoneVerificationToken
     ){}
+
+    public record VerifyCurrentPassword(
+            @NotBlank
+            @Pattern(regexp = "^\\d{6}$")
+            String currentPassword
+    ) {}
+
+    public record VerifyRecoveryAnswer(
+            @NotBlank
+            @Size(max = 255)
+            String recoveryAnswer
+    ) {}
+
+    public record ChangePassword(
+            @NotNull
+            PasswordVerificationMethod verificationMethod,
+
+            @Pattern(regexp = "^\\d{6}$")
+            String currentPassword,
+
+            @Size(max = 255)
+            String recoveryAnswer,
+
+            @NotBlank
+            @Pattern(regexp = "^\\d{6}$")
+            String newPassword
+    ) {}
 }
