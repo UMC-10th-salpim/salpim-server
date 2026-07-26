@@ -103,6 +103,7 @@ public class RegionService {
 
         regionRepository.findById(ancestorRegionId)
                 .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+        // TODO : 상위 지역이 아닌 하위 지역으로 요청 보냈을 때 예외처리
 
         List<Region> regions = regionRepository.findAllByParentIdOrderById(ancestorRegionId);
 
