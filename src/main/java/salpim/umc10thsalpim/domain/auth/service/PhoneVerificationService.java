@@ -38,6 +38,7 @@ public class PhoneVerificationService {
     private final PhoneVerificationRepository phoneVerificationRepository;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DiscordWebhookNotifier discordWebhookNotifier;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
@@ -198,6 +199,11 @@ public class PhoneVerificationService {
                 "[DEV] phone verification code. maskedPhoneNumber={}, code={}",
                 maskPhoneNumber(normalizedPhoneNumber),
                 code
+        );
+        discordWebhookNotifier.sendVerificationCode(
+                maskPhoneNumber(normalizedPhoneNumber),
+                code,
+                purpose
         );
     }
 
