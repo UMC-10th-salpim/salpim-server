@@ -32,7 +32,7 @@ public class RecommendationController {
                 2단계 선택지들의 id와 선택지 내용, 순서를 가진 리스트를 보낸다.
                 """
     )
-    public ApiResponse<RecommendationResDTO.recommendationOptionsDTO> getRecommendationOptions(
+    public ApiResponse<RecommendationResDTO.RecommendationOptionsDTO> getRecommendationOptions(
             @PathVariable Long categoryId
     ){
         return ApiResponse.onSuccess(RecommendationSuccessCode.OPTION_LIST_GET_SUCCESS, recommendationService.getRecommendationOptions(categoryId));

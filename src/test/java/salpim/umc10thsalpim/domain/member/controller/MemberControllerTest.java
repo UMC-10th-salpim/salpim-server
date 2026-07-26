@@ -30,7 +30,7 @@ import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.member.enums.PasswordVerificationMethod;
 import salpim.umc10thsalpim.domain.member.service.MemberService;
 import salpim.umc10thsalpim.domain.member.service.MemberWithdrawalService;
-import salpim.umc10thsalpim.global.apiPayload.hander.GeneralExceptionAdvice;
+import salpim.umc10thsalpim.global.apiPayload.handler.GeneralExceptionAdvice;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

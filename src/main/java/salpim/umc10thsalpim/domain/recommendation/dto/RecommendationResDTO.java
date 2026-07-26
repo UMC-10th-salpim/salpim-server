@@ -7,15 +7,15 @@ import java.util.List;
 public class RecommendationResDTO {
 
     @Builder
-    public record recommendationOptionDTO(
+    public record RecommendationOptionDTO(
       Long optionId,
       Integer optionOrder,
       String optionText
     ){}
 
     @Builder
-    public record recommendationOptionsDTO(
-            List<recommendationOptionDTO> recommendationOptionDTOList
+    public record RecommendationOptionsDTO(
+            List<RecommendationOptionDTO> recommendationOptionDTOList
     ){}
 
 }

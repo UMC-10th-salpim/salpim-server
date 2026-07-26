@@ -1,4 +1,4 @@
-package salpim.umc10thsalpim.global.apiPayload.hander;
+package salpim.umc10thsalpim.global.apiPayload.handler;
 
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.ResponseEntity;

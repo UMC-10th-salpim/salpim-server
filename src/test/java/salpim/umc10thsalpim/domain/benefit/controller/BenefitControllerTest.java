@@ -19,7 +19,7 @@ import salpim.umc10thsalpim.domain.auth.security.JwtAuthenticationFilter;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
-import salpim.umc10thsalpim.global.apiPayload.hander.GeneralExceptionAdvice;
+import salpim.umc10thsalpim.global.apiPayload.handler.GeneralExceptionAdvice;
 
 import java.time.LocalDate;
 import java.util.List;

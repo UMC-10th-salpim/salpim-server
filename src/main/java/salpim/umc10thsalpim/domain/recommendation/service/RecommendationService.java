@@ -35,9 +35,9 @@ public class RecommendationService {
 
     private final BenefitService benefitService;
 
-    public RecommendationResDTO.recommendationOptionsDTO getRecommendationOptions(Long categoryId) {
+    public RecommendationResDTO.RecommendationOptionsDTO getRecommendationOptions(Long categoryId) {
         List<RecommendationOption>  recommendationOptions = recommendationRepository.findAllByCategoryIdOrderByOptionOrderAsc(categoryId);
-        return RecommendationConverter.toRecommedationOptionRes(recommendationOptions);
+        return RecommendationConverter.toRecommendationOptionRes(recommendationOptions);
     }
 
     public CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO> getRecommendationResult(Long optionId, Long memberId, String cursor, @Positive Integer pageSize) {
