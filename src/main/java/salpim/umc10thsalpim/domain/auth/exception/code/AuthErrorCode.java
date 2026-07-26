@@ -51,6 +51,18 @@ public enum AuthErrorCode implements BaseErrorCode {
     SIGNUP_TOKEN_TYPE_INVALID(HttpStatus.UNAUTHORIZED,
             "AUTH401_SIGNUP_TOKEN_TYPE",
             "회원가입 토큰이 아닙니다."),
+    PHONE_CHANGE_REQUEST_INVALID(HttpStatus.BAD_REQUEST,
+            "AUTH400_PHONE_CHANGE_REQUEST",
+            "전화번호와 인증 토큰은 함께 입력해야 합니다."),
+    INVALID_PHONE_VERIFICATION_TOKEN(HttpStatus.BAD_REQUEST,
+            "AUTH400_PHONE_VERIFICATION_TOKEN",
+            "유효하지 않은 전화번호 변경 인증 토큰입니다."),
+    EXPIRED_PHONE_VERIFICATION_TOKEN(HttpStatus.BAD_REQUEST,
+            "AUTH400_PHONE_VERIFICATION_TOKEN_EXPIRED",
+            "전화번호 변경 인증 토큰이 만료되었습니다."),
+    PHONE_VERIFICATION_RESEND_TOO_SOON(HttpStatus.TOO_MANY_REQUESTS,
+            "AUTH429_PHONE_VERIFICATION_RESEND",
+            "인증번호는 1분 후에 다시 요청할 수 있습니다."),
     ;
 
     private final HttpStatus status;

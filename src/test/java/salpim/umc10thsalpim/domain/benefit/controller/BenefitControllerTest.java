@@ -1,19 +1,25 @@
 package salpim.umc10thsalpim.domain.benefit.controller;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
 import salpim.umc10thsalpim.domain.auth.service.TokenService;
+import salpim.umc10thsalpim.domain.auth.security.JwtAuthenticationFilter;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
+import salpim.umc10thsalpim.global.apiPayload.handler.GeneralExceptionAdvice;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,10 +30,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BenefitController.class)
+@Import(JwtAuthenticationFilter.class)
 class BenefitControllerTest {
 
     @Autowired
+    private BenefitController benefitController;
+
     private MockMvc mockMvc;
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @MockitoBean
     private BenefitService benefitService;
@@ -40,6 +52,15 @@ class BenefitControllerTest {
 
     @MockitoBean
     private MemberRepository memberRepository;
+
+    @BeforeEach
+    void setUpMockMvc() {
+        mockMvc = MockMvcBuilders.standaloneSetup(benefitController)
+                .setControllerAdvice(new GeneralExceptionAdvice())
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
+                .addFilters(jwtAuthenticationFilter)
+                .build();
+    }
 
     @Test
     @DisplayName("신청 도우미 정보 정상 조회")
@@ -67,8 +88,12 @@ class BenefitControllerTest {
 
         given(benefitService.getApplicationHelperInfo(1L, benefitId))
                 .willReturn(response);
+        given(tokenService.validateAccessTokenAndGetMemberId("access-token"))
+                .willReturn(1L);
+        given(memberRepository.existsById(1L)).willReturn(true);
 
         mockMvc.perform(get("/api/benefits/{benefitId}/application-helper", benefitId)
+                        .header("Authorization", "Bearer access-token")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))

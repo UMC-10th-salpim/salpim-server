@@ -10,6 +10,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     boolean existsByPhoneNumber(String phoneNumber);
 
+    boolean existsByPhoneNumberAndIdNot(String phoneNumber, Long memberId);
+
     Optional<Member> findByPhoneNumber(String phoneNumber);
 
     boolean existsByLoginTypeAndKakaoId(SocialProvider loginType, String kakaoId);

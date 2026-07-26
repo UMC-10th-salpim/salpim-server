@@ -9,7 +9,7 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 
-public class MapRequestDto {
+public class MapReqDTO {
 
     @Builder
     public record FacilityInfoRequest(

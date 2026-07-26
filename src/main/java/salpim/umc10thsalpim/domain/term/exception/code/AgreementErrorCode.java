@@ -1,4 +1,4 @@
-package salpim.umc10thsalpim.domain.term.exception;
+package salpim.umc10thsalpim.domain.term.exception.code;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

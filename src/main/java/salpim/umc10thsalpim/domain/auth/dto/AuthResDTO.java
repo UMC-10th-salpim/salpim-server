@@ -37,4 +37,10 @@ public class AuthResDTO {
             String signupToken
     ) {
     }
+
+    @Builder
+    public record PhoneChangeVerifyResult(
+            String phoneVerificationToken
+    ) {
+    }
 }
