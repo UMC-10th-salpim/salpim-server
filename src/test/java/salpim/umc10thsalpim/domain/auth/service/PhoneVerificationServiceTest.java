@@ -49,6 +49,9 @@ class PhoneVerificationServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private DiscordWebhookNotifier discordWebhookNotifier;
+
     @InjectMocks
     private PhoneVerificationService phoneVerificationService;
 
