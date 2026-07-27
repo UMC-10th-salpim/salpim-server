@@ -19,6 +19,7 @@ import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.repository.RefreshTokenRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -39,29 +40,33 @@ public class TokenService {
 
     private final JwtProperties jwtProperties;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public AuthResDTO.TokenResult issueLoginTokens(Member member) {
+        Member lockedMember = memberRepository.findByIdForUpdate(member.getId())
+                .orElseThrow(() -> new AuthException(AuthErrorCode.LOGIN_MEMBER_NOT_FOUND));
+
         String accessToken = createMemberToken(
-                member,
+                lockedMember,
                 TokenPurpose.ACCESS,
                 jwtProperties.getAccessTokenExpirationMillis()
         );
         String refreshToken = createMemberToken(
-                member,
+                lockedMember,
                 TokenPurpose.REFRESH,
                 jwtProperties.getRefreshTokenExpirationMillis()
         );
         LocalDateTime refreshTokenExpiredAt = LocalDateTime.now()
                 .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
 
-        RefreshToken savedRefreshToken = refreshTokenRepository.findByMember(member)
+        RefreshToken savedRefreshToken = refreshTokenRepository.findByMember(lockedMember)
                 .map(existingToken -> {
                     existingToken.updateToken(refreshToken, refreshTokenExpiredAt);
                     return existingToken;
                 })
                 .orElseGet(() -> RefreshToken.builder()
-                        .member(member)
+                        .member(lockedMember)
                         .token(refreshToken)
                         .expiredAt(refreshTokenExpiredAt)
                         .build());

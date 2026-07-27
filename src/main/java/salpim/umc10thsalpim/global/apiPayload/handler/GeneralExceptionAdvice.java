@@ -1,6 +1,7 @@
 package salpim.umc10thsalpim.global.apiPayload.handler;
 
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +14,7 @@ import salpim.umc10thsalpim.global.apiPayload.exception.ProjectException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GeneralExceptionAdvice {
 
@@ -31,8 +33,7 @@ public class GeneralExceptionAdvice {
     public ResponseEntity<ApiResponse<String>> handleException(
             Exception ex
     ) {
-        //서버 로그로 에러 확인
-        System.out.println("서버 내부 오류 발생: " + ex.getMessage());
+        log.error("Unhandled server exception", ex);
         BaseErrorCode code = GeneralErrorCode.INTERNAL_SERVER_ERROR;
         return ResponseEntity.status(code.getStatus())
                 .body(ApiResponse.onFailure(code, null));
