@@ -10,8 +10,8 @@ import salpim.umc10thsalpim.domain.region.dto.RegionReqDTO;
 import salpim.umc10thsalpim.domain.region.dto.RegionResDTO;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
-import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
+import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 
 import java.util.ArrayList;
@@ -89,5 +89,24 @@ public class RegionService {
             return null;
         }
         return normalized;
+    }
+
+    @Transactional(readOnly = true)
+    public RegionResDTO.RegionListDTO getAncestorRegionList() {
+        List<Region> regions = regionRepository.findAllByRegionLevelOrderById(RegionLevel.SIDO);
+
+        return RegionConverter.toRegionResult(regions);
+    }
+
+    @Transactional(readOnly = true)
+    public RegionResDTO.RegionListDTO getDescendantRegionList(Long ancestorRegionId) {
+
+        regionRepository.findById(ancestorRegionId)
+                .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+        // TODO : 상위 지역이 아닌 하위 지역으로 요청 보냈을 때 예외처리
+
+        List<Region> regions = regionRepository.findAllByParentIdOrderById(ancestorRegionId);
+
+        return RegionConverter.toRegionResult(regions);
     }
 }
