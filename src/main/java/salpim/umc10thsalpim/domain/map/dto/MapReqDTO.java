@@ -9,7 +9,11 @@ import lombok.Builder;
 
 import java.math.BigDecimal;
 
+<<<<<<<< HEAD:src/main/java/salpim/umc10thsalpim/domain/map/dto/MapRequestDTO.java
 public class MapRequestDTO {
+========
+public class MapReqDTO {
+>>>>>>>> 1445168e0e9ba49d31ab8beade7b2e34a68a135c:src/main/java/salpim/umc10thsalpim/domain/map/dto/MapReqDTO.java
 
     @Builder
     public record FacilityInfoRequest(

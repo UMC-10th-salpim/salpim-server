@@ -2,10 +2,12 @@ package salpim.umc10thsalpim.domain.benefit.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
@@ -62,6 +64,7 @@ public class BenefitController {
 
 
     @GetMapping("/{benefitId}/application-helper")
+    @SecurityRequirement(name = "JWT TOKEN")
     @Operation(
             summary = "신청 도우미 조회",
             description = """
@@ -72,11 +75,10 @@ public class BenefitController {
     )
     public ApiResponse<BenefitResDTO.GetApplicationHelperInfo> getApplicationHelperInfoApiResponse(
             @Parameter(description = "조회할 복지 혜택 ID", example = "1")
-            @PathVariable Long benefitId
+            @PathVariable Long benefitId,
+            @AuthenticationPrincipal Long memberId
             ){
         BaseSuccessCode code = BenefitSuccessCode.BENEFIT_VIEW;
-
-        Long memberId = 1L; //TODO : get memberId from accessToken
 
         BenefitResDTO.GetApplicationHelperInfo response =
                 benefitService.getApplicationHelperInfo(memberId, benefitId);

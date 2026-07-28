@@ -27,6 +27,21 @@ public enum MemberErrorCode implements BaseErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEMBER404_NOT_FOUND",
             "해당 사용자를 찾을 수 없습니다."),
+    MEMBER_REGION_NOT_SET(HttpStatus.BAD_REQUEST,
+            "MEMBER400_1",
+            "회원의 지역 정보가 설정되지 않았습니다."),
+    PASSWORD_MISMATCH(HttpStatus.BAD_REQUEST,
+            "MEMBER400_2",
+            "현재 비밀번호가 일치하지 않습니다."),
+    RECOVERY_ANSWER_MISMATCH(HttpStatus.BAD_REQUEST,
+            "MEMBER400_3",
+            "비밀번호 찾기 답변이 일치하지 않습니다."),
+    INVALID_PASSWORD_VERIFICATION(HttpStatus.BAD_REQUEST,
+            "MEMBER400_4",
+            "비밀번호 변경에 필요한 검증 정보가 올바르지 않습니다."),
+    PASSWORD_CHANGE_NOT_SUPPORTED(HttpStatus.BAD_REQUEST,
+            "MEMBER400_5",
+            "카카오 로그인 회원은 비밀번호를 변경할 수 없습니다."),
     ;
 
     private final HttpStatus status;

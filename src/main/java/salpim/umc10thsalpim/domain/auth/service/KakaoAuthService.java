@@ -30,6 +30,7 @@ public class KakaoAuthService {
     private final MemberRepository memberRepository;
     private final SignupValidationService signupValidationService;
 
+    @Transactional
     public AuthResDTO.KakaoLoginResult login(String authorizationCode) {
         KakaoOAuthResDTO.Token kakaoToken = kakaoOAuthClient.requestToken(authorizationCode);
         KakaoOAuthResDTO.UserInfo kakaoUserInfo = kakaoOAuthClient.requestUserInfo(kakaoToken.accessToken());

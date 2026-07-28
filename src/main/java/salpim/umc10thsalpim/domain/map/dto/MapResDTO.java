@@ -5,10 +5,14 @@ import lombok.Builder;
 
 import java.util.List;
 
+<<<<<<<< HEAD:src/main/java/salpim/umc10thsalpim/domain/map/dto/MapResponseDTO.java
 public class MapResponseDTO {
+========
+public class MapResDTO {
+>>>>>>>> 1445168e0e9ba49d31ab8beade7b2e34a68a135c:src/main/java/salpim/umc10thsalpim/domain/map/dto/MapResDTO.java
 
     @Builder
-    public record FacilityInfoResponseDto(
+    public record FacilityInfoResDTO(
             @Schema(description = "Facility name", example = "Hakik 1-dong Administrative Welfare Center")
             String name,
             @Schema(description = "Facility address", example = "381 Maesoho-ro, Michuhol-gu, Incheon")
@@ -20,14 +24,14 @@ public class MapResponseDTO {
             @Schema(description = "Whether this is the member's service center", example = "true")
             boolean isMyCenter,
             @Schema(description = "Paginated benefits")
-            BenefitPageDto benefits
+            BenefitPageDTO benefits
     ) {
     }
 
     @Builder
-    public record BenefitPageDto(
+    public record BenefitPageDTO(
             @Schema(description = "Benefit list")
-            List<BenefitDto> data,
+            List<BenefitDTO> data,
             @Schema(description = "Whether another page exists", example = "true")
             boolean hasNext,
             @Schema(description = "Cursor for the next request", example = "WLF00001234")
@@ -40,7 +44,7 @@ public class MapResponseDTO {
     }
 
     @Builder
-    public record BenefitDto(
+    public record BenefitDTO(
             @Schema(description = "Service identifier used as a cursor", example = "WLF00001234")
             String servId,
             @Schema(description = "Provided region", example = "Nationwide")
