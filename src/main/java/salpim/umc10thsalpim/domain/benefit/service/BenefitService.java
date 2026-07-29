@@ -24,6 +24,7 @@ import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
+import salpim.umc10thsalpim.domain.region.service.RegionQueryService;
 import salpim.umc10thsalpim.global.apiPayload.exception.ProjectException;
 import salpim.umc10thsalpim.global.dto.CursorResDTO;
 import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
@@ -52,6 +53,7 @@ public class BenefitService {
     private final RegionRepository regionRepository;
     private final MemberRepository memberRepository;
     private final WelfareCategoryRepository welfareCategoryRepository;
+    private final RegionQueryService regionQueryService;
 
     @Transactional(readOnly = true)
     public BenefitResDTO.GetApplicationHelperInfo getApplicationHelperInfo(
@@ -139,28 +141,9 @@ public class BenefitService {
             );
         }
 
-        Region memberRegionAtTargetLevel = findAncestorRegion(memberRegion, targetLevel);
+        Region memberRegionAtTargetLevel = regionQueryService.findAncestorRegion(memberRegion, targetLevel);
 
         return memberRegionAtTargetLevel != null && memberRegionAtTargetLevel.getId().equals(benefitRegionId);
-    }
-
-    public Region findAncestorRegion(Region region, RegionLevel targetLevel){
-        Region current = region;
-
-        while(current != null){
-            if(current.getRegionLevel() == targetLevel){
-                return current;
-            }
-
-            if(current.getParentId() == null){
-                return null;
-            }
-
-            current = regionRepository.findById(current.getParentId())
-                    .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
-        }
-
-        return null;
     }
 
     private Boolean isAgeSatisfied(Member member, WelfareBenefit welfareBenefit) {

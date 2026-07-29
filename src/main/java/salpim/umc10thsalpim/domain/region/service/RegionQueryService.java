@@ -25,33 +25,49 @@ public class RegionQueryService {
             return new String[]{null, null};
         }
 
-        Region current = regionRepository.findById(regionId)
+        Region region = regionRepository.findById(regionId)
                 .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
 
-        String sido = null;
-        String sigungu = null;
+        Region sido = findAncestorRegionOrThrow(region, RegionLevel.SIDO);
+        Region sigungu = findAncestorRegionOrThrow(region, RegionLevel.SIGUNGU);
+
+        return new String[]{sido.getName(), sigungu.getName()};
+    }
+
+    public Region findAncestorRegion(Region region, RegionLevel targetLevel) {
+        Region current = region;
         Set<Long> visitedIds = new HashSet<>();
 
         while (current != null) {
             if (!visitedIds.add(current.getId())) {
-                throw new RegionException(RegionErrorCode.INVALID_REGION_REQUEST);
+                throw new RegionException(RegionErrorCode.REGION_HIERARCHY_INVALID);
             }
 
-            if (current.getRegionLevel() == RegionLevel.SIDO) {
-                sido = current.getName();
-            } else if (current.getRegionLevel() == RegionLevel.SIGUNGU) {
-                sigungu = current.getName();
+            if (current.getRegionLevel() == targetLevel) {
+                return current;
             }
 
             if (current.getParentId() == null) {
-                break;
+                return null;
             }
 
-            Long parentId = current.getParentId();
-            current = regionRepository.findById(parentId)
+            current = regionRepository.findById(current.getParentId())
                     .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
         }
 
-        return new String[]{sido, sigungu};
+        return null;
+    }
+
+    public Region findAncestorRegionOrThrow(
+            Region region,
+            RegionLevel targetLevel
+    ) {
+        Region ancestorRegion = findAncestorRegion(region, targetLevel);
+
+        if (ancestorRegion == null) {
+            throw new RegionException(RegionErrorCode.REGION_HIERARCHY_INVALID);
+        }
+
+        return ancestorRegion;
     }
 }

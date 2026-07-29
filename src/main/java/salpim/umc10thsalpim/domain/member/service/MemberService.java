@@ -21,6 +21,7 @@ import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
+import salpim.umc10thsalpim.domain.region.service.RegionQueryService;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,8 @@ public class MemberService {
     private final RegionRepository regionRepository;
     private final PhoneVerificationService phoneVerificationService;
     private final PasswordEncoder passwordEncoder;
+
+    private final RegionQueryService regionQueryService;
 
     @Transactional(readOnly = true)
     public MemberResDTO.MyPageInfo getMyPage(Long memberId) {
@@ -41,8 +44,8 @@ public class MemberService {
 
         Region memberRegion = getRegionOrThrow(member.getRegionId());
 
-        Region sido = findAncestorRegion(memberRegion, RegionLevel.SIDO);
-        Region sigungu = findAncestorRegion(memberRegion, RegionLevel.SIGUNGU);
+        Region sido = regionQueryService.findAncestorRegionOrThrow(memberRegion, RegionLevel.SIDO);
+        Region sigungu = regionQueryService.findAncestorRegionOrThrow(memberRegion, RegionLevel.SIGUNGU);
 
         return MemberConverter.toMyPageInfo(
                 member,
@@ -109,22 +112,6 @@ public class MemberService {
         validatePasswordVerification(member, request);
 
         member.changePassword(passwordEncoder.encode(request.newPassword()));
-    }
-
-    private Region findAncestorRegion(Region region, RegionLevel targetLevel) {
-        Region currentRegion = region;
-
-        while (currentRegion.getRegionLevel() != targetLevel) {
-            Long parentId = currentRegion.getParentId();
-
-            if(parentId == null){
-                throw new RegionException(RegionErrorCode.REGION_HIERARCHY_INVALID);
-            }
-
-            currentRegion = getRegionOrThrow(parentId);
-        }
-
-        return currentRegion;
     }
 
     private void updatePhoneNumberIfRequested(
