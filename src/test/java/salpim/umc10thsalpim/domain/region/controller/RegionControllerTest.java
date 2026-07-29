@@ -39,38 +39,88 @@ class RegionControllerTest {
     }
 
     @Test
-    void resolveReturnsRegionId() throws Exception {
+    void resolveReturnsAdministrativeAreaForThreeLevelRequest() throws Exception {
         when(regionService.resolve(any(RegionReqDTO.Resolve.class)))
-                .thenReturn(new RegionResDTO.ResolveResult(13L, "Hwajeon", "Goyang Deogyang Hwajeon"));
+                .thenReturn(new RegionResDTO.ResolveResult(
+                        13L,
+                        "Yonghyeon-dong",
+                        "Incheon Michuhol-gu Yonghyeon-dong"
+                ));
 
         mockMvc.perform(post("/api/regions/resolve")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "city": "Goyang",
-                                  "district": "Deogyang",
-                                  "eupMyeonDong": "Hwajeon"
+                                  "sido": "Incheon",
+                                  "sigungu": "Michuhol-gu",
+                                  "administrativeArea": "Yonghyeon-dong"
                                 }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess", is(true)))
-                .andExpect(jsonPath("$.code", is("COMMON200")))
                 .andExpect(jsonPath("$.result.regionId", is(13)))
-                .andExpect(jsonPath("$.result.regionName", is("Hwajeon")))
-                .andExpect(jsonPath("$.result.fullRegionName", is("Goyang Deogyang Hwajeon")));
+                .andExpect(jsonPath("$.result.regionName", is("Yonghyeon-dong")))
+                .andExpect(jsonPath("$.result.fullRegionName", is("Incheon Michuhol-gu Yonghyeon-dong")));
     }
 
     @Test
-    void resolveFailsWhenEupMyeonDongIsBlank() throws Exception {
+    void resolveReturnsAdministrativeAreaForFourLevelRequest() throws Exception {
+        when(regionService.resolve(any(RegionReqDTO.Resolve.class)))
+                .thenReturn(new RegionResDTO.ResolveResult(
+                        14L,
+                        "Hwajeong-dong",
+                        "Gyeonggi-do Goyang-si Deogyang-gu Hwajeong-dong"
+                ));
+
         mockMvc.perform(post("/api/regions/resolve")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "city": "Goyang",
-                                  "district": "Deogyang",
-                                  "eupMyeonDong": ""
+                                  "sido": "Gyeonggi-do",
+                                  "sigungu": "Goyang-si",
+                                  "generalGu": "Deogyang-gu",
+                                  "administrativeArea": "Hwajeong-dong"
                                 }
                                 """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.regionId", is(14)));
+    }
+
+    @Test
+    void resolveFailsWhenSidoIsMissing() throws Exception {
+        assertInvalidRequest("""
+                {
+                  "sigungu": "Michuhol-gu",
+                  "administrativeArea": "Yonghyeon-dong"
+                }
+                """);
+    }
+
+    @Test
+    void resolveFailsWhenSigunguIsMissing() throws Exception {
+        assertInvalidRequest("""
+                {
+                  "sido": "Incheon",
+                  "administrativeArea": "Yonghyeon-dong"
+                }
+                """);
+    }
+
+    @Test
+    void resolveFailsWhenAdministrativeAreaIsBlank() throws Exception {
+        assertInvalidRequest("""
+                {
+                  "sido": "Incheon",
+                  "sigungu": "Michuhol-gu",
+                  "administrativeArea": ""
+                }
+                """);
+    }
+
+    private void assertInvalidRequest(String requestBody) throws Exception {
+        mockMvc.perform(post("/api/regions/resolve")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.isSuccess", is(false)))
                 .andExpect(jsonPath("$.code", is("COMMON400")));

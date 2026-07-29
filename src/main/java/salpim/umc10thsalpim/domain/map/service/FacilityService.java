@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.map.converter.WelfareConverter;
-import salpim.umc10thsalpim.domain.map.dto.ExternalWelfareResponse;
 import salpim.umc10thsalpim.domain.map.dto.MapReqDTO;
 import salpim.umc10thsalpim.domain.map.dto.MapResDTO;
 import salpim.umc10thsalpim.domain.map.exception.MapException;
@@ -15,6 +14,8 @@ import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.region.service.RegionQueryService;
+import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
+import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 import salpim.umc10thsalpim.global.util.GeoUtils;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class FacilityService {
 
     private final MemberRepository memberRepository;
     private final RegionQueryService regionQueryService;
-    private final WelfareApiClient welfareApiClient;
+    private final BokjiroApiClient bokjiroApiClient;
     private final WelfareConverter welfareConverter;
 
     public MapResDTO.FacilityInfoResDTO getFacilityInfo(
@@ -54,12 +55,19 @@ public class FacilityService {
         GeoUtils.validateCoordinates(request.latitude(), request.longitude());
         GeoUtils.validateCoordinates(member.getLatitude(), member.getLongitude());
 
-        // 관할 행정복지센터 일치 여부 확인 (카카오맵 VS DB의 사용자 관할행정동)
-        boolean isMatched = isMyServiceCenter(member.getWelfareCenter(), request.facilityName());
-        if (!isMatched) {
-            log.warn("⚠️ 관할 행정동 불일치 - Member serviceCenter: {}, Request facilityName: {}", member.getWelfareCenter(), request.facilityName());
-            throw new MapException(MapErrorCode.NOT_MY_SERVICE_CENTER);
+        //DB에 저장된 회원의 welfare_center 유효성 검증
+        if(member.getWelfareCenter() == null || member.getWelfareCenter().isBlank()){
+            throw new MapException(MapErrorCode.SERVICE_CENTER_NOT_FOUND); //404_2
         }
+        //카카오맵 요청 facilityName 유효성 검증
+        if(request.facilityName() == null || request.facilityName().isBlank()){
+            throw new MapException(MapErrorCode.INVALID_FACILITY_REQUEST); //400_2
+        }
+
+        // 관할 행정복지센터 일치 여부 확인 메서드 호출(카카오맵 VS DB의 사용자 관할행정동)
+        validateMyServiceCenter(member.getWelfareCenter(), request.facilityName());
+        //예외가 터지지 않으면 true
+        boolean isMatched = true;
 
         // 거리 계산 (GeoUtils 사용)
         String calculatedDistance = GeoUtils.calculateDistance(
@@ -69,8 +77,8 @@ public class FacilityService {
 
         List<MapResDTO.BenefitDTO> totalBenefits = new ArrayList<>();
 
-        // 중앙 혜택 리스트 추가
-        ExternalWelfareResponse centralResponse = welfareApiClient.fetchRawCentralBenefits();
+        // 중앙 혜택 리스트 추가 (BokjiroApiClient 사용)
+        BokjiroApiDTO.BenefitListRes centralResponse = bokjiroApiClient.searchNationalBenefits(1, 100, null, null);
         totalBenefits.addAll(welfareConverter.toCentralBenefitDTO(centralResponse));
 
         // 지자체 혜택 리스트 추가 (RegionQueryService 사용)
@@ -80,8 +88,8 @@ public class FacilityService {
             String sigungu = location[1];
 
             if (sido != null && sigungu != null) {
-                ExternalWelfareResponse localResponse = welfareApiClient.fetchRawLocalBenefits(sido, sigungu);
-                totalBenefits.addAll(welfareConverter.toLocalBenefitDTO(localResponse));
+                BokjiroApiDTO.BenefitListRes localResponse = bokjiroApiClient.searchLocalBenefits(1, 100, null, null, sido, sigungu);
+                totalBenefits.addAll(welfareConverter.toLocalBenefitDTO(localResponse, sido, sigungu));
             }
         }
 
@@ -89,6 +97,28 @@ public class FacilityService {
         MapResDTO.BenefitPageDTO benefitPageDTO = paginateBenefits(totalBenefits, cursor, size);
 
         return welfareConverter.toFacilityInfoResDTO(request, calculatedDistance, isMatched, benefitPageDTO);
+    }
+
+    // 지도에서 선택한 마커가 사용자의 관할구가 맞는지 판별
+    private void validateMyServiceCenter(String dbDongName, String kakaoFacilityName) {
+
+        //공백, 쉼표, 마침표, 기호 등 문자 제거
+        String myDong = dbDongName.replaceAll("[^가-힣0-9]",""); // DB에서 추출한 동 이름 (예: "학익1동")
+        String normalizedKakao = kakaoFacilityName.replaceAll("[^가-힣0-9]",""); // 카카오맵 facilityName
+
+        boolean isWelfareCenter = normalizedKakao.contains("주민센터") || normalizedKakao.contains("행정복지센터");
+
+        //넘어온 시설이 주민센터, 행정복지센터인지 확인
+        if(!isWelfareCenter){
+            throw new MapException(MapErrorCode.NOT_WELFARE_CENTER); //400_4
+        }
+
+        //내 관활동 이름이 포함되어 있는지 확인
+        boolean containsDong = normalizedKakao.contains(myDong);
+
+        if(!containsDong){
+            throw new MapException(MapErrorCode.NOT_MY_SERVICE_CENTER); //400_3
+        }
     }
 
     /**
@@ -175,18 +205,5 @@ public class FacilityService {
                 .pageSize(pageSize)
                 .totalCount(totalCount)
                 .build();
-    }
-
-    // 지도에서 선택한 마커가 사용자의 관할구가 맞는지 판별
-    private boolean isMyServiceCenter(String dbDongName, String kakaoFacilityName) {
-        if (dbDongName == null || kakaoFacilityName == null || dbDongName.isBlank()) {
-            return false;
-        }
-
-        String myDong = dbDongName.trim(); // DB에서 추출한 동 이름 (예: "학익1동")
-        String normalizedKakao = kakaoFacilityName.replaceAll("\\s+", ""); // 카카오맵 이름 공백 제거
-
-        return normalizedKakao.contains(myDong) &&
-                (normalizedKakao.contains("주민센터") || normalizedKakao.contains("행정복지센터"));
     }
 }

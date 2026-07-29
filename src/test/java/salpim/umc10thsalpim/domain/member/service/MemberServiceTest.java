@@ -24,6 +24,7 @@ import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
+import salpim.umc10thsalpim.domain.region.service.RegionQueryService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -50,6 +51,9 @@ class MemberServiceTest {
     private RegionRepository regionRepository;
 
     @Mock
+    private RegionQueryService regionQueryService;
+
+    @Mock
     private PhoneVerificationService phoneVerificationService;
 
     @Mock
@@ -63,20 +67,51 @@ class MemberServiceTest {
     void getMyPageSuccess() {
         Member member = createMember(DONG_ID);
 
-        Region dong = createRegion(DONG_ID, SIGUNGU_ID, "용현동", RegionLevel.DONG);
+        Region dong = createRegion(DONG_ID, SIGUNGU_ID, "용현동", RegionLevel.ADMINISTRATIVE_AREA);
         Region sigungu = createRegion(SIGUNGU_ID, SIDO_ID, "미추홀구", RegionLevel.SIGUNGU);
         Region sido = createRegion(SIDO_ID, null, "인천광역시", RegionLevel.SIDO);
 
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
         given(regionRepository.findById(DONG_ID)).willReturn(Optional.of(dong));
-        given(regionRepository.findById(SIGUNGU_ID)).willReturn(Optional.of(sigungu));
-        given(regionRepository.findById(SIDO_ID)).willReturn(Optional.of(sido));
+        given(regionQueryService.findAncestorRegionOrThrow(dong, RegionLevel.SIDO)).willReturn(sido);
+        given(regionQueryService.findAncestorRegionOrThrow(dong, RegionLevel.SIGUNGU)).willReturn(sigungu);
 
         MemberResDTO.MyPageInfo result = memberService.getMyPage(MEMBER_ID);
 
         assertThat(result).isEqualTo(
                 new MemberResDTO.MyPageInfo("홍길동", "인천광역시", "미추홀구")
         );
+    }
+
+    @Test
+    @DisplayName("일반구를 거치는 회원도 시도와 시군구를 조회한다")
+    void getMyPageSuccessWithGeneralGu() {
+        Long generalGuId = 3L;
+        Long administrativeAreaId = 4L;
+        Member member = createMember(administrativeAreaId);
+
+        Region sido = createRegion(SIDO_ID, null, "Gyeonggi-do", RegionLevel.SIDO);
+        Region sigungu = createRegion(SIGUNGU_ID, SIDO_ID, "Goyang-si", RegionLevel.SIGUNGU);
+        Region generalGu = createRegion(generalGuId, SIGUNGU_ID, "Deogyang-gu", RegionLevel.GENERAL_GU);
+        Region administrativeArea = createRegion(
+                administrativeAreaId,
+                generalGuId,
+                "Hwajeong-dong",
+                RegionLevel.ADMINISTRATIVE_AREA
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(regionRepository.findById(administrativeAreaId)).willReturn(Optional.of(administrativeArea));
+        given(regionQueryService.findAncestorRegionOrThrow(administrativeArea, RegionLevel.SIDO))
+                .willReturn(sido);
+        given(regionQueryService.findAncestorRegionOrThrow(administrativeArea, RegionLevel.SIGUNGU))
+                .willReturn(sigungu);
+
+        MemberResDTO.MyPageInfo result = memberService.getMyPage(MEMBER_ID);
+
+        assertThat(result.sido()).isEqualTo("Gyeonggi-do");
+        assertThat(result.sigungu()).isEqualTo("Goyang-si");
+        assertThat(generalGu.getRegionLevel()).isEqualTo(RegionLevel.GENERAL_GU);
     }
 
     @Test
@@ -130,10 +165,12 @@ class MemberServiceTest {
     @DisplayName("지역 계층의 부모 정보가 없으면 예외가 발생한다")
     void throwsExceptionWhenRegionHierarchyIsInvalid() {
         Member member = createMember(DONG_ID);
-        Region dong = createRegion(DONG_ID, null, "용현동", RegionLevel.DONG);
+        Region dong = createRegion(DONG_ID, null, "용현동", RegionLevel.ADMINISTRATIVE_AREA);
 
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
         given(regionRepository.findById(DONG_ID)).willReturn(Optional.of(dong));
+        given(regionQueryService.findAncestorRegionOrThrow(dong, RegionLevel.SIDO))
+                .willThrow(new RegionException(RegionErrorCode.REGION_HIERARCHY_INVALID));
 
         RegionException exception = assertThrows(
                 RegionException.class,
@@ -148,7 +185,7 @@ class MemberServiceTest {
     @DisplayName("동 단위 지역으로 회원 개인정보를 수정한다")
     void updateProfileSuccess() {
         Member member = createMember(DONG_ID);
-        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.ADMINISTRATIVE_AREA);
         MemberReqDTO.UpdateProfile request = createUpdateRequest(10L);
 
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
@@ -171,7 +208,7 @@ class MemberServiceTest {
     @DisplayName("개인정보 수정 시 텍스트 입력값을 정규화한다")
     void normalizesTextFieldsWhenUpdatingProfile() {
         Member member = createMember(DONG_ID);
-        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.ADMINISTRATIVE_AREA);
         MemberReqDTO.UpdateProfile request = new MemberReqDTO.UpdateProfile(
                 " 김철수 ",
                 LocalDate.of(1960, 5, 10),
@@ -200,7 +237,7 @@ class MemberServiceTest {
     @DisplayName("전화번호와 인증 토큰을 함께 전달하면 전화번호를 변경한다")
     void updateProfileWithPhoneNumberSuccess() {
         Member member = createMember(DONG_ID);
-        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.ADMINISTRATIVE_AREA);
         MemberReqDTO.UpdateProfile request = createUpdateRequest(
                 10L,
                 "010-1234-5678",
@@ -231,7 +268,7 @@ class MemberServiceTest {
     @DisplayName("전화번호만 전달하면 개인정보 수정에 실패한다")
     void throwsExceptionWhenOnlyPhoneNumberIsProvided() {
         Member member = createMember(DONG_ID);
-        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.ADMINISTRATIVE_AREA);
         MemberReqDTO.UpdateProfile request = createUpdateRequest(10L, "010-1234-5678", null);
 
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
@@ -251,7 +288,7 @@ class MemberServiceTest {
     @DisplayName("인증 토큰만 전달하면 개인정보 수정에 실패한다")
     void throwsExceptionWhenOnlyPhoneVerificationTokenIsProvided() {
         Member member = createMember(DONG_ID);
-        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.ADMINISTRATIVE_AREA);
         MemberReqDTO.UpdateProfile request = createUpdateRequest(
                 10L,
                 null,
@@ -275,7 +312,7 @@ class MemberServiceTest {
     @DisplayName("이미 사용 중인 전화번호로는 개인정보를 수정할 수 없다")
     void throwsExceptionWhenPhoneNumberAlreadyExists() {
         Member member = createMember(DONG_ID);
-        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.DONG);
+        Region newDong = createRegion(10L, SIGUNGU_ID, "주안동", RegionLevel.ADMINISTRATIVE_AREA);
         MemberReqDTO.UpdateProfile request = createUpdateRequest(
                 10L,
                 "010-1234-5678",
@@ -327,7 +364,7 @@ class MemberServiceTest {
 
     @Test
     @DisplayName("동 단위가 아닌 지역으로 개인정보를 수정하면 예외가 발생한다")
-    void throwsExceptionWhenUpdateRegionIsNotDong() {
+    void throwsExceptionWhenUpdateRegionIsNotAdministrativeArea() {
         Member member = createMember(DONG_ID);
         Region sigungu = createRegion(SIGUNGU_ID, SIDO_ID, "미추홀구", RegionLevel.SIGUNGU);
         MemberReqDTO.UpdateProfile request = createUpdateRequest(SIGUNGU_ID);
@@ -342,6 +379,42 @@ class MemberServiceTest {
 
         assertThat(exception.getErrorCode())
                 .isEqualTo(RegionErrorCode.REGION_LEVEL_INVALID);
+    }
+
+    @Test
+    @DisplayName("시도는 회원 지역으로 수정할 수 없다")
+    void throwsExceptionWhenUpdateRegionIsSido() {
+        Member member = createMember(DONG_ID);
+        Region sido = createRegion(SIDO_ID, null, "Incheon", RegionLevel.SIDO);
+        MemberReqDTO.UpdateProfile request = createUpdateRequest(SIDO_ID);
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(regionRepository.findById(SIDO_ID)).willReturn(Optional.of(sido));
+
+        RegionException exception = assertThrows(
+                RegionException.class,
+                () -> memberService.updateProfile(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(RegionErrorCode.REGION_LEVEL_INVALID);
+    }
+
+    @Test
+    @DisplayName("일반구는 회원 지역으로 수정할 수 없다")
+    void throwsExceptionWhenUpdateRegionIsGeneralGu() {
+        Member member = createMember(DONG_ID);
+        Region generalGu = createRegion(10L, SIGUNGU_ID, "Deogyang-gu", RegionLevel.GENERAL_GU);
+        MemberReqDTO.UpdateProfile request = createUpdateRequest(10L);
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(regionRepository.findById(10L)).willReturn(Optional.of(generalGu));
+
+        RegionException exception = assertThrows(
+                RegionException.class,
+                () -> memberService.updateProfile(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(RegionErrorCode.REGION_LEVEL_INVALID);
     }
 
     private Member createMember(Long regionId) {

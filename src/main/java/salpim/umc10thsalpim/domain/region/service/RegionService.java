@@ -26,24 +26,30 @@ public class RegionService {
 
     @Transactional
     public RegionResDTO.ResolveResult resolve(RegionReqDTO.Resolve request) {
-        String city = normalizeOptional(request.city());
-        String district = normalizeOptional(request.district());
-        String eupMyeonDong = normalizeRequired(request.eupMyeonDong());
+        String sido = normalizeRequired(request.sido());
+        String sigungu = normalizeRequired(request.sigungu());
+        String generalGu = normalizeOptional(request.generalGu());
+        String administrativeArea = normalizeRequired(request.administrativeArea());
 
         List<String> regionNames = new ArrayList<>();
         Region parent = null;
 
-        if (StringUtils.hasText(city)) {
-            parent = findOrCreateRegion(null, city, RegionLevel.CITY);
+        if (StringUtils.hasText(sido)) {
+            parent = findOrCreateRegion(null, sido, RegionLevel.SIDO);
             regionNames.add(parent.getName());
         }
 
-        if (StringUtils.hasText(district)) {
-            parent = findOrCreateRegion(parent, district, RegionLevel.GU_GUN);
+        if (StringUtils.hasText(sigungu)) {
+            parent = findOrCreateRegion(parent, sigungu, RegionLevel.SIGUNGU);
             regionNames.add(parent.getName());
         }
 
-        Region leafRegion = findOrCreateRegion(parent, eupMyeonDong, RegionLevel.EUP_MYEON_DONG);
+        if (StringUtils.hasText(generalGu)) {
+            parent = findOrCreateRegion(parent, generalGu, RegionLevel.GENERAL_GU);
+            regionNames.add(parent.getName());
+        }
+
+        Region leafRegion = findOrCreateRegion(parent, administrativeArea, RegionLevel.ADMINISTRATIVE_AREA);
         regionNames.add(leafRegion.getName());
 
         return RegionConverter.toResolveResult(leafRegion, String.join(" ", regionNames));

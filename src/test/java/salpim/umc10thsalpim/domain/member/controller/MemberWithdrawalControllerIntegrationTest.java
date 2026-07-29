@@ -71,7 +71,7 @@ class MemberWithdrawalControllerIntegrationTest {
 
     @Test
     void withdrawDeletesAuthenticatedMemberAndInvalidatesExistingAccessToken() throws Exception {
-        Region region = regionRepository.save(Region.create(null, "화전동", RegionLevel.EUP_MYEON_DONG));
+        Region region = regionRepository.save(Region.create(null, "화전동", RegionLevel.ADMINISTRATIVE_AREA));
         Member member = memberRepository.save(member(region));
         AuthResDTO.TokenResult tokenResult = tokenService.issueLoginTokens(member);
 

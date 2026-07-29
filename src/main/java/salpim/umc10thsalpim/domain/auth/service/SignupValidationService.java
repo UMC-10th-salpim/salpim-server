@@ -33,7 +33,7 @@ public class SignupValidationService {
     public Region findLeafRegion(Long regionId) {
         Region region = regionRepository.findById(regionId)
                 .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
-        if (region.getRegionLevel() != RegionLevel.EUP_MYEON_DONG) {
+        if (region.getRegionLevel() != RegionLevel.ADMINISTRATIVE_AREA) {
             throw new RegionException(RegionErrorCode.REGION_NOT_LEAF);
         }
         return region;

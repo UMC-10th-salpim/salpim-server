@@ -32,6 +32,8 @@ public class BokjiroApiDTO {
         private String servId;
         private String servNm;
         private String inqNum;
+        private String ctpvNm;
+        private String sggNm;
     }
 
 }

@@ -1,9 +1,9 @@
 package salpim.umc10thsalpim.domain.map.converter;
 
 import org.springframework.stereotype.Component;
-import salpim.umc10thsalpim.domain.map.dto.ExternalWelfareResponse;
 import salpim.umc10thsalpim.domain.map.dto.MapReqDTO;
 import salpim.umc10thsalpim.domain.map.dto.MapResDTO;
+import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,13 +29,13 @@ public class WelfareConverter {
                 .build();
     }
 
-    //중앙 혜택리스트 변환 (XML 요소 -> DTO 요소)
-    public List<MapResDTO.BenefitDTO> toCentralBenefitDTO(ExternalWelfareResponse response) {
-        if(response == null || response.getServList() == null){
+    // 중앙 혜택 리스트 변환 (BokjiroApiDTO -> DTO)
+    public List<MapResDTO.BenefitDTO> toCentralBenefitDTO(BokjiroApiDTO.BenefitListRes response) {
+        if (response == null || response.getBenefitList() == null) {
             return Collections.emptyList();
         }
 
-        return response.getServList().stream()
+        return response.getBenefitList().stream()
                 .map(item -> MapResDTO.BenefitDTO.builder()
                         .servId(item.getServId())
                         .region("전국")
@@ -44,16 +44,30 @@ public class WelfareConverter {
                 .collect(Collectors.toList());
     }
 
-    //지자체 혜택리스트 변환 (XML 요소 -> DTO 요소)
-    public List<MapResDTO.BenefitDTO> toLocalBenefitDTO(ExternalWelfareResponse response) {
-        if(response == null || response.getServList() == null) return Collections.emptyList();
+    // 지자체 혜택 리스트 변환 (BokjiroApiDTO -> DTO)
+    public List<MapResDTO.BenefitDTO> toLocalBenefitDTO(
+            BokjiroApiDTO.BenefitListRes response,
+            String sido,
+            String sigungu
+    ) {
+        if (response == null || response.getBenefitList() == null) {
+            return Collections.emptyList();
+        }
 
-        return response.getServList().stream()
-                .map(item -> MapResDTO.BenefitDTO.builder()
-                        .servId(item.getServId())
-                        .region(item.getCtpvNm() + " " + item.getSggNm())
-                        .serviceName(item.getServNm())
-                        .build())
+        String fallbackRegion = (sido != null && sigungu != null) ? sido + " " + sigungu : "지자체";
+
+        return response.getBenefitList().stream()
+                .map(item -> {
+                    String regionText = (item.getCtpvNm() != null && item.getSggNm() != null)
+                            ? item.getCtpvNm() + " " + item.getSggNm()
+                            : fallbackRegion;
+
+                    return MapResDTO.BenefitDTO.builder()
+                            .servId(item.getServId())
+                            .region(regionText)
+                            .serviceName(item.getServNm())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 }

@@ -93,6 +93,6 @@ class MemberTest {
     }
 
     private Region region() {
-        return Region.create(null, "화전동", RegionLevel.EUP_MYEON_DONG);
+        return Region.create(null, "화전동", RegionLevel.ADMINISTRATIVE_AREA);
     }
 }

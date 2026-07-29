@@ -29,7 +29,7 @@ class MemberAuditingTest {
     @Test
     void createdAtAndUpdatedAtAreSavedWhenMemberIsPersisted() {
         Region region = regionRepository.saveAndFlush(
-                Region.create(null, "Hwajeon", RegionLevel.EUP_MYEON_DONG)
+                Region.create(null, "Hwajeon", RegionLevel.ADMINISTRATIVE_AREA)
         );
         Member member = Member.builder()
                 .loginType(SocialProvider.LOCAL)
