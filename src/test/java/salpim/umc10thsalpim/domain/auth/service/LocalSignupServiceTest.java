@@ -48,7 +48,7 @@ class LocalSignupServiceTest {
     private LocalSignupService localSignupService;
 
     @Test
-    void signupSavesMemberWithRegionAndEupMyeonDongAsWelfareCenter() {
+    void signupSavesMemberWithAdministrativeAreaAsWelfareCenter() {
         AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
         Region region = region();
 
@@ -132,6 +132,6 @@ class LocalSignupServiceTest {
     }
 
     private Region region() {
-        return Region.create(null, "Hwajeon", RegionLevel.EUP_MYEON_DONG);
+        return Region.create(null, "Hwajeon", RegionLevel.ADMINISTRATIVE_AREA);
     }
 }

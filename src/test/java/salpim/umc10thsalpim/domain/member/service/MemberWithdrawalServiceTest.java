@@ -57,7 +57,7 @@ class MemberWithdrawalServiceTest {
 
     @Test
     void withdrawDeletesMemberOwnedDataButKeepsSharedData() {
-        Region region = regionRepository.save(Region.create(null, "화전동", RegionLevel.EUP_MYEON_DONG));
+        Region region = regionRepository.save(Region.create(null, "화전동", RegionLevel.ADMINISTRATIVE_AREA));
         WelfareBenefit benefit = welfareBenefitRepository.save(WelfareBenefit.builder()
                 .externalId("benefit-1")
                 .source("test")

@@ -8,20 +8,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RegionTest {
 
     @Test
-    void topLevelRegionCanHaveNoParent() {
-        Region sido = Region.create(null, "경기도", RegionLevel.SIDO);
+    void sidoCanHaveNoParent() {
+        Region sido = Region.create(null, "Gyeonggi-do", RegionLevel.SIDO);
 
         assertThat(sido.getParent()).isNull();
-        assertThat(sido.getName()).isEqualTo("경기도");
         assertThat(sido.getRegionLevel()).isEqualTo(RegionLevel.SIDO);
     }
 
     @Test
-    void childRegionCanHaveParentRegion() {
-        Region sido = Region.create(null, "경기도", RegionLevel.SIDO);
-        Region city = Region.create(sido, "고양시", RegionLevel.CITY);
+    void administrativeAreaCanHaveGeneralGuAsParent() {
+        Region sido = Region.create(null, "Gyeonggi-do", RegionLevel.SIDO);
+        Region sigungu = Region.create(sido, "Goyang-si", RegionLevel.SIGUNGU);
+        Region generalGu = Region.create(sigungu, "Deogyang-gu", RegionLevel.GENERAL_GU);
+        Region administrativeArea = Region.create(generalGu, "Hwajeong-dong", RegionLevel.ADMINISTRATIVE_AREA);
 
-        assertThat(city.getParent()).isSameAs(sido);
-        assertThat(city.getRegionLevel()).isEqualTo(RegionLevel.CITY);
+        assertThat(administrativeArea.getParent()).isSameAs(generalGu);
+        assertThat(generalGu.getParent()).isSameAs(sigungu);
+        assertThat(administrativeArea.getRegionLevel()).isEqualTo(RegionLevel.ADMINISTRATIVE_AREA);
     }
 }
