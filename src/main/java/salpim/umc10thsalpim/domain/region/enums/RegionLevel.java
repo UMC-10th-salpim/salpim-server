@@ -6,5 +6,7 @@ public enum RegionLevel {
     GU_GUN,
     EUP_MYEON_DONG,
     SIGUNGU,
-    DONG
+    DONG,
+    GENERAL_GU,
+    ADMINISTRATIVE_AREA
 }
