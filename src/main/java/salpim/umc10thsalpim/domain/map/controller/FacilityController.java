@@ -2,12 +2,14 @@ package salpim.umc10thsalpim.domain.map.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import salpim.umc10thsalpim.domain.map.dto.MapRequestDto;
-import salpim.umc10thsalpim.domain.map.dto.MapResponseDto;
+import salpim.umc10thsalpim.domain.map.dto.MapReqDTO;
+import salpim.umc10thsalpim.domain.map.dto.MapResDTO;
 import salpim.umc10thsalpim.domain.map.exception.code.MapSuccessCode;
 import salpim.umc10thsalpim.domain.map.service.FacilityService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;

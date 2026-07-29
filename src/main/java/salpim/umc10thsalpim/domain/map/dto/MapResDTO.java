@@ -5,11 +5,7 @@ import lombok.Builder;
 
 import java.util.List;
 
-<<<<<<<< HEAD:src/main/java/salpim/umc10thsalpim/domain/map/dto/MapResponseDTO.java
-public class MapResponseDTO {
-========
 public class MapResDTO {
->>>>>>>> 1445168e0e9ba49d31ab8beade7b2e34a68a135c:src/main/java/salpim/umc10thsalpim/domain/map/dto/MapResDTO.java
 
     @Builder
     public record FacilityInfoResDTO(
