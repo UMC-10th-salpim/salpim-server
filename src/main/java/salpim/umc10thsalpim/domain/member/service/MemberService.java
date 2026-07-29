@@ -57,7 +57,7 @@ public class MemberService {
 
         Region region = getRegionOrThrow(request.regionId());
 
-        if (region.getRegionLevel() != RegionLevel.DONG) {
+        if (region.getRegionLevel() != RegionLevel.ADMINISTRATIVE_AREA) {
             throw new RegionException(RegionErrorCode.REGION_LEVEL_INVALID);
         }
 

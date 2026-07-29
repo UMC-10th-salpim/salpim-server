@@ -121,7 +121,8 @@ public class BenefitService {
         }
 
         RegionLevel targetLevel = switch(regionScope){
-            case MEMBER_DONG -> RegionLevel.DONG;
+            case MEMBER_ADMINISTRATIVE_AREA -> RegionLevel.ADMINISTRATIVE_AREA;
+            case MEMBER_GENERAL_GU -> RegionLevel.GENERAL_GU;
             case MEMBER_SIGUNGU -> RegionLevel.SIGUNGU;
             case MEMBER_SIDO -> RegionLevel.SIDO;
             case NONE -> throw new IllegalStateException(

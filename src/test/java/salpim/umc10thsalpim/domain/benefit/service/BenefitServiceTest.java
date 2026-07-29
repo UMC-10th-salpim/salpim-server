@@ -82,7 +82,7 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("테스트 혜택")
                 .regionId(dongId)
-                .regionScope(RegionScope.MEMBER_DONG)
+                .regionScope(RegionScope.MEMBER_ADMINISTRATIVE_AREA)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
@@ -248,7 +248,7 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("테스트 혜택")
                 .regionId(benefitDongId)
-                .regionScope(RegionScope.MEMBER_DONG)
+                .regionScope(RegionScope.MEMBER_ADMINISTRATIVE_AREA)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
@@ -337,7 +337,7 @@ class BenefitServiceTest {
                 .id(benefitId)
                 .title("지역 정보 없는 테스트 혜택")
                 .regionId(null)
-                .regionScope(RegionScope.MEMBER_DONG)
+                .regionScope(RegionScope.MEMBER_ADMINISTRATIVE_AREA)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
