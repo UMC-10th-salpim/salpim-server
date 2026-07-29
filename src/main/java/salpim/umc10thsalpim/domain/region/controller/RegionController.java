@@ -23,7 +23,7 @@ public class RegionController {
 
     @Operation(
             summary = "행정구역 계층 저장 및 조회",
-            description = "시·도, 시, 구·군, 읍·면·동 정보를 계층형 Region으로 저장하거나 기존 Region을 조회한 후 가장 하위 지역 ID를 반환합니다."
+            description = "시/도, 시/군/구, 일반구, 행정구역 정보를 계층형 Region으로 저장하거나 기존 Region을 조회한 후 가장 하위 지역 ID를 반환합니다."
     )
     @PostMapping("/resolve")
     public ResponseEntity<ApiResponse<RegionResDTO.ResolveResult>> resolve(

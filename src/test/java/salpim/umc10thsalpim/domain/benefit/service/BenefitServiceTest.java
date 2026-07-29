@@ -19,6 +19,7 @@ import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
+import salpim.umc10thsalpim.domain.region.service.RegionQueryService;
 import salpim.umc10thsalpim.domain.benefit.exception.BenefitException;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitErrorCode;
 import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
@@ -46,6 +47,9 @@ class BenefitServiceTest {
     @Mock
     private RegionRepository regionRepository;
 
+    @Mock
+    private RegionQueryService regionQueryService;
+
     @InjectMocks
     private BenefitService benefitService;
 
@@ -61,7 +65,7 @@ class BenefitServiceTest {
 
     @Test
     @DisplayName("회원 동과 헤택 동이 같으면 지역 조건 충족")
-    void returnsTrueWhenMemberDongMatchesBenefitDong() {
+    void returnsTrueWhenMemberAdministrativeAreaMatchesBenefitAdministrativeArea() {
         Long memberId = 1L;
         Long benefitId = 100L;
         Long dongId = 10L;
@@ -75,14 +79,14 @@ class BenefitServiceTest {
                 .id(dongId)
                 .parentId(2L)
                 .name("용현동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
                 .id(benefitId)
                 .title("테스트 혜택")
                 .regionId(dongId)
-                .regionScope(RegionScope.MEMBER_DONG)
+                .regionScope(RegionScope.MEMBER_ADMINISTRATIVE_AREA)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
@@ -93,6 +97,8 @@ class BenefitServiceTest {
 
         given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
         given(regionRepository.findById(dongId)).willReturn(Optional.of(dong));
+        given(regionQueryService.findAncestorRegion(dong, RegionLevel.ADMINISTRATIVE_AREA))
+                .willReturn(dong);
         given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
         given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
                 .willReturn(List.of(rule));
@@ -120,7 +126,7 @@ class BenefitServiceTest {
                 .id(dongId)
                 .parentId(sigunguId)
                 .name("용현동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         Region sigungu = Region.builder()
@@ -146,9 +152,99 @@ class BenefitServiceTest {
         given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
         given(regionRepository.findById(dongId)).willReturn(Optional.of(dong));
         given(regionRepository.findById(sigunguId)).willReturn(Optional.of(sigungu));
+        given(regionQueryService.findAncestorRegion(dong, RegionLevel.SIGUNGU))
+                .willReturn(sigungu);
         given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
         given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
                 .willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isRegionSatisfied()).isTrue();
+    }
+
+    @Test
+    void returnsTrueWhenMemberUnderGeneralGuMatchesBenefitSigungu() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberRegionId = 10L;
+        Long sigunguId = 2L;
+
+        Member member = Member.builder().id(memberId).regionId(memberRegionId).build();
+        Region memberRegion = Region.builder()
+                .id(memberRegionId)
+                .parentId(3L)
+                .name("Hwajeong-dong")
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
+                .build();
+        Region sigungu = Region.builder()
+                .id(sigunguId)
+                .parentId(1L)
+                .name("Goyang-si")
+                .regionLevel(RegionLevel.SIGUNGU)
+                .build();
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .regionId(sigunguId)
+                .regionScope(RegionScope.MEMBER_SIGUNGU)
+                .build();
+        BenefitRule rule = BenefitRule.builder()
+                .welfareBenefitId(benefitId)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberRegionId)).willReturn(Optional.of(memberRegion));
+        given(regionRepository.findById(sigunguId)).willReturn(Optional.of(sigungu));
+        given(regionQueryService.findAncestorRegion(memberRegion, RegionLevel.SIGUNGU))
+                .willReturn(sigungu);
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId)).willReturn(List.of(rule));
+
+        BenefitResDTO.GetApplicationHelperInfo result =
+                benefitService.getApplicationHelperInfo(memberId, benefitId);
+
+        assertThat(result.isRegionSatisfied()).isTrue();
+    }
+
+    @Test
+    void returnsTrueWhenMemberGeneralGuMatchesBenefitGeneralGu() {
+        Long memberId = 1L;
+        Long benefitId = 100L;
+        Long memberRegionId = 10L;
+        Long generalGuId = 3L;
+
+        Member member = Member.builder().id(memberId).regionId(memberRegionId).build();
+        Region memberRegion = Region.builder()
+                .id(memberRegionId)
+                .parentId(generalGuId)
+                .name("Hwajeong-dong")
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
+                .build();
+        Region generalGu = Region.builder()
+                .id(generalGuId)
+                .parentId(2L)
+                .name("Deogyang-gu")
+                .regionLevel(RegionLevel.GENERAL_GU)
+                .build();
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .regionId(generalGuId)
+                .regionScope(RegionScope.MEMBER_GENERAL_GU)
+                .build();
+        BenefitRule rule = BenefitRule.builder()
+                .welfareBenefitId(benefitId)
+                .applicationType(ApplicationType.ONLINE)
+                .build();
+
+        given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
+        given(regionRepository.findById(memberRegionId)).willReturn(Optional.of(memberRegion));
+        given(regionRepository.findById(generalGuId)).willReturn(Optional.of(generalGu));
+        given(regionQueryService.findAncestorRegion(memberRegion, RegionLevel.GENERAL_GU))
+                .willReturn(generalGu);
+        given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
+        given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId)).willReturn(List.of(rule));
 
         BenefitResDTO.GetApplicationHelperInfo result =
                 benefitService.getApplicationHelperInfo(memberId, benefitId);
@@ -174,7 +270,7 @@ class BenefitServiceTest {
                 .id(dongId)
                 .parentId(sigunguId)
                 .name("용현동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         Region sigungu = Region.builder()
@@ -205,8 +301,9 @@ class BenefitServiceTest {
 
         given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
         given(regionRepository.findById(dongId)).willReturn(Optional.of(dong));
-        given(regionRepository.findById(sigunguId)).willReturn(Optional.of(sigungu));
         given(regionRepository.findById(sidoId)).willReturn(Optional.of(sido));
+        given(regionQueryService.findAncestorRegion(dong, RegionLevel.SIDO))
+                .willReturn(sido);
         given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
         given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
                 .willReturn(List.of(rule));
@@ -219,7 +316,7 @@ class BenefitServiceTest {
 
     @Test
     @DisplayName("회원 동과 혜택 동이 다르면 지역 조건 불충족")
-    void returnsFalseWhenMemberDongDoesNotMatchBenefitDong() {
+    void returnsFalseWhenMemberAdministrativeAreaDoesNotMatchBenefitAdministrativeArea() {
         Long memberId = 1L;
         Long benefitId = 100L;
         Long memberDongId = 10L;
@@ -234,21 +331,21 @@ class BenefitServiceTest {
                 .id(memberDongId)
                 .parentId(2L)
                 .name("용현동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         Region benefitDong = Region.builder()
                 .id(benefitDongId)
                 .parentId(2L)
                 .name("학익동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
                 .id(benefitId)
                 .title("테스트 혜택")
                 .regionId(benefitDongId)
-                .regionScope(RegionScope.MEMBER_DONG)
+                .regionScope(RegionScope.MEMBER_ADMINISTRATIVE_AREA)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
@@ -260,6 +357,8 @@ class BenefitServiceTest {
         given(memberRepository.findById(memberId)).willReturn(Optional.of(member));
         given(regionRepository.findById(memberDongId)).willReturn(Optional.of(memberDong));
         given(regionRepository.findById(benefitDongId)).willReturn(Optional.of(benefitDong));
+        given(regionQueryService.findAncestorRegion(memberDong, RegionLevel.ADMINISTRATIVE_AREA))
+                .willReturn(memberDong);
         given(welfareBenefitRepository.findById(benefitId)).willReturn(Optional.of(benefit));
         given(benefitRuleRepository.findAllByWelfareBenefitId(benefitId))
                 .willReturn(List.of(rule));
@@ -286,7 +385,7 @@ class BenefitServiceTest {
                 .id(memberDongId)
                 .parentId(2L)
                 .name("용현동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
@@ -330,14 +429,14 @@ class BenefitServiceTest {
                 .id(memberDongId)
                 .parentId(2L)
                 .name("용현동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
                 .id(benefitId)
                 .title("지역 정보 없는 테스트 혜택")
                 .regionId(null)
-                .regionScope(RegionScope.MEMBER_DONG)
+                .regionScope(RegionScope.MEMBER_ADMINISTRATIVE_AREA)
                 .build();
 
         BenefitRule rule = BenefitRule.builder()
@@ -378,14 +477,14 @@ class BenefitServiceTest {
                 .id(memberDongId)
                 .parentId(2L)
                 .name("용현동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         Region benefitDong = Region.builder()
                 .id(benefitDongId)
                 .parentId(2L)
                 .name("학익동")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
@@ -433,7 +532,7 @@ class BenefitServiceTest {
         Region memberRegion = Region.builder()
                 .id(memberRegionId)
                 .name("테스트 지역")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
@@ -478,7 +577,7 @@ class BenefitServiceTest {
         Region memberRegion = Region.builder()
                 .id(memberRegionId)
                 .name("테스트 지역")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
@@ -523,7 +622,7 @@ class BenefitServiceTest {
         Region memberRegion = Region.builder()
                 .id(memberRegionId)
                 .name("테스트 지역")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
@@ -570,7 +669,7 @@ class BenefitServiceTest {
         Region memberRegion = Region.builder()
                 .id(memberRegionId)
                 .name("테스트 지역")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
@@ -617,7 +716,7 @@ class BenefitServiceTest {
         Region memberRegion = Region.builder()
                 .id(memberRegionId)
                 .name("테스트 지역")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
@@ -664,7 +763,7 @@ class BenefitServiceTest {
         Region memberRegion = Region.builder()
                 .id(memberRegionId)
                 .name("테스트 지역")
-                .regionLevel(RegionLevel.DONG)
+                .regionLevel(RegionLevel.ADMINISTRATIVE_AREA)
                 .build();
 
         WelfareBenefit benefit = WelfareBenefit.builder()
