@@ -3,6 +3,7 @@ services:
     image: mysql:8.4
     container_name: salpim-db
     restart: unless-stopped
+    command: ["--local-infile=1"]
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
