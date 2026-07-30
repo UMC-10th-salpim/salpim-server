@@ -33,11 +33,17 @@ public class WelfareBenefit extends BaseEntity {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "content", nullable = false)
-    private String content;
+    @Column(name = "easy_summary", nullable = false)
+    private String easySummary;
 
-    @Column(name = "target_description")
-    private String targetDescription;
+    @Column(name = "who_can_receive", nullable = false)
+    private String whoCanReceive;
+
+    @Column(name = "what_you_receive", nullable = false)
+    private String whatYouReceive;
+
+    @Column(name = "recommended_for", nullable = false)
+    private String recommendedFor;
 
     @Column(name = "application_start_date")
     private LocalDate applicationStartDate;
@@ -54,9 +60,6 @@ public class WelfareBenefit extends BaseEntity {
 
     @Column(name = "category_id")
     private Long categoryId;
-
-    @Column(name = "application_method")
-    private String applicationMethod;
 
     @Column(name = "application_url")
     private String applicationUrl;
