@@ -55,7 +55,7 @@ public class MemberController {
     @GetMapping("/users/me")
     @Operation(
             summary = "마이페이지 조회",
-            description = "회원 이름과 시도, 시군구 정보를 조회합니다.",
+            description = "회원 기본정보 및 개인정보 수정용 정보를 조회합니다.",
             security = @SecurityRequirement(name = "JWT TOKEN")
     )
     public ApiResponse<MemberResDTO.MyPageInfo> getMyPage(
