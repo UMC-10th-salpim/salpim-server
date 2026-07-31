@@ -71,8 +71,6 @@ class BenefitControllerTest {
                 new BenefitResDTO.GetApplicationHelperInfo(
                         benefitId,
                         "테스트 혜택",
-                        "지원 대상",
-                        "주민센터 방문",
                         "https://example.com",
                         "129",
                         "테스트 기관",

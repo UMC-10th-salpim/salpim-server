@@ -62,7 +62,10 @@ class MemberWithdrawalServiceTest {
                 .externalId("benefit-1")
                 .source("test")
                 .title("benefit")
-                .content("content")
+                .easySummary("easy summary")
+                .whoCanReceive("who can receive")
+                .whatYouReceive("what you receive")
+                .recommendedFor("recommended for")
                 .regionScope(RegionScope.NONE)
                 .build());
         Member member = memberRepository.save(member(region, "01011112222"));
