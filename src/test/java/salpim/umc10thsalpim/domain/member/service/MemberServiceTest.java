@@ -75,12 +75,23 @@ class MemberServiceTest {
         given(regionRepository.findById(DONG_ID)).willReturn(Optional.of(dong));
         given(regionQueryService.findAncestorRegionOrThrow(dong, RegionLevel.SIDO)).willReturn(sido);
         given(regionQueryService.findAncestorRegionOrThrow(dong, RegionLevel.SIGUNGU)).willReturn(sigungu);
+        given(regionQueryService.findAncestorRegion(dong, RegionLevel.GENERAL_GU)).willReturn(null);
 
         MemberResDTO.MyPageInfo result = memberService.getMyPage(MEMBER_ID);
 
-        assertThat(result).isEqualTo(
-                new MemberResDTO.MyPageInfo("홍길동", "인천광역시", "미추홀구")
-        );
+        assertThat(result.name()).isEqualTo(member.getName());
+        assertThat(result.birthDate()).isEqualTo(member.getBirthDate());
+        assertThat(result.gender()).isEqualTo(member.getGender());
+        assertThat(result.phoneNumber()).isEqualTo(member.getPhoneNumber());
+        assertThat(result.roadAddress()).isEqualTo(member.getRoadAddress());
+        assertThat(result.detailAddress()).isEqualTo(member.getDetailAddress());
+        assertThat(result.latitude()).isEqualByComparingTo(member.getLatitude());
+        assertThat(result.longitude()).isEqualByComparingTo(member.getLongitude());
+        assertThat(result.regionId()).isEqualTo(DONG_ID);
+        assertThat(result.sido()).isEqualTo(sido.getName());
+        assertThat(result.sigungu()).isEqualTo(sigungu.getName());
+        assertThat(result.generalGu()).isNull();
+        assertThat(result.administrativeArea()).isEqualTo(dong.getName());
     }
 
     @Test
@@ -106,12 +117,15 @@ class MemberServiceTest {
                 .willReturn(sido);
         given(regionQueryService.findAncestorRegionOrThrow(administrativeArea, RegionLevel.SIGUNGU))
                 .willReturn(sigungu);
+        given(regionQueryService.findAncestorRegion(administrativeArea, RegionLevel.GENERAL_GU))
+                .willReturn(generalGu);
 
         MemberResDTO.MyPageInfo result = memberService.getMyPage(MEMBER_ID);
 
         assertThat(result.sido()).isEqualTo("Gyeonggi-do");
         assertThat(result.sigungu()).isEqualTo("Goyang-si");
-        assertThat(generalGu.getRegionLevel()).isEqualTo(RegionLevel.GENERAL_GU);
+        assertThat(result.generalGu()).isEqualTo("Deogyang-gu");
+        assertThat(result.administrativeArea()).isEqualTo("Hwajeong-dong");
     }
 
     @Test
