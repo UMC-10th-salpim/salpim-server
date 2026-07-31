@@ -19,8 +19,6 @@ public class BenefitResDTO {
     public record GetApplicationHelperInfo(
             Long benefitId,
             String title,
-            String targetDescription,
-            String applicationMethod,
             String applicationUrl,
             String contact,
             String organization,
