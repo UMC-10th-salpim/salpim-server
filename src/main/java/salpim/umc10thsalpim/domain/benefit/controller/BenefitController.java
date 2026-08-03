@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import salpim.umc10thsalpim.domain.benefit.dto.BenefitReqDTO;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitSuccessCode;
 import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
@@ -62,6 +63,20 @@ public class BenefitController {
     }
 
 
+
+    @GetMapping("/{benefitId}")
+    @Operation(
+            summary = "혜택 상세 조회",
+            description = "복지 혜택의 상세 정보(요약, 자격, 혜택 내용, 신청 기간 등)를 조회합니다."
+    )
+    public ApiResponse<BenefitResDTO.GetBenefitDetailDTO> getBenefitDetail(
+            @Parameter(description = "조회할 복지 혜택 ID", example = "1")
+            @PathVariable Long benefitId
+    ) {
+        BenefitReqDTO.GetBenefitDetailDTO request = new BenefitReqDTO.GetBenefitDetailDTO(benefitId);
+        BenefitResDTO.GetBenefitDetailDTO response = benefitService.getBenefitDetail(request);
+        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_VIEW, response);
+    }
 
     @GetMapping("/{benefitId}/application-helper")
     @SecurityRequirement(name = "JWT TOKEN")

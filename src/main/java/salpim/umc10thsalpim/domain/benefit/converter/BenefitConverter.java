@@ -31,6 +31,25 @@ public class BenefitConverter {
                 .build();
     }
 
+    public static BenefitResDTO.GetBenefitDetailDTO toGetBenefitDetailDTO(
+            WelfareBenefit welfareBenefit,
+            String categoryName
+    ) {
+        return new BenefitResDTO.GetBenefitDetailDTO(
+                welfareBenefit.getTitle(),
+                welfareBenefit.getEasySummary(),
+                welfareBenefit.getWhoCanReceive(),
+                welfareBenefit.getWhatYouReceive(),
+                welfareBenefit.getRecommendedFor(),
+                welfareBenefit.getApplicationStartDate(),
+                welfareBenefit.getApplicationEndDate(),
+                welfareBenefit.getApplicationUrl(),
+                categoryName,
+                welfareBenefit.getMinAge(),
+                welfareBenefit.getMaxAge()
+        );
+    }
+
     public static BenefitResDTO.GetApplicationHelperInfo toGetApplicationHelperInfo(
             WelfareBenefit welfareBenefit,
             Boolean isOnlineApplicationAvailable,
