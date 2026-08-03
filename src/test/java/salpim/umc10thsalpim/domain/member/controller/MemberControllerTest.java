@@ -89,7 +89,21 @@ class MemberControllerTest {
     @DisplayName("마이페이지 정보를 정상 조회한다")
     void getMyPageSuccess() throws Exception {
         MemberResDTO.MyPageInfo response =
-                new MemberResDTO.MyPageInfo("홍길동", "인천광역시", "미추홀구");
+                new MemberResDTO.MyPageInfo(
+                        "홍길동",
+                        LocalDate.of(1950, 1, 1),
+                        Gender.MALE,
+                        "01012345678",
+                        "인천광역시 미추홀구",
+                        "101호",
+                        new BigDecimal("37.4510000"),
+                        new BigDecimal("126.6500000"),
+                        3L,
+                        "인천광역시",
+                        "미추홀구",
+                        "덕양구",
+                        "용현동"
+                );
 
         given(memberService.getMyPage(MEMBER_ID)).willReturn(response);
 
@@ -99,8 +113,18 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(true))
                 .andExpect(jsonPath("$.code").value("MEMBER200_1"))
                 .andExpect(jsonPath("$.result.name").value("홍길동"))
+                .andExpect(jsonPath("$.result.birthDate").value("1950-01-01"))
+                .andExpect(jsonPath("$.result.gender").value("MALE"))
+                .andExpect(jsonPath("$.result.phoneNumber").value("01012345678"))
+                .andExpect(jsonPath("$.result.roadAddress").value("인천광역시 미추홀구"))
+                .andExpect(jsonPath("$.result.detailAddress").value("101호"))
+                .andExpect(jsonPath("$.result.latitude").value(37.451))
+                .andExpect(jsonPath("$.result.longitude").value(126.65))
+                .andExpect(jsonPath("$.result.regionId").value(3))
                 .andExpect(jsonPath("$.result.sido").value("인천광역시"))
-                .andExpect(jsonPath("$.result.sigungu").value("미추홀구"));
+                .andExpect(jsonPath("$.result.sigungu").value("미추홀구"))
+                .andExpect(jsonPath("$.result.generalGu").value("덕양구"))
+                .andExpect(jsonPath("$.result.administrativeArea").value("용현동"));
 
         verify(memberService).getMyPage(MEMBER_ID);
     }

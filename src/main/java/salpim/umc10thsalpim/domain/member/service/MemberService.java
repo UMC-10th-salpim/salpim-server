@@ -46,11 +46,15 @@ public class MemberService {
 
         Region sido = regionQueryService.findAncestorRegionOrThrow(memberRegion, RegionLevel.SIDO);
         Region sigungu = regionQueryService.findAncestorRegionOrThrow(memberRegion, RegionLevel.SIGUNGU);
+        Region generalGu = regionQueryService.findAncestorRegion(memberRegion, RegionLevel.GENERAL_GU);
 
         return MemberConverter.toMyPageInfo(
                 member,
+                memberRegion.getId(),
                 sido.getName(),
-                sigungu.getName()
+                sigungu.getName(),
+                generalGu != null ? generalGu.getName() : null,
+                memberRegion.getName()
         );
     }
 

@@ -60,13 +60,27 @@ public final class MemberConverter {
 
     public static MemberResDTO.MyPageInfo toMyPageInfo(
             Member member,
+            Long regionId,
             String sido,
-            String sigungu
+            String sigungu,
+            String generalGu,
+            String administrativeArea
     ) {
         return new MemberResDTO.MyPageInfo(
                 member.getName(),
+                member.getBirthDate(),
+                member.getGender(),
+                member.getPhoneNumber(),
+                member.getRoadAddress(),
+                member.getDetailAddress(),
+                member.getLatitude(),
+                member.getLongitude(),
+                regionId,
                 sido,
-                sigungu
+                sigungu,
+                generalGu,
+                administrativeArea
+
         );
     }
 
