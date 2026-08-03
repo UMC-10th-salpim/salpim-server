@@ -25,95 +25,78 @@ class RegionServiceTest {
     private RegionRepository regionRepository;
 
     @Test
-    void resolveCreatesCityDistrictDongHierarchy() {
+    void resolveCreatesThreeLevelHierarchyWithoutGeneralGu() {
         RegionResDTO.ResolveResult result = regionService.resolve(
-                new RegionReqDTO.Resolve("Goyang", "Deogyang", "Hwajeon")
+                new RegionReqDTO.Resolve("Incheon", "Michuhol-gu", null, "Yonghyeon-dong")
         );
 
-        Region leaf = regionRepository.findById(result.regionId()).orElseThrow();
-        Region district = leaf.getParent();
-        Region city = district.getParent();
+        Region administrativeArea = regionRepository.findById(result.regionId()).orElseThrow();
+        Region sigungu = administrativeArea.getParent();
+        Region sido = sigungu.getParent();
 
         assertThat(regionRepository.count()).isEqualTo(3);
-        assertThat(leaf.getName()).isEqualTo("Hwajeon");
-        assertThat(leaf.getRegionLevel()).isEqualTo(RegionLevel.EUP_MYEON_DONG);
-        assertThat(district.getName()).isEqualTo("Deogyang");
-        assertThat(district.getRegionLevel()).isEqualTo(RegionLevel.GU_GUN);
-        assertThat(city.getName()).isEqualTo("Goyang");
-        assertThat(city.getRegionLevel()).isEqualTo(RegionLevel.CITY);
-        assertThat(city.getParent()).isNull();
-        assertThat(result.fullRegionName()).isEqualTo("Goyang Deogyang Hwajeon");
+        assertThat(administrativeArea.getRegionLevel()).isEqualTo(RegionLevel.ADMINISTRATIVE_AREA);
+        assertThat(sigungu.getRegionLevel()).isEqualTo(RegionLevel.SIGUNGU);
+        assertThat(sido.getRegionLevel()).isEqualTo(RegionLevel.SIDO);
+        assertThat(result.fullRegionName()).isEqualTo("Incheon Michuhol-gu Yonghyeon-dong");
     }
 
     @Test
-    void resolveDoesNotCreateDuplicateRegionsForSameRequest() {
-        RegionReqDTO.Resolve request = new RegionReqDTO.Resolve("Goyang", "Deogyang", "Hwajeon");
+    void resolveCreatesFourLevelHierarchyWithGeneralGu() {
+        RegionResDTO.ResolveResult result = regionService.resolve(
+                new RegionReqDTO.Resolve("Gyeonggi-do", "Goyang-si", "Deogyang-gu", "Hwajeong-dong")
+        );
+
+        Region administrativeArea = regionRepository.findById(result.regionId()).orElseThrow();
+        Region generalGu = administrativeArea.getParent();
+        Region sigungu = generalGu.getParent();
+
+        assertThat(regionRepository.count()).isEqualTo(4);
+        assertThat(generalGu.getRegionLevel()).isEqualTo(RegionLevel.GENERAL_GU);
+        assertThat(sigungu.getRegionLevel()).isEqualTo(RegionLevel.SIGUNGU);
+        assertThat(result.fullRegionName()).isEqualTo("Gyeonggi-do Goyang-si Deogyang-gu Hwajeong-dong");
+    }
+
+    @Test
+    void resolveReusesRegionsForSameRequest() {
+        RegionReqDTO.Resolve request = new RegionReqDTO.Resolve(
+                "Gyeonggi-do", "Goyang-si", "Deogyang-gu", "Hwajeong-dong"
+        );
 
         RegionResDTO.ResolveResult first = regionService.resolve(request);
         RegionResDTO.ResolveResult second = regionService.resolve(request);
 
         assertThat(second.regionId()).isEqualTo(first.regionId());
-        assertThat(regionRepository.count()).isEqualTo(3);
+        assertThat(regionRepository.count()).isEqualTo(4);
     }
 
     @Test
-    void resolveSupportsDistrictDongHierarchyWithoutCity() {
-        RegionResDTO.ResolveResult result = regionService.resolve(
-                new RegionReqDTO.Resolve(null, "Gangnam", "Yeoksam")
-        );
-
-        Region leaf = regionRepository.findById(result.regionId()).orElseThrow();
-        Region district = leaf.getParent();
-
-        assertThat(regionRepository.count()).isEqualTo(2);
-        assertThat(leaf.getName()).isEqualTo("Yeoksam");
-        assertThat(district.getName()).isEqualTo("Gangnam");
-        assertThat(district.getParent()).isNull();
-        assertThat(result.fullRegionName()).isEqualTo("Gangnam Yeoksam");
-    }
-
-    @Test
-    void resolveSupportsDongOnlyHierarchy() {
-        RegionResDTO.ResolveResult result = regionService.resolve(
-                new RegionReqDTO.Resolve(null, null, "Naseong")
-        );
-
-        Region leaf = regionRepository.findById(result.regionId()).orElseThrow();
-
-        assertThat(regionRepository.count()).isEqualTo(1);
-        assertThat(leaf.getName()).isEqualTo("Naseong");
-        assertThat(leaf.getParent()).isNull();
-        assertThat(leaf.getRegionLevel()).isEqualTo(RegionLevel.EUP_MYEON_DONG);
-        assertThat(result.fullRegionName()).isEqualTo("Naseong");
-    }
-
-    @Test
-    void resolveCreatesDifferentLeafRegionsWhenParentsAreDifferent() {
+    void resolveSeparatesSameAdministrativeAreaNameUnderDifferentGeneralGu() {
         RegionResDTO.ResolveResult first = regionService.resolve(
-                new RegionReqDTO.Resolve("Suwon", "Paldal", "Jungang")
+                new RegionReqDTO.Resolve("Gyeonggi-do", "Goyang-si", "Deogyang-gu", "Jungang-dong")
         );
         RegionResDTO.ResolveResult second = regionService.resolve(
-                new RegionReqDTO.Resolve("Changwon", "Masanhappo", "Jungang")
+                new RegionReqDTO.Resolve("Gyeonggi-do", "Goyang-si", "Ilsandong-gu", "Jungang-dong")
         );
 
-        List<Region> leaves = regionRepository.findAll().stream()
-                .filter(region -> region.getRegionLevel() == RegionLevel.EUP_MYEON_DONG)
+        List<Region> administrativeAreas = regionRepository.findAll().stream()
+                .filter(region -> region.getRegionLevel() == RegionLevel.ADMINISTRATIVE_AREA)
                 .toList();
 
-        assertThat(second.regionId()).isNotEqualTo(first.regionId());
-        assertThat(leaves)
+        assertThat(first.regionId()).isNotEqualTo(second.regionId());
+        assertThat(administrativeAreas)
                 .hasSize(2)
                 .extracting(Region::getName)
-                .containsExactly("Jungang", "Jungang");
+                .containsOnly("Jungang-dong");
     }
 
     @Test
-    void resolveNormalizesBlankOptionalValuesAndRepeatedSpaces() {
+    void resolveTreatsBlankGeneralGuAsAbsentAndNormalizesNames() {
         RegionResDTO.ResolveResult result = regionService.resolve(
-                new RegionReqDTO.Resolve("  Sejong  ", "   ", " Na   seong ")
+                new RegionReqDTO.Resolve("  Incheon  ", " Michuhol-gu ", "   ", " Yong  hyeon-dong ")
         );
 
-        assertThat(result.fullRegionName()).isEqualTo("Sejong Na seong");
-        assertThat(regionRepository.count()).isEqualTo(2);
+        assertThat(regionRepository.count()).isEqualTo(3);
+        assertThat(result.fullRegionName()).isEqualTo("Incheon Michuhol-gu Yong hyeon-dong");
     }
 }

@@ -10,8 +10,8 @@ import salpim.umc10thsalpim.domain.region.dto.RegionReqDTO;
 import salpim.umc10thsalpim.domain.region.dto.RegionResDTO;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
-import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
+import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 
 import java.util.ArrayList;
@@ -26,24 +26,30 @@ public class RegionService {
 
     @Transactional
     public RegionResDTO.ResolveResult resolve(RegionReqDTO.Resolve request) {
-        String city = normalizeOptional(request.city());
-        String district = normalizeOptional(request.district());
-        String eupMyeonDong = normalizeRequired(request.eupMyeonDong());
+        String sido = normalizeRequired(request.sido());
+        String sigungu = normalizeRequired(request.sigungu());
+        String generalGu = normalizeOptional(request.generalGu());
+        String administrativeArea = normalizeRequired(request.administrativeArea());
 
         List<String> regionNames = new ArrayList<>();
         Region parent = null;
 
-        if (StringUtils.hasText(city)) {
-            parent = findOrCreateRegion(null, city, RegionLevel.CITY);
+        if (StringUtils.hasText(sido)) {
+            parent = findOrCreateRegion(null, sido, RegionLevel.SIDO);
             regionNames.add(parent.getName());
         }
 
-        if (StringUtils.hasText(district)) {
-            parent = findOrCreateRegion(parent, district, RegionLevel.GU_GUN);
+        if (StringUtils.hasText(sigungu)) {
+            parent = findOrCreateRegion(parent, sigungu, RegionLevel.SIGUNGU);
             regionNames.add(parent.getName());
         }
 
-        Region leafRegion = findOrCreateRegion(parent, eupMyeonDong, RegionLevel.EUP_MYEON_DONG);
+        if (StringUtils.hasText(generalGu)) {
+            parent = findOrCreateRegion(parent, generalGu, RegionLevel.GENERAL_GU);
+            regionNames.add(parent.getName());
+        }
+
+        Region leafRegion = findOrCreateRegion(parent, administrativeArea, RegionLevel.ADMINISTRATIVE_AREA);
         regionNames.add(leafRegion.getName());
 
         return RegionConverter.toResolveResult(leafRegion, String.join(" ", regionNames));
@@ -89,5 +95,24 @@ public class RegionService {
             return null;
         }
         return normalized;
+    }
+
+    @Transactional(readOnly = true)
+    public RegionResDTO.RegionListDTO getAncestorRegionList() {
+        List<Region> regions = regionRepository.findAllByRegionLevelOrderById(RegionLevel.SIDO);
+
+        return RegionConverter.toRegionResult(regions);
+    }
+
+    @Transactional(readOnly = true)
+    public RegionResDTO.RegionListDTO getDescendantRegionList(Long ancestorRegionId) {
+
+        regionRepository.findById(ancestorRegionId)
+                .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+        // TODO : 상위 지역이 아닌 하위 지역으로 요청 보냈을 때 예외처리
+
+        List<Region> regions = regionRepository.findAllByParentIdOrderById(ancestorRegionId);
+
+        return RegionConverter.toRegionResult(regions);
     }
 }

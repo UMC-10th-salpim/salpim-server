@@ -41,8 +41,6 @@ public class BenefitConverter {
         return new BenefitResDTO.GetApplicationHelperInfo(
                 welfareBenefit.getId(),
                 welfareBenefit.getTitle(),
-                welfareBenefit.getTargetDescription(),
-                welfareBenefit.getApplicationMethod(),
                 welfareBenefit.getApplicationUrl(),
                 welfareBenefit.getContact(),
                 welfareBenefit.getOrganization(),

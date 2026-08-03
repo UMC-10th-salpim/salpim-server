@@ -6,15 +6,20 @@ import jakarta.validation.constraints.Size;
 public class RegionReqDTO {
 
     public record Resolve(
-            @Size(max = 50, message = "city must be 50 characters or less.")
-            String city,
+            @NotBlank(message = "시/도 정보는 필수입니다.")
+            @Size(max = 50, message = "시/도 정보는 50자 이하여야합니다.")
+            String sido,
 
-            @Size(max = 50, message = "district must be 50 characters or less.")
-            String district,
+            @NotBlank(message = "시/군/구 정보는 필수입니다.")
+            @Size(max = 50, message = "시/군/구 정보는 50자 이하여야합니다.")
+            String sigungu,
 
-            @NotBlank(message = "eupMyeonDong is required.")
-            @Size(max = 50, message = "eupMyeonDong must be 50 characters or less.")
-            String eupMyeonDong
+            @Size(max = 50, message = "구 정보는 50자 이하여야합니다.")
+            String generalGu,
+
+            @NotBlank(message = "행정구역 정보는 필수입니다.")
+            @Size(max = 50, message = "행정구역 정보는 50자 이하여야합니다.")
+            String administrativeArea
     ) {
     }
 }

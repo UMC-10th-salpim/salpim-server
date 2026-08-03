@@ -1,6 +1,7 @@
 package salpim.umc10thsalpim.domain.member.converter;
 
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
+import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.region.entity.Region;
@@ -16,6 +17,7 @@ public final class MemberConverter {
             AuthReqDTO.LocalSignup request,
             String normalizedPhoneNumber,
             String encodedPassword,
+            String encodedPasswordRecoveryAnswer,
             Region region
     ) {
         return Member.builder()
@@ -30,7 +32,7 @@ public final class MemberConverter {
                 .latitude(BigDecimal.valueOf(request.latitude()))
                 .longitude(BigDecimal.valueOf(request.longitude()))
                 .region(region)
-                .passwordRecoveryAnswer(request.passwordAnswer().trim())
+                .passwordRecoveryAnswer(encodedPasswordRecoveryAnswer)
                 .welfareCenter(region.getName())
                 .build();
     }
@@ -56,7 +58,33 @@ public final class MemberConverter {
                 .build();
     }
 
-    private static String normalizeNullableText(String value) {
+    public static MemberResDTO.MyPageInfo toMyPageInfo(
+            Member member,
+            Long regionId,
+            String sido,
+            String sigungu,
+            String generalGu,
+            String administrativeArea
+    ) {
+        return new MemberResDTO.MyPageInfo(
+                member.getName(),
+                member.getBirthDate(),
+                member.getGender(),
+                member.getPhoneNumber(),
+                member.getRoadAddress(),
+                member.getDetailAddress(),
+                member.getLatitude(),
+                member.getLongitude(),
+                regionId,
+                sido,
+                sigungu,
+                generalGu,
+                administrativeArea
+
+        );
+    }
+
+    public static String normalizeNullableText(String value) {
         if (value == null || value.trim().isEmpty()) {
             return null;
         }

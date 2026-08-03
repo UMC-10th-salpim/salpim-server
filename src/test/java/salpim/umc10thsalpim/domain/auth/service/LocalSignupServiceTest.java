@@ -48,13 +48,14 @@ class LocalSignupServiceTest {
     private LocalSignupService localSignupService;
 
     @Test
-    void signupSavesMemberWithRegionAndEupMyeonDongAsWelfareCenter() {
+    void signupSavesMemberWithAdministrativeAreaAsWelfareCenter() {
         AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
         Region region = region();
 
         when(signupValidationService.normalizePhoneNumber("010-3176-8867")).thenReturn("01031768867");
         when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(region);
         when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
+        when(passwordEncoder.encode("Seoul")).thenReturn("encoded-recovery-answer");
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         localSignupService.signup(request);
@@ -63,6 +64,9 @@ class LocalSignupServiceTest {
         verify(memberRepository).save(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getRegion()).isSameAs(region);
         assertThat(memberCaptor.getValue().getWelfareCenter()).isEqualTo("Hwajeon");
+        assertThat(memberCaptor.getValue().getPasswordRecoveryAnswer())
+                .isEqualTo("encoded-recovery-answer");
+        verify(passwordEncoder).encode("Seoul");
     }
 
     @Test
@@ -128,6 +132,6 @@ class LocalSignupServiceTest {
     }
 
     private Region region() {
-        return Region.create(null, "Hwajeon", RegionLevel.EUP_MYEON_DONG);
+        return Region.create(null, "Hwajeon", RegionLevel.ADMINISTRATIVE_AREA);
     }
 }

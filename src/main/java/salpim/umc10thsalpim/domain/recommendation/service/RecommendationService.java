@@ -20,6 +20,7 @@ import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
+import salpim.umc10thsalpim.domain.region.service.RegionQueryService;
 import salpim.umc10thsalpim.global.dto.CursorResDTO;
 
 import java.util.ArrayList;
@@ -34,10 +35,11 @@ public class RecommendationService {
     private final RegionRepository regionRepository;
 
     private final BenefitService benefitService;
+    private final RegionQueryService regionQueryService;
 
-    public RecommendationResDTO.recommendationOptionsDTO getRecommendationOptions(Long categoryId) {
+    public RecommendationResDTO.RecommendationOptionsDTO getRecommendationOptions(Long categoryId) {
         List<RecommendationOption>  recommendationOptions = recommendationRepository.findAllByCategoryIdOrderByOptionOrderAsc(categoryId);
-        return RecommendationConverter.toRecommedationOptionRes(recommendationOptions);
+        return RecommendationConverter.toRecommendationOptionRes(recommendationOptions);
     }
 
     public CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO> getRecommendationResult(Long optionId, Long memberId, String cursor, @Positive Integer pageSize) {
@@ -51,8 +53,8 @@ public class RecommendationService {
 
         Region memberRegion = regionRepository.findById(member.getRegionId())
                 .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
-        Region sido = benefitService.findAncestorRegion(memberRegion, RegionLevel.SIDO);
-        Region sigungu = benefitService.findAncestorRegion(memberRegion, RegionLevel.SIGUNGU);
+        Region sido = regionQueryService.findAncestorRegionOrThrow(memberRegion, RegionLevel.SIDO);
+        Region sigungu = regionQueryService.findAncestorRegionOrThrow(memberRegion, RegionLevel.SIGUNGU);
         List<Long> regionIds = List.of(sido.getId(), sigungu.getId());
 
         List<Long> categoryIds = new ArrayList<>();

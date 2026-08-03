@@ -6,13 +6,13 @@ import salpim.umc10thsalpim.domain.recommendation.entity.RecommendationOption;
 import java.util.List;
 
 public class RecommendationConverter {
-    public static RecommendationResDTO.recommendationOptionsDTO toRecommedationOptionRes(List<RecommendationOption> recommendationOptions) {
-        return RecommendationResDTO.recommendationOptionsDTO.builder()
+    public static RecommendationResDTO.RecommendationOptionsDTO toRecommendationOptionRes(List<RecommendationOption> recommendationOptions) {
+        return RecommendationResDTO.RecommendationOptionsDTO.builder()
                 .recommendationOptionDTOList(
                         recommendationOptions.stream()
                                         .map(
                                                 option ->
-                                                        RecommendationResDTO.recommendationOptionDTO.builder()
+                                                        RecommendationResDTO.RecommendationOptionDTO.builder()
                                                                 .optionId(option.getId())
                                                                 .optionOrder(option.getOptionOrder())
                                                                 .optionText(option.getOptionText())

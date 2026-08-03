@@ -112,7 +112,6 @@ public class BokjiroApiClient {
         }catch(Exception e){
             throw new BokjiroException(BokjiroErrorCode.BOKJIRO_API_ERROR);
         }
-
     }
 
 }

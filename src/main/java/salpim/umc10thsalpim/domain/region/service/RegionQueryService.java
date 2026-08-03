@@ -9,6 +9,9 @@ import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -22,26 +25,49 @@ public class RegionQueryService {
             return new String[]{null, null};
         }
 
-        Region current = regionRepository.findById(regionId)
+        Region region = regionRepository.findById(regionId)
                 .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
 
-        String sido = null;
-        String sigungu = null;
+        Region sido = findAncestorRegionOrThrow(region, RegionLevel.SIDO);
+        Region sigungu = findAncestorRegionOrThrow(region, RegionLevel.SIGUNGU);
+
+        return new String[]{sido.getName(), sigungu.getName()};
+    }
+
+    public Region findAncestorRegion(Region region, RegionLevel targetLevel) {
+        Region current = region;
+        Set<Long> visitedIds = new HashSet<>();
 
         while (current != null) {
-            if (current.getRegionLevel() == RegionLevel.SIDO) {
-                sido = current.getName();
-            } else if (current.getRegionLevel() == RegionLevel.SIGUNGU) {
-                sigungu = current.getName();
+            if (!visitedIds.add(current.getId())) {
+                throw new RegionException(RegionErrorCode.REGION_HIERARCHY_INVALID);
+            }
+
+            if (current.getRegionLevel() == targetLevel) {
+                return current;
             }
 
             if (current.getParentId() == null) {
-                break;
+                return null;
             }
 
-            current = regionRepository.findById(current.getParentId()).orElse(null);
+            current = regionRepository.findById(current.getParentId())
+                    .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
         }
 
-        return new String[]{sido, sigungu};
+        return null;
+    }
+
+    public Region findAncestorRegionOrThrow(
+            Region region,
+            RegionLevel targetLevel
+    ) {
+        Region ancestorRegion = findAncestorRegion(region, targetLevel);
+
+        if (ancestorRegion == null) {
+            throw new RegionException(RegionErrorCode.REGION_HIERARCHY_INVALID);
+        }
+
+        return ancestorRegion;
     }
 }

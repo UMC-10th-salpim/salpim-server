@@ -1,9 +1,11 @@
 package salpim.umc10thsalpim.domain.recommendation.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
@@ -30,13 +32,14 @@ public class RecommendationController {
                 2단계 선택지들의 id와 선택지 내용, 순서를 가진 리스트를 보낸다.
                 """
     )
-    public ApiResponse<RecommendationResDTO.recommendationOptionsDTO> getRecommendationOptions(
+    public ApiResponse<RecommendationResDTO.RecommendationOptionsDTO> getRecommendationOptions(
             @PathVariable Long categoryId
     ){
         return ApiResponse.onSuccess(RecommendationSuccessCode.OPTION_LIST_GET_SUCCESS, recommendationService.getRecommendationOptions(categoryId));
     }
 
     @GetMapping("/result")
+    @SecurityRequirement(name = "JWT TOKEN")
     @Operation(
             summary = "살피미 추천 결과",
             description = """
@@ -49,11 +52,9 @@ public class RecommendationController {
     public ApiResponse<CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO>> getRecommendationResult(
             @RequestParam(name = "optionId") Long  lastOptionId,
             @RequestParam(name="cursor", defaultValue = "-1") String cursor,
-            @RequestParam(name="pageSize", defaultValue = "10") @Positive Integer pageSize
+            @RequestParam(name="pageSize", defaultValue = "10") @Positive Integer pageSize,
+            @AuthenticationPrincipal Long memberId
     ){
-
-        Long memberId = 1L; //TODO : get memberId from accessToken
-
         return ApiResponse.onSuccess(RecommendationSuccessCode.RECOMMENDATION_GET_SUCCESS, recommendationService.getRecommendationResult(lastOptionId, memberId, cursor, pageSize));
     }
 
