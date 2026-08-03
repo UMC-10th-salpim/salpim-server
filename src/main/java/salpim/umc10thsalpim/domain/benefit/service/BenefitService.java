@@ -211,8 +211,18 @@ public class BenefitService {
         String nextCursor;
         Integer totalCount;
 
-        //지자체 복지 검색에 쓸 리스트
-        List<Region> regions=regionRepository.findAllById(regionIds);
+        //지자체 복지 검색에 쓸 리스트 만들기 & 검증
+        List<Region> regions=List.of(
+                regionRepository.findById(regionIds.get(0)).orElseThrow(
+                        () -> new RegionException(RegionErrorCode.REGION_NOT_FOUND)
+                ),
+                regionRepository.findById(regionIds.get(1)).orElseThrow(
+                        () -> new RegionException(RegionErrorCode.REGION_NOT_FOUND)
+                )
+        );
+        if (!regions.get(0).getRegionLevel().equals(RegionLevel.SIDO)||!regions.get(1).getRegionLevel().equals(RegionLevel.SIGUNGU)){
+            throw new RegionException(RegionErrorCode.REGION_SEARCH_LEVEL_INVALID);
+        }
 
         //조회수를 담을 list
         Map<String, Integer> viewCountMap =  new HashMap<>();
