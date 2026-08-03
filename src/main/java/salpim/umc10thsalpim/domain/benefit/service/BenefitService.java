@@ -223,6 +223,9 @@ public class BenefitService {
         if (!regions.get(0).getRegionLevel().equals(RegionLevel.SIDO)||!regions.get(1).getRegionLevel().equals(RegionLevel.SIGUNGU)){
             throw new RegionException(RegionErrorCode.REGION_SEARCH_LEVEL_INVALID);
         }
+        if (!regions.get(1).getParentId().equals(regionIds.get(0))) {
+            throw new RegionException(RegionErrorCode.REGION_HIERARCHY_MISMATCH);
+        }
 
         //조회수를 담을 list
         Map<String, Integer> viewCountMap =  new HashMap<>();
