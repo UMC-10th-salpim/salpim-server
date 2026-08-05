@@ -24,6 +24,7 @@ jwt:
   access-token-expiration-millis: 3600000
   refresh-token-expiration-millis: 1209600000
   signup-token-expiration-millis: 600000
+  password-reset-token-expiration-millis: 300000
 
 bokjiro:
   base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
