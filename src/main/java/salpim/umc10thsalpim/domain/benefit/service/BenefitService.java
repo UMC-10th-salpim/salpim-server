@@ -212,18 +212,23 @@ public class BenefitService {
         Integer totalCount;
 
         //지자체 복지 검색에 쓸 리스트 만들기 & 검증
-        List<Region> regions=List.of(
-                regionRepository.findById(regionIds.get(0)).orElseThrow(
-                        () -> new RegionException(RegionErrorCode.REGION_NOT_FOUND)
-                ),
-                regionRepository.findById(regionIds.get(1)).orElseThrow(
-                        () -> new RegionException(RegionErrorCode.REGION_NOT_FOUND)
-                )
-        );
-        if (!regions.get(0).getRegionLevel().equals(RegionLevel.SIDO)||!regions.get(1).getRegionLevel().equals(RegionLevel.SIGUNGU)){
+        Region sido = null;
+        Region sigungu = null;
+
+        for (Long regionId : regionIds) {
+            Region region = regionRepository.findById(regionId)
+                    .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+
+            switch (region.getRegionLevel()) {
+                case SIDO -> sido = region;
+                case SIGUNGU -> sigungu = region;
+                default -> throw new RegionException(RegionErrorCode.REGION_SEARCH_LEVEL_INVALID);
+            }
+        }
+        if (sido == null || sigungu == null) {
             throw new RegionException(RegionErrorCode.REGION_SEARCH_LEVEL_INVALID);
         }
-        if (!regions.get(1).getParentId().equals(regionIds.get(0))) {
+        if (!sido.getId().equals(sigungu.getParentId())) {
             throw new RegionException(RegionErrorCode.REGION_HIERARCHY_MISMATCH);
         }
 
@@ -240,7 +245,7 @@ public class BenefitService {
                     bokjiroApiClient.searchNationalBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
 
             BokjiroApiDTO.BenefitListRes LocalRes =
-                    bokjiroApiClient.searchLocalBenefits(pageNumber, API_MAX_SIZE, searchKey, null, regions.get(0).getName(), regions.get(1).getName());
+                    bokjiroApiClient.searchLocalBenefits(pageNumber, API_MAX_SIZE, searchKey, null, sido.getName(), sigungu.getName());
 
             NationalRes.getBenefitList().forEach(item -> {servIds_N.add(item.getServId());
                 viewCountMap.put(SOURCE_NATIONAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));

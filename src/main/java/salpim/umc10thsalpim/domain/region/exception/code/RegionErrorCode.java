@@ -14,8 +14,8 @@ public enum RegionErrorCode implements BaseErrorCode {
             "잘못된 지역 요청입니다."),
     REGION_SEARCH_LEVEL_INVALID(
             HttpStatus.BAD_REQUEST,
-            "REGION400_ORDER",
-            "지역은 [시도, 시군구] 순서로 입력해야 합니다."),
+            "REGION400_LEVEL",
+            "지역은 시도 1개와 시군구 1개를 입력해야 합니다."),
     REGION_HIERARCHY_MISMATCH(
             HttpStatus.BAD_REQUEST,
             "REGION400_HIERARCHY",
