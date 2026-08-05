@@ -63,6 +63,16 @@ public enum AuthErrorCode implements BaseErrorCode {
     PHONE_VERIFICATION_RESEND_TOO_SOON(HttpStatus.TOO_MANY_REQUESTS,
             "AUTH429_PHONE_VERIFICATION_RESEND",
             "인증번호는 1분 후에 다시 요청할 수 있습니다."),
+    PASSWORD_RESET_TOKEN_INVALID(HttpStatus.UNAUTHORIZED,
+            "PASSWORD_RESET401_1",
+            "유효하지 않은 비밀번호 초기화 인증 토큰입니다."),
+    PASSWORD_RESET_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED,
+            "PASSWORD_RESET401_2",
+            "비밀번호 초기화 인증 토큰이 만료되었습니다."),
+    PASSWORD_RESET_TOKEN_TYPE_INVALID(HttpStatus.UNAUTHORIZED,
+            "PASSWORD_RESET_401_3",
+            "비밀번호 초기화 토큰이 아닙니다."
+    )
     ;
 
     private final HttpStatus status;
