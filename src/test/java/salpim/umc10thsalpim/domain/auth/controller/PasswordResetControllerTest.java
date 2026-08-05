@@ -70,7 +70,7 @@ class PasswordResetControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
-                .andExpect(jsonPath("$.code").value("PASSWORD_RESET200_1"))
+                .andExpect(jsonPath("$.code").value("AUTH200_PASSWORD_RESET_VERIFICATION"))
                 .andExpect(jsonPath("$.result.passwordResetToken").value(PASSWORD_RESET_TOKEN));
 
         verify(passwordResetService).verifyRecoveryAnswer(request);
@@ -88,7 +88,7 @@ class PasswordResetControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
-                .andExpect(jsonPath("$.code").value("PASSWORD_RESET200_2"))
+                .andExpect(jsonPath("$.code").value("AUTH200_PASSWORD_RESET"))
                 .andExpect(jsonPath("$.result").doesNotExist());
 
         verify(passwordResetService).resetPassword(request);
