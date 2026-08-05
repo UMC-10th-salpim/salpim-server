@@ -54,4 +54,24 @@ public class BenefitConverter {
                 isAgeSatisfied
         );
     }
+
+    public static CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO> toFavoriteBenefitPagination(List<WelfareBenefit> favoriteBenefits, Long totalCount) {
+        return CursorResDTO.Pagination.<BenefitResDTO.FavoriteBenefitDTO>builder()
+                .data(favoriteBenefits.stream()
+                        .map(BenefitConverter::toFavoriteBenefitDTO)
+                        .toList())
+                .totalCount(totalCount.intValue())
+                .pageSize(favoriteBenefits.size())
+                .hasNext(totalCount>favoriteBenefits.size())
+                .build();
+    }
+
+    public static BenefitResDTO.FavoriteBenefitDTO toFavoriteBenefitDTO(WelfareBenefit benefit) {
+        return BenefitResDTO.FavoriteBenefitDTO.builder()
+                .benefitId(benefit.getId())
+                .title(benefit.getTitle())
+                .applicationEndDate(benefit.getApplicationEndDate())
+                .minAge(benefit.getMinAge())
+                .build();
+    }
 }
