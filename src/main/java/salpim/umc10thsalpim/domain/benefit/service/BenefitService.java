@@ -1,6 +1,9 @@
 package salpim.umc10thsalpim.domain.benefit.service;
 
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.benefit.converter.BenefitConverter;
@@ -13,6 +16,7 @@ import salpim.umc10thsalpim.domain.benefit.enums.RegionScope;
 import salpim.umc10thsalpim.domain.benefit.exception.BenefitException;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitErrorCode;
 import salpim.umc10thsalpim.domain.benefit.repository.BenefitRuleRepository;
+import salpim.umc10thsalpim.domain.benefit.repository.FavoriteBenefitRepository;
 import salpim.umc10thsalpim.domain.benefit.repository.WelfareBenefitRepository;
 import salpim.umc10thsalpim.domain.benefit.repository.WelfareCategoryRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;
@@ -54,6 +58,7 @@ public class BenefitService {
     private final MemberRepository memberRepository;
     private final WelfareCategoryRepository welfareCategoryRepository;
     private final RegionQueryService regionQueryService;
+    private final FavoriteBenefitRepository favoriteBenefitRepository;
 
     @Transactional(readOnly = true)
     public BenefitResDTO.GetApplicationHelperInfo getApplicationHelperInfo(
@@ -323,5 +328,17 @@ public class BenefitService {
             }
         }
         return Collections.emptyList();
+    }
+
+    @Transactional(readOnly = true)
+    public CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO> getFavoriteBenefits(Long memberId, Integer pageNumber, @Positive Integer pageSize) {
+
+        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
+
+        Page<Long> favoriteBenefitIds = favoriteBenefitRepository.findBenefitIdsByMemberId(memberId, pageRequest);
+
+        List<WelfareBenefit> favoriteBenefits = welfareBenefitRepository.findAllById(favoriteBenefitIds);
+
+        return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits, favoriteBenefitIds.getTotalElements());
     }
 }
