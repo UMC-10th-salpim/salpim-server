@@ -5,10 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthSuccessCode;
@@ -35,6 +32,20 @@ public class PasswordResetController {
                 .body(ApiResponse.onSuccess(
                         AuthSuccessCode.PASSWORD_RESET_VERIFIED,
                         response
+                ));
+    }
+
+    @Operation(summary = "비밀번호 재설정")
+    @PutMapping
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @Valid @RequestBody AuthReqDTO.PasswordReset request
+    ) {
+        passwordResetService.resetPassword(request);
+
+        return ResponseEntity.status(AuthSuccessCode.PASSWORD_RESET_COMPLETED.getStatus())
+                .body(ApiResponse.onSuccess(
+                        AuthSuccessCode.PASSWORD_RESET_COMPLETED,
+                        null
                 ));
     }
 }

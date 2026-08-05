@@ -168,4 +168,16 @@ public class AuthReqDTO {
             String recoveryAnswer
     ){
     }
+
+    public record PasswordReset(
+            @NotBlank(message = "비밀번호 재설정 토큰은 필수입니다.")
+            String passwordResetToken,
+
+            @NotBlank(message = "새 비밀번호는 필수입니다.")
+            @Pattern(
+                    regexp = "^\\d{6}$",
+                    message = "비밀번호는 6자리 숫자여야 합니다.")
+            String newPassword
+    ){
+    }
 }

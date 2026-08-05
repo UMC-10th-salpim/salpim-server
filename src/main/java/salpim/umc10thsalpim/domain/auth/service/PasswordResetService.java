@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
+import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.member.entity.Member;
@@ -33,6 +34,22 @@ public class PasswordResetService {
         return new AuthResDTO.PasswordResetVerifyResult(
                 tokenService.issuePasswordResetToken(member)
         );
+    }
+
+    @Transactional
+    public void resetPassword(AuthReqDTO.PasswordReset request) {
+        TokenDTO.PasswordResetTokenClaims claims =
+                tokenService.parsePasswordResetToken(request.passwordResetToken());
+
+        Member member = memberRepository.findById(claims.memberId())
+                .orElseThrow(() ->
+                        new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
+
+        if (member.getLoginType() != SocialProvider.LOCAL) {
+            throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
+        }
+
+        member.changePassword(passwordEncoder.encode(request.newPassword()));
     }
 
 

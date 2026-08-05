@@ -30,6 +30,9 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     PASSWORD_RESET_VERIFIED(HttpStatus.OK,
     "PASSWORD_RESET200_1",
             "비밀번호 재설정 인증이 완료되었습니다."),
+    PASSWORD_RESET_COMPLETED(HttpStatus.OK,
+            "PASSWORD_RESET200_2",
+            "비밀번호가 재설정되었습니다."),
     ;
 
     private final HttpStatus status;
