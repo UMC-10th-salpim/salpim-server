@@ -70,9 +70,11 @@ public enum AuthErrorCode implements BaseErrorCode {
             "PASSWORD_RESET401_2",
             "비밀번호 초기화 인증 토큰이 만료되었습니다."),
     PASSWORD_RESET_TOKEN_TYPE_INVALID(HttpStatus.UNAUTHORIZED,
-            "PASSWORD_RESET_401_3",
-            "비밀번호 초기화 토큰이 아닙니다."
-    )
+            "PASSWORD_RESET401_3",
+            "비밀번호 초기화 토큰이 아닙니다."),
+    PASSWORD_RESET_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST,
+            "PASSWORD_RESET400_1",
+            "전화번호 또는 비밀번호 복구 답변이 일치하지 않습니다."),
     ;
 
     private final HttpStatus status;

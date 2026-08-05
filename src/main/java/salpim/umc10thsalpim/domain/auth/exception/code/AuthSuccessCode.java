@@ -27,6 +27,9 @@ public enum AuthSuccessCode implements BaseSuccessCode {
     SIGNUP_REQUIRED(HttpStatus.OK,
             "AUTH200_SIGNUP_REQUIRED",
             "추가 회원가입이 필요합니다."),
+    PASSWORD_RESET_VERIFIED(HttpStatus.OK,
+    "PASSWORD_RESET200_1",
+            "비밀번호 재설정 인증이 완료되었습니다."),
     ;
 
     private final HttpStatus status;
