@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import salpim.umc10thsalpim.domain.benefit.dto.BenefitReqDTO;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitSuccessCode;
 import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
@@ -142,6 +143,25 @@ public class BenefitController {
             @RequestParam(name="pageSize", defaultValue = "10") @Positive Integer pageSize
     ){
         return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_VIEW, benefitService.getFavoriteBenefits(memberId, pageNumber, pageSize));
+    }
+
+    @PutMapping("/{benefitId}/favorite")
+    @SecurityRequirement(name = "JWT TOKEN")
+    @Operation(
+            summary = "혜택 찜하기/찜 취소",
+            description = """
+                혜택 찜 상태를 활성화/비활성화 토글합니다.
+                - benefitId: 찜 상태 변경을 원하는 혜택 id를 path로 주기
+                - updateFavorite: 어떤 상태로 변하길 원하는 지를 body로 주기
+                """
+    )
+    public ApiResponse<BenefitResDTO.FavoriteBenefitStatusDTO> toggleFavoriteBenefit(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable Long benefitId,
+            @RequestBody BenefitReqDTO.UpdateFavorite req
+    ){
+        return ApiResponse.onSuccess(req.isFavorite() ? BenefitSuccessCode.BENEFIT_FAVORITE_ADD : BenefitSuccessCode.BENEFIT_FAVORITE_REMOVE,
+                benefitService.toggleFavoriteBenefit(memberId, benefitId, req.isFavorite()));
     }
 
 }
