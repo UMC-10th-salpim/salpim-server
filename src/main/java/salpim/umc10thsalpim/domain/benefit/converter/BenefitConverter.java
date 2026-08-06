@@ -5,6 +5,8 @@ import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 import salpim.umc10thsalpim.global.dto.CursorResDTO;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -79,6 +81,26 @@ public class BenefitConverter {
         return BenefitResDTO.FavoriteBenefitStatusDTO.builder()
                 .benefitId(benefitId)
                 .isFavorite(favorite)
+                .build();
+    }
+
+    public static List<BenefitResDTO.DeadlineSoonBenefitDTO> toDeadlineSoonBenefitList(
+            List<WelfareBenefit> benefits, LocalDate today) {
+        return benefits.stream()
+                .map(benefit -> toDeadlineSoonBenefitDTO(benefit, today))
+                .toList();
+    }
+
+    public static BenefitResDTO.DeadlineSoonBenefitDTO toDeadlineSoonBenefitDTO(
+            WelfareBenefit benefit, LocalDate today) {
+
+        LocalDate endDate = benefit.getApplicationEndDate();
+
+        return BenefitResDTO.DeadlineSoonBenefitDTO.builder()
+                .benefitId(benefit.getId())
+                .title(benefit.getTitle())
+                .applicationEndDate(endDate)
+                .dDay(endDate==null? null : (int) ChronoUnit.DAYS.between(today, endDate))
                 .build();
     }
 }

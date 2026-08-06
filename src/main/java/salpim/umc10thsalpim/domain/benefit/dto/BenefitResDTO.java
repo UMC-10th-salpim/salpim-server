@@ -45,4 +45,12 @@ public class BenefitResDTO {
             Long benefitId,
             Boolean isFavorite
     ) {}
+
+    @Builder
+    public record DeadlineSoonBenefitDTO (
+           Long benefitId,
+           String title,
+           LocalDate applicationEndDate,
+           Integer dDay
+    ){}
 }
