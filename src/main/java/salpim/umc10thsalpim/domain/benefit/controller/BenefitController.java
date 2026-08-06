@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -150,15 +151,16 @@ public class BenefitController {
     @Operation(
             summary = "혜택 찜하기/찜 취소",
             description = """
-                혜택 찜 상태를 활성화/비활성화 토글합니다.
+                혜택 찜 상태를 요청한 상태로 변경합니다.
                 - benefitId: 찜 상태 변경을 원하는 혜택 id를 path로 주기
                 - updateFavorite: 어떤 상태로 변하길 원하는 지를 body로 주기
+                이미 원하는 상태인 경우에도 성공으로 응답합니다.
                 """
     )
-    public ApiResponse<BenefitResDTO.FavoriteBenefitStatusDTO> toggleFavoriteBenefit(
+    public ApiResponse<BenefitResDTO.FavoriteBenefitStatusDTO> updateFavoriteBenefit(
             @AuthenticationPrincipal Long memberId,
             @PathVariable Long benefitId,
-            @RequestBody BenefitReqDTO.UpdateFavorite req
+            @Valid @RequestBody BenefitReqDTO.UpdateFavorite req
     ){
         return ApiResponse.onSuccess(req.isFavorite() ? BenefitSuccessCode.BENEFIT_FAVORITE_ADD : BenefitSuccessCode.BENEFIT_FAVORITE_REMOVE,
                 benefitService.toggleFavoriteBenefit(memberId, benefitId, req.isFavorite()));
