@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/benefits/*/application-helper").authenticated()
                         .requestMatchers("/api/benefits/*/favorite").authenticated()
                         .requestMatchers("/api/benefits/favorites").authenticated()
+                        .requestMatchers("/api/benefits/favorites/deadline-soon").authenticated()
                         .requestMatchers("/api/recommendations/result").authenticated()
                         .requestMatchers("/api/map/details").authenticated()
                         .anyRequest().permitAll())
