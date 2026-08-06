@@ -38,6 +38,7 @@ import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.ZoneId;
 import java.util.List;
 import java.net.URI;
 import java.util.*;
@@ -53,6 +54,8 @@ public class BenefitService {
     private static final int MAX_SERV_NUMBER=2000;
     private static final String SOURCE_NATIONAL = "NATIONAL";
     private static final String SOURCE_LOCAL = "LOCAL";
+    private static final int DEADLINE_SOON_LIMIT = 3;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final WelfareBenefitRepository welfareBenefitRepository;
     private final BenefitRuleRepository benefitRuleRepository;
@@ -368,5 +371,15 @@ public class BenefitService {
         }
 
         return BenefitConverter.toFavoriteBenefitStatusDTO(benefitId, favorite);
+    }
+
+    public List<BenefitResDTO.DeadlineSoonBenefitDTO> getDeadlineSoonBenefits(Long memberId) {
+
+        LocalDate today = LocalDate.now(KST);
+
+        List<WelfareBenefit> benefits = favoriteBenefitRepository.findDeadlineSoonFavoriteBenefits(
+                memberId, today, PageRequest.of(0, DEADLINE_SOON_LIMIT));
+
+        return BenefitConverter.toDeadlineSoonBenefitList(benefits, today);
     }
 }
