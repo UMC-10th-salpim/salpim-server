@@ -335,10 +335,8 @@ public class BenefitService {
 
         PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
 
-        Page<Long> favoriteBenefitIds = favoriteBenefitRepository.findBenefitIdsByMemberId(memberId, pageRequest);
+        Page<WelfareBenefit> favoriteBenefits = favoriteBenefitRepository.findFavoriteBenefitsByMemberId(memberId, pageRequest);
 
-        List<WelfareBenefit> favoriteBenefits = welfareBenefitRepository.findAllById(favoriteBenefitIds);
-
-        return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits, favoriteBenefitIds.getTotalElements(), favoriteBenefitIds.hasNext());
+        return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits.getContent(), favoriteBenefits.getTotalElements(), favoriteBenefits.hasNext());
     }
 }
