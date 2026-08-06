@@ -39,4 +39,10 @@ public class BenefitResDTO {
             LocalDate applicationEndDate,
             Integer minAge
     ){}
+
+    @Builder
+    public record FavoriteBenefitStatusDTO(
+            Long benefitId,
+            Boolean isFavorite
+    ) {}
 }

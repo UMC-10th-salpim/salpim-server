@@ -74,4 +74,11 @@ public class BenefitConverter {
                 .minAge(benefit.getMinAge())
                 .build();
     }
+
+    public static BenefitResDTO.FavoriteBenefitStatusDTO toFavoriteBenefitStatusDTO(Long benefitId, Boolean favorite) {
+        return BenefitResDTO.FavoriteBenefitStatusDTO.builder()
+                .benefitId(benefitId)
+                .isFavorite(favorite)
+                .build();
+    }
 }
