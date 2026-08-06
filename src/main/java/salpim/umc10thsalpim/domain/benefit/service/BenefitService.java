@@ -1,5 +1,6 @@
 package salpim.umc10thsalpim.domain.benefit.service;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.benefit.converter.BenefitConverter;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.entity.BenefitRule;
+import salpim.umc10thsalpim.domain.benefit.entity.FavoriteBenefit;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareCategory;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
@@ -338,5 +340,33 @@ public class BenefitService {
         Page<WelfareBenefit> favoriteBenefits = favoriteBenefitRepository.findFavoriteBenefitsByMemberId(memberId, pageRequest);
 
         return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits.getContent(), favoriteBenefits.getTotalElements(), favoriteBenefits.hasNext());
+    }
+
+    @Transactional
+    public BenefitResDTO.FavoriteBenefitStatusDTO toggleFavoriteBenefit(Long memberId, Long benefitId, @NotNull(message = "찜 상태는 필수입니다.") Boolean favorite) {
+
+        memberRepository.findById(memberId).orElseThrow(
+                () -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND)
+        );
+
+        welfareBenefitRepository.findById(benefitId).orElseThrow(
+                () -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND)
+        );
+
+        boolean alreadyFavorite =
+                favoriteBenefitRepository.existsByMemberIdAndBenefitId(memberId, benefitId);
+
+        if (favorite&&!alreadyFavorite) {
+            favoriteBenefitRepository.save(
+                    FavoriteBenefit.builder()
+                            .memberId(memberId)
+                            .benefitId(benefitId)
+                            .build()
+            );
+        }else if (!favorite&&alreadyFavorite) {
+            favoriteBenefitRepository.deleteByMemberIdAndBenefitId(memberId, benefitId);
+        }
+
+        return BenefitConverter.toFavoriteBenefitStatusDTO(benefitId, favorite);
     }
 }

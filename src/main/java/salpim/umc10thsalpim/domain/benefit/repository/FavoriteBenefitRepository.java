@@ -23,4 +23,8 @@ WHERE fb.memberId = :memberId
 """
     )
     Page<WelfareBenefit> findFavoriteBenefitsByMemberId(@Param("memberId")Long memberId, Pageable Pageable);
+
+    boolean existsByMemberIdAndBenefitId(Long memberId, Long benefitId);
+
+    void deleteByMemberIdAndBenefitId(Long memberId, Long benefitId);
 }
