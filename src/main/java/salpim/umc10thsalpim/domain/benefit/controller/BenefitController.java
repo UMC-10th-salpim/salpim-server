@@ -154,6 +154,7 @@ public class BenefitController {
                 혜택 찜 상태를 요청한 상태로 변경합니다.
                 - benefitId: 찜 상태 변경을 원하는 혜택 id를 path로 주기
                 - updateFavorite: 어떤 상태로 변하길 원하는 지를 body로 주기
+                
                 이미 원하는 상태인 경우에도 성공으로 응답합니다.
                 """
     )
