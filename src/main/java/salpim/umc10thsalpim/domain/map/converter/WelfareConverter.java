@@ -1,12 +1,14 @@
 package salpim.umc10thsalpim.domain.map.converter;
 
 import org.springframework.stereotype.Component;
+import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 import salpim.umc10thsalpim.domain.map.dto.MapReqDTO;
 import salpim.umc10thsalpim.domain.map.dto.MapResDTO;
 import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -30,44 +32,36 @@ public class WelfareConverter {
     }
 
     // 중앙 혜택 리스트 변환 (BokjiroApiDTO -> DTO)
-    public List<MapResDTO.BenefitDTO> toCentralBenefitDTO(BokjiroApiDTO.BenefitListRes response) {
-        if (response == null || response.getBenefitList() == null) {
+    public List<MapResDTO.BenefitDTO> toBenefitDTOList(
+            List<WelfareBenefit> benefits,
+            Map<Long, String> regionNameMap
+    ) {
+        if (benefits == null || benefits.isEmpty()) {
             return Collections.emptyList();
         }
 
-        return response.getBenefitList().stream()
-                .map(item -> MapResDTO.BenefitDTO.builder()
-                        .servId(item.getServId())
-                        .region("전국")
-                        .serviceName(item.getServNm())
-                        .build())
+        return benefits.stream()
+                .map(benefit -> toBenefitDTO(benefit, regionNameMap))
                 .collect(Collectors.toList());
     }
 
-    // 지자체 혜택 리스트 변환 (BokjiroApiDTO -> DTO)
-    public List<MapResDTO.BenefitDTO> toLocalBenefitDTO(
-            BokjiroApiDTO.BenefitListRes response,
-            String sido,
-            String sigungu
+    //welfareBenefit 엔티티를 BenefitDTO로
+    private MapResDTO.BenefitDTO toBenefitDTO(
+            WelfareBenefit benefit,
+            Map<Long, String> regionNameMap
     ) {
-        if (response == null || response.getBenefitList() == null) {
-            return Collections.emptyList();
+        // 지역(region) 문자열 처리: 중앙 혜택이면 '전국', 아니면 '지자체' (필요시 지자체 명으로 고도화 가능)
+        String regionText = "전국";
+
+        if("LOCAL".equals(benefit.getSource()) && benefit.getRegionId() != null){
+            regionText = regionNameMap.getOrDefault(benefit.getRegionId(), "지자체");
         }
 
-        String fallbackRegion = (sido != null && sigungu != null) ? sido + " " + sigungu : "지자체";
-
-        return response.getBenefitList().stream()
-                .map(item -> {
-                    String regionText = (item.getCtpvNm() != null && item.getSggNm() != null)
-                            ? item.getCtpvNm() + " " + item.getSggNm()
-                            : fallbackRegion;
-
-                    return MapResDTO.BenefitDTO.builder()
-                            .servId(item.getServId())
-                            .region(regionText)
-                            .serviceName(item.getServNm())
-                            .build();
-                })
-                .collect(Collectors.toList());
+        return MapResDTO.BenefitDTO.builder()
+                .benefitId(benefit.getId()) //페이징에 사용할 DB PK
+                .servId(benefit.getExternalId()) // 자세히 보기에 사용할 서비스 ID
+                .region(regionText)
+                .serviceName(benefit.getTitle())
+                .build();
     }
 }
