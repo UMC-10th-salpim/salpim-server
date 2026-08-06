@@ -12,7 +12,12 @@ import salpim.umc10thsalpim.global.entity.BaseEntity;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "favorite_benefit")
+@Table(name = "favorite_benefit",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_favorite_benefit_member_benefit",
+                columnNames = {"member_id", "benefit_id"}
+        )
+)
 public class FavoriteBenefit extends BaseEntity {
 
     @Id
