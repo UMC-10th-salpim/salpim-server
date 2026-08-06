@@ -55,14 +55,14 @@ public class BenefitConverter {
         );
     }
 
-    public static CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO> toFavoriteBenefitPagination(List<WelfareBenefit> favoriteBenefits, Long totalCount) {
+    public static CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO> toFavoriteBenefitPagination(List<WelfareBenefit> favoriteBenefits, Long totalCount, Boolean hasNext) {
         return CursorResDTO.Pagination.<BenefitResDTO.FavoriteBenefitDTO>builder()
                 .data(favoriteBenefits.stream()
                         .map(BenefitConverter::toFavoriteBenefitDTO)
                         .toList())
                 .totalCount(totalCount.intValue())
                 .pageSize(favoriteBenefits.size())
-                .hasNext(totalCount>favoriteBenefits.size())
+                .hasNext(hasNext)
                 .build();
     }
 

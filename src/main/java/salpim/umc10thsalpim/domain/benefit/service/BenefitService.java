@@ -339,6 +339,6 @@ public class BenefitService {
 
         List<WelfareBenefit> favoriteBenefits = welfareBenefitRepository.findAllById(favoriteBenefitIds);
 
-        return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits, favoriteBenefitIds.getTotalElements());
+        return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits, favoriteBenefitIds.getTotalElements(), favoriteBenefitIds.hasNext());
     }
 }
