@@ -127,12 +127,13 @@ public class BenefitController {
     @Operation(
             summary = "찜한 혜택 조회",
             description = """
-                    로그인한 회원이 찜한 복지 혜택 목록을 페이지 단위로 조회합니다.
-                                - pageNumber: 조회할 페이지 번호. 0부터 시작하며 기본값은 0입니다.
-                                - pageSize: 한 페이지에 반환할 개수. 기본값 10입니다.
-                                totalCount는 회원이 찜한 전체 혜택 수, pageSize는 현재 페이지에 실제로 담긴 개수입니다.
-                                hasNext가 false이면 마지막 페이지이다
-                                applicationEndDate와 minAge는 혜택에 해당 정보가 없으면 null로 반환됩니다.
+                로그인한 회원이 찜한 복지 혜택 목록을 페이지 단위로 조회합니다.
+                - pageNumber: 조회할 페이지 번호 0부터 시작하며 기본값은 0
+                - pageSize: 한 페이지에 반환할 개수
+                - totalCount는 회원이 찜한 전체 혜택 개수
+                - pageSize는 현재 페이지에 실제로 담긴 개수
+                - hasNext가 false이면 마지막 페이지이다.
+                - applicationEndDate와 minAge는 혜택에 해당 정보가 없으면 null로 반환됩니다.
                 """
     )
    public ApiResponse<CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO>> getFavoriteBenefits(
