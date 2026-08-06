@@ -9,7 +9,7 @@ import salpim.umc10thsalpim.domain.benefit.entity.FavoriteBenefit;
 
 public interface FavoriteBenefitRepository extends JpaRepository<FavoriteBenefit, Long> {
     @Query(
-            "SELECT fb.benefitId FROM FavoriteBenefit fb WHERE fb.memberId = :memberId"
+            "SELECT fb.benefitId FROM FavoriteBenefit fb WHERE fb.memberId = :memberId ORDER BY fb.id DESC"
     )
     Page<Long> findBenefitIdsByMemberId(@Param("memberId") Long memberId, Pageable pageRequest);
 }
