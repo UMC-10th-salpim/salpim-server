@@ -167,4 +167,22 @@ public class BenefitController {
                 benefitService.toggleFavoriteBenefit(memberId, benefitId, req.isFavorite()));
     }
 
+    @GetMapping("/favorites/deadline-soon")
+    @SecurityRequirement(name = "JWT TOKEN")
+    @Operation(
+            summary = "마감일 임박한 혜택 조회",
+            description = """
+                로그인한 회원이 찜한 혜택 중 마감일이 임박한 순으로 3개를 조회합니다.
+                - 마감일이 이미 지난 혜택은 제외됩니다.
+                - 마감일이 있는 혜택이 먼저 오고, 마감일이 없는 혜택은 뒤에 ID 오름차순으로 옵니다.
+                - dDay는 서버 기준(KST) 남은 일수입니다. 0이면 오늘 마감이고, 마감일이 없으면 null입니다.
+                - applicationEndDate와 dDay는 항상 같이 null이거나 같이 값이 있습니다.
+                - 조건에 맞는 혜택이 없으면 빈 배열이 반환됩니다.
+                """
+    )
+    public ApiResponse<List<BenefitResDTO.DeadlineSoonBenefitDTO>> getDeadlineSoonBenefits(
+            @AuthenticationPrincipal Long memberId
+    ){
+        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_VIEW, benefitService.getDeadlineSoonBenefits(memberId));
+    }
 }

@@ -8,6 +8,9 @@ import org.springframework.data.repository.query.Param;
 import salpim.umc10thsalpim.domain.benefit.entity.FavoriteBenefit;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 
+import java.time.LocalDate;
+import java.util.List;
+
 public interface FavoriteBenefitRepository extends JpaRepository<FavoriteBenefit, Long> {
 
     @Query(
@@ -27,4 +30,17 @@ WHERE fb.memberId = :memberId
     boolean existsByMemberIdAndBenefitId(Long memberId, Long benefitId);
 
     void deleteByMemberIdAndBenefitId(Long memberId, Long benefitId);
+
+    @Query("""
+SELECT wb FROM FavoriteBenefit fb JOIN WelfareBenefit wb ON wb.id = fb.benefitId
+WHERE fb.memberId = :memberId
+  AND (wb.applicationEndDate IS NULL OR wb.applicationEndDate >= :today)
+ORDER BY CASE WHEN wb.applicationEndDate IS NULL THEN 1 ELSE 0 END ASC,
+         wb.applicationEndDate ASC,
+         wb.id ASC
+""")
+    List<WelfareBenefit> findDeadlineSoonFavoriteBenefits(
+            @Param("memberId") Long memberId,
+            @Param("today") LocalDate today,
+            Pageable pageable);
 }
