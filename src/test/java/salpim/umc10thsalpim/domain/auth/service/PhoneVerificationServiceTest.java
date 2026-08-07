@@ -37,6 +37,7 @@ class PhoneVerificationServiceTest {
     private static final String PHONE_NUMBER = "010-1234-5678";
     private static final String NORMALIZED_PHONE_NUMBER = "01012345678";
     private static final String VERIFICATION_CODE = "123456";
+    private static final String CODE_HASH = "encoded-code";
     private static final String VERIFICATION_TOKEN = "phone-verification-token";
     private static final String TOKEN_HASH = "encoded-token";
 
@@ -48,6 +49,9 @@ class PhoneVerificationServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AuthSecretHasher authSecretHasher;
 
     @Mock
     private DiscordWebhookNotifier discordWebhookNotifier;
@@ -68,6 +72,7 @@ class PhoneVerificationServiceTest {
                 NORMALIZED_PHONE_NUMBER,
                 PhoneVerificationPurpose.PHONE_CHANGE
         )).willReturn(Optional.empty());
+        given(authSecretHasher.hashVerificationCode(anyString())).willReturn(CODE_HASH);
 
         phoneVerificationService.sendPhoneChangeVerificationCode(MEMBER_ID, PHONE_NUMBER);
 
@@ -86,7 +91,10 @@ class PhoneVerificationServiceTest {
         assertThat(savedVerification.getMember()).isSameAs(member);
         assertThat(savedVerification.getPhoneNumber()).isEqualTo(NORMALIZED_PHONE_NUMBER);
         assertThat(savedVerification.getPurpose()).isEqualTo(PhoneVerificationPurpose.PHONE_CHANGE);
-        assertThat(savedVerification.getCode()).hasSize(6).containsOnlyDigits();
+        assertThat(savedVerification.getCodeHash()).isEqualTo(CODE_HASH);
+        ArgumentCaptor<String> codeCaptor = ArgumentCaptor.forClass(String.class);
+        verify(authSecretHasher).hashVerificationCode(codeCaptor.capture());
+        assertThat(codeCaptor.getValue()).hasSize(6).containsOnlyDigits();
         assertThat(savedVerification.getVerified()).isFalse();
         assertThat(savedVerification.getSentAt()).isAfter(beforeRequest);
         assertThat(savedVerification.getExpiredAt()).isAfter(beforeRequest.plusMinutes(4));
@@ -134,7 +142,7 @@ class PhoneVerificationServiceTest {
                 .member(member)
                 .phoneNumber(NORMALIZED_PHONE_NUMBER)
                 .purpose(PhoneVerificationPurpose.PHONE_CHANGE)
-                .code(VERIFICATION_CODE)
+                .codeHash(CODE_HASH)
                 .expiredAt(LocalDateTime.now().plusMinutes(4))
                 .sentAt(LocalDateTime.now().minusSeconds(61))
                 .verified(true)
@@ -232,11 +240,12 @@ class PhoneVerificationServiceTest {
         );
 
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
-        given(phoneVerificationRepository.findByMemberAndPhoneNumberAndPurpose(
+        given(phoneVerificationRepository.findByMemberAndPhoneNumberAndPurposeForUpdate(
                 member,
                 NORMALIZED_PHONE_NUMBER,
                 PhoneVerificationPurpose.PHONE_CHANGE
         )).willReturn(Optional.of(verification));
+        given(authSecretHasher.matchesVerificationCode(VERIFICATION_CODE, CODE_HASH)).willReturn(true);
         given(passwordEncoder.encode(anyString())).willReturn(TOKEN_HASH);
 
         AuthResDTO.PhoneChangeVerifyResult result = phoneVerificationService
@@ -266,7 +275,7 @@ class PhoneVerificationServiceTest {
         );
 
         given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
-        given(phoneVerificationRepository.findByMemberAndPhoneNumberAndPurpose(
+        given(phoneVerificationRepository.findByMemberAndPhoneNumberAndPurposeForUpdate(
                 member,
                 NORMALIZED_PHONE_NUMBER,
                 PhoneVerificationPurpose.PHONE_CHANGE
@@ -283,6 +292,43 @@ class PhoneVerificationServiceTest {
 
         assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.EXPIRED_VERIFICATION_CODE);
         verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("인증번호 검증 실패가 다섯 번 누적되면 잠긴다")
+    void locksVerificationAfterFiveFailedAttempts() {
+        PhoneVerification verification = PhoneVerification.builder()
+                .phoneNumber(NORMALIZED_PHONE_NUMBER)
+                .purpose(PhoneVerificationPurpose.SIGNUP)
+                .codeHash(CODE_HASH)
+                .expiredAt(LocalDateTime.now().plusMinutes(5))
+                .sentAt(LocalDateTime.now().minusMinutes(1))
+                .verified(false)
+                .build();
+
+        given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.SIGNUP
+        )).willReturn(Optional.of(verification));
+        given(authSecretHasher.matchesVerificationCode("000000", CODE_HASH)).willReturn(false);
+
+        for (int attempt = 1; attempt < 5; attempt++) {
+            AuthException exception = assertThrows(
+                    AuthException.class,
+                    () -> phoneVerificationService.verifyCode(PHONE_NUMBER, "000000")
+            );
+            assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_VERIFICATION_CODE);
+        }
+
+        AuthException lockedException = assertThrows(
+                AuthException.class,
+                () -> phoneVerificationService.verifyCode(PHONE_NUMBER, "000000")
+        );
+
+        assertThat(lockedException.getErrorCode())
+                .isEqualTo(AuthErrorCode.PHONE_VERIFICATION_ATTEMPTS_EXCEEDED);
+        assertThat(verification.getFailedAttempts()).isEqualTo(5);
+        assertThat(verification.getLockedUntil()).isAfter(LocalDateTime.now());
     }
 
     @Test
@@ -433,7 +479,7 @@ class PhoneVerificationServiceTest {
                 .member(member)
                 .phoneNumber(NORMALIZED_PHONE_NUMBER)
                 .purpose(PhoneVerificationPurpose.PHONE_CHANGE)
-                .code(VERIFICATION_CODE)
+                .codeHash(CODE_HASH)
                 .expiredAt(expiredAt)
                 .verified(verified)
                 .verificationTokenHash(verificationTokenHash)
@@ -451,7 +497,7 @@ class PhoneVerificationServiceTest {
                 .member(member)
                 .phoneNumber(NORMALIZED_PHONE_NUMBER)
                 .purpose(purpose)
-                .code(VERIFICATION_CODE)
+                .codeHash(CODE_HASH)
                 .expiredAt(LocalDateTime.now().plusMinutes(5))
                 .sentAt(LocalDateTime.now())
                 .verified(false)

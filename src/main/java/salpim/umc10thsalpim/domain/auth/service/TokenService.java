@@ -41,6 +41,7 @@ public class TokenService {
     private final JwtProperties jwtProperties;
     private final RefreshTokenRepository refreshTokenRepository;
     private final MemberRepository memberRepository;
+    private final AuthSecretHasher authSecretHasher;
 
     @Transactional
     public AuthResDTO.TokenResult issueLoginTokens(Member member) {
@@ -59,15 +60,16 @@ public class TokenService {
         );
         LocalDateTime refreshTokenExpiredAt = LocalDateTime.now()
                 .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
+        String refreshTokenHash = authSecretHasher.hashRefreshToken(refreshToken);
 
         RefreshToken savedRefreshToken = refreshTokenRepository.findByMember(lockedMember)
                 .map(existingToken -> {
-                    existingToken.updateToken(refreshToken, refreshTokenExpiredAt);
+                    existingToken.updateTokenHash(refreshTokenHash, refreshTokenExpiredAt);
                     return existingToken;
                 })
                 .orElseGet(() -> RefreshToken.builder()
                         .member(lockedMember)
-                        .token(refreshToken)
+                        .tokenHash(refreshTokenHash)
                         .expiredAt(refreshTokenExpiredAt)
                         .build());
 

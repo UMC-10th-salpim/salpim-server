@@ -71,7 +71,7 @@ class MemberWithdrawalServiceTest {
         Member member = memberRepository.save(member(region, "01011112222"));
         RefreshToken refreshToken = refreshTokenRepository.save(RefreshToken.builder()
                 .member(member)
-                .token("refresh-token")
+                .tokenHash("encoded-refresh-token")
                 .expiredAt(LocalDateTime.now().plusDays(1))
                 .build());
         Term term = termRepository.save(Term.builder()

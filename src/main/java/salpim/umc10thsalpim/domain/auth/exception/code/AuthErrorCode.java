@@ -15,6 +15,9 @@ public enum AuthErrorCode implements BaseErrorCode {
     INVALID_PASSWORD(HttpStatus.UNAUTHORIZED,
             "AUTH401_PASSWORD",
             "비밀번호가 일치하지 않습니다."),
+    INVALID_LOGIN_CREDENTIALS(HttpStatus.UNAUTHORIZED,
+            "AUTH401_LOGIN_CREDENTIALS",
+            "전화번호 또는 비밀번호가 올바르지 않습니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED,
             "AUTH401_TOKEN",
             "유효하지 않은 토큰입니다."),
@@ -63,6 +66,9 @@ public enum AuthErrorCode implements BaseErrorCode {
     PHONE_VERIFICATION_RESEND_TOO_SOON(HttpStatus.TOO_MANY_REQUESTS,
             "AUTH429_PHONE_VERIFICATION_RESEND",
             "인증번호는 1분 후에 다시 요청할 수 있습니다."),
+    PHONE_VERIFICATION_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS,
+            "AUTH429_PHONE_VERIFICATION_ATTEMPTS",
+            "인증번호 검증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요."),
     ;
 
     private final HttpStatus status;
