@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.domain.benefit.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import salpim.umc10thsalpim.domain.benefit.entity.FavoriteBenefit;
@@ -43,4 +44,12 @@ ORDER BY CASE WHEN wb.applicationEndDate IS NULL THEN 1 ELSE 0 END ASC,
             @Param("memberId") Long memberId,
             @Param("today") LocalDate today,
             Pageable pageable);
+
+    @Modifying
+    @Query(value = """
+INSERT IGNORE INTO favorite_benefit (member_id, benefit_id, created_at, updated_at)
+VALUES (:memberId, :benefitId, NOW(), NOW())
+""", nativeQuery = true)
+    void insertIgnore(@Param("memberId") Long memberId, @Param("benefitId") Long benefitId);
+
 }

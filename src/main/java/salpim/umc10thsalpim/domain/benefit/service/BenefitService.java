@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.benefit.converter.BenefitConverter;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.entity.BenefitRule;
-import salpim.umc10thsalpim.domain.benefit.entity.FavoriteBenefit;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareCategory;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
@@ -360,12 +359,7 @@ public class BenefitService {
                 favoriteBenefitRepository.existsByMemberIdAndBenefitId(memberId, benefitId);
 
         if (favorite&&!alreadyFavorite) {
-            favoriteBenefitRepository.save(
-                    FavoriteBenefit.builder()
-                            .memberId(memberId)
-                            .benefitId(benefitId)
-                            .build()
-            );
+            favoriteBenefitRepository.insertIgnore(memberId, benefitId);
         }else if (!favorite&&alreadyFavorite) {
             favoriteBenefitRepository.deleteByMemberIdAndBenefitId(memberId, benefitId);
         }
