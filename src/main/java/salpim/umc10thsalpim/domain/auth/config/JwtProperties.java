@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 public class JwtProperties {
 
     private static final int MIN_SECRET_LENGTH_BYTES = 32;
+    private static final String EXAMPLE_SECRET = "REPLACE_WITH_RANDOM_BASE64_SECRET";
 
     @NotBlank(message = "JWT secret key is required.")
     private String secretKey;
@@ -36,9 +37,11 @@ public class JwtProperties {
     @Positive(message = "JWT signup token expiration must be positive.")
     private Long signupTokenExpirationMillis;
 
-    @AssertTrue(message = "JWT secret key must be at least 32 bytes.")
-    public boolean isSecretKeyAtLeast32Bytes() {
+    @AssertTrue(message = "JWT secret key must be at least 32 bytes and must not use the example value.")
+    public boolean isSecretKeySecure() {
         return secretKey != null
-                && secretKey.getBytes(StandardCharsets.UTF_8).length >= MIN_SECRET_LENGTH_BYTES;
+                && secretKey.getBytes(StandardCharsets.UTF_8).length >= MIN_SECRET_LENGTH_BYTES
+                && !EXAMPLE_SECRET.equals(secretKey)
+                && !secretKey.startsWith("your_jwt_secret_key");
     }
 }

@@ -63,7 +63,7 @@ class LocalLoginServiceTest {
 
         assertThatThrownBy(() -> localLoginService.login(request))
                 .isInstanceOfSatisfying(AuthException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.LOGIN_MEMBER_NOT_FOUND));
+                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
     }
 
     @Test
@@ -76,7 +76,7 @@ class LocalLoginServiceTest {
 
         assertThatThrownBy(() -> localLoginService.login(request))
                 .isInstanceOfSatisfying(AuthException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_PASSWORD));
+                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
     }
 
     private Member localMember() {
