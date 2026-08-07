@@ -1,6 +1,7 @@
 package salpim.umc10thsalpim.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,15 +36,19 @@ public class LocalSignupService {
         String encodedPasswordRecoveryAnswer = passwordEncoder.encode(
                 request.passwordAnswer().trim()
         );
-        memberRepository.save(
-                MemberConverter.toLocalMember(
-                        request,
-                        normalizedPhoneNumber,
-                        encodedPassword,
-                        encodedPasswordRecoveryAnswer,
-                        region
-                )
-        );
+        try {
+            memberRepository.saveAndFlush(
+                    MemberConverter.toLocalMember(
+                            request,
+                            normalizedPhoneNumber,
+                            encodedPassword,
+                            encodedPasswordRecoveryAnswer,
+                            region
+                    )
+            );
+        } catch (DataIntegrityViolationException exception) {
+            throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
+        }
         phoneVerificationService.deleteVerification(normalizedPhoneNumber);
     }
 

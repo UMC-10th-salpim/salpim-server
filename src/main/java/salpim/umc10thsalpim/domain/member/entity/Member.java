@@ -96,6 +96,9 @@ public class Member extends BaseEntity {
     }
 
     private void validateLocalMemberFields() {
+        if (isBlank(phoneNumber)) {
+            throw new MemberException(MemberErrorCode.REQUIRED_LOCAL_PHONE_NUMBER);
+        }
         if (isBlank(password)) {
             throw new MemberException(MemberErrorCode.REQUIRED_LOCAL_PASSWORD);
         }
