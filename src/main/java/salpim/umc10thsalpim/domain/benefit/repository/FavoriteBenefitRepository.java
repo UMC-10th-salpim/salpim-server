@@ -30,6 +30,8 @@ WHERE fb.memberId = :memberId
 
     boolean existsByMemberIdAndBenefitId(Long memberId, Long benefitId);
 
+    long countByMemberIdAndBenefitId(Long memberId, Long benefitId);
+
     void deleteByMemberIdAndBenefitId(Long memberId, Long benefitId);
 
     @Query("""
