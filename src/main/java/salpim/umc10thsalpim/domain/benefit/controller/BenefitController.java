@@ -2,26 +2,29 @@ package salpim.umc10thsalpim.domain.benefit.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import salpim.umc10thsalpim.domain.benefit.dto.BenefitReqDTO;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitSuccessCode;
 import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 import salpim.umc10thsalpim.global.apiPayload.code.BaseSuccessCode;
 import salpim.umc10thsalpim.global.dto.CursorResDTO;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
-import java.util.List;
 import java.net.URI;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import java.util.List;
 
 @RestController
 @Validated
@@ -119,5 +122,67 @@ public class BenefitController {
                 .status(HttpStatus.FOUND)
                 .location(URI.create(applicationUrl))
                 .build();
+    }
+
+    @GetMapping("/favorites")
+    @SecurityRequirement(name = "JWT TOKEN")
+    @Operation(
+            summary = "찜한 혜택 조회",
+            description = """
+                로그인한 회원이 찜한 복지 혜택 목록을 페이지 단위로 조회합니다.
+                - pageNumber: 조회할 페이지 번호 0부터 시작하며 기본값은 0
+                - pageSize: 한 페이지에 반환할 개수
+                - totalCount는 회원이 찜한 전체 혜택 개수
+                - pageSize는 현재 페이지에 실제로 담긴 개수
+                - hasNext가 false이면 마지막 페이지이다.
+                - applicationEndDate와 minAge는 혜택에 해당 정보가 없으면 null로 반환됩니다.
+                """
+    )
+   public ApiResponse<CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO>> getFavoriteBenefits(
+            @AuthenticationPrincipal Long memberId,
+            @RequestParam(name="pageNumber", defaultValue = "0") @PositiveOrZero Integer pageNumber,
+            @RequestParam(name="pageSize", defaultValue = "10") @Positive Integer pageSize
+    ){
+        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_VIEW, benefitService.getFavoriteBenefits(memberId, pageNumber, pageSize));
+    }
+
+    @PutMapping("/{benefitId}/favorite")
+    @SecurityRequirement(name = "JWT TOKEN")
+    @Operation(
+            summary = "혜택 찜하기/찜 취소",
+            description = """
+                혜택 찜 상태를 요청한 상태로 변경합니다.
+                - benefitId: 찜 상태 변경을 원하는 혜택 id를 path로 주기
+                - updateFavorite: 어떤 상태로 변하길 원하는 지를 body로 주기
+                
+                이미 원하는 상태인 경우에도 성공으로 응답합니다.
+                """
+    )
+    public ApiResponse<BenefitResDTO.FavoriteBenefitStatusDTO> updateFavoriteBenefit(
+            @AuthenticationPrincipal Long memberId,
+            @PathVariable Long benefitId,
+            @Valid @RequestBody BenefitReqDTO.UpdateFavorite req
+    ){
+        return ApiResponse.onSuccess(req.isFavorite() ? BenefitSuccessCode.BENEFIT_FAVORITE_ADD : BenefitSuccessCode.BENEFIT_FAVORITE_REMOVE,
+                benefitService.toggleFavoriteBenefit(memberId, benefitId, req.isFavorite()));
+    }
+
+    @GetMapping("/favorites/deadline-soon")
+    @SecurityRequirement(name = "JWT TOKEN")
+    @Operation(
+            summary = "마감일 임박한 혜택 조회",
+            description = """
+                로그인한 회원이 찜한 혜택 중 마감일이 임박한 순으로 3개를 조회합니다.
+                - 마감일이 이미 지난 혜택은 제외됩니다.
+                - 마감일이 있는 혜택이 먼저 오고, 마감일이 없는 혜택은 뒤에 ID 오름차순으로 옵니다.
+                - dDay는 서버 기준(KST) 남은 일수입니다. 0이면 오늘 마감이고, 마감일이 없으면 null입니다.
+                - applicationEndDate와 dDay는 항상 같이 null이거나 같이 값이 있습니다.
+                - 조건에 맞는 혜택이 없으면 빈 배열이 반환됩니다.
+                """
+    )
+    public ApiResponse<List<BenefitResDTO.DeadlineSoonBenefitDTO>> getDeadlineSoonBenefits(
+            @AuthenticationPrincipal Long memberId
+    ){
+        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_VIEW, benefitService.getDeadlineSoonBenefits(memberId));
     }
 }

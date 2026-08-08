@@ -32,4 +32,25 @@ public class BenefitResDTO {
             Boolean isAgeSatisfied
     ) {}
 
+    @Builder
+    public record FavoriteBenefitDTO(
+            Long benefitId,
+            String title,
+            LocalDate applicationEndDate,
+            Integer minAge
+    ){}
+
+    @Builder
+    public record FavoriteBenefitStatusDTO(
+            Long benefitId,
+            Boolean isFavorite
+    ) {}
+
+    @Builder
+    public record DeadlineSoonBenefitDTO (
+           Long benefitId,
+           String title,
+           LocalDate applicationEndDate,
+           Integer dDay
+    ){}
 }

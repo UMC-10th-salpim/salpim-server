@@ -5,6 +5,8 @@ import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 import salpim.umc10thsalpim.global.dto.CursorResDTO;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -53,5 +55,52 @@ public class BenefitConverter {
                 welfareBenefit.getMaxAge(),
                 isAgeSatisfied
         );
+    }
+
+    public static CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO> toFavoriteBenefitPagination(List<WelfareBenefit> favoriteBenefits, Long totalCount, Boolean hasNext) {
+        return CursorResDTO.Pagination.<BenefitResDTO.FavoriteBenefitDTO>builder()
+                .data(favoriteBenefits.stream()
+                        .map(BenefitConverter::toFavoriteBenefitDTO)
+                        .toList())
+                .totalCount(totalCount.intValue())
+                .pageSize(favoriteBenefits.size())
+                .hasNext(hasNext)
+                .build();
+    }
+
+    public static BenefitResDTO.FavoriteBenefitDTO toFavoriteBenefitDTO(WelfareBenefit benefit) {
+        return BenefitResDTO.FavoriteBenefitDTO.builder()
+                .benefitId(benefit.getId())
+                .title(benefit.getTitle())
+                .applicationEndDate(benefit.getApplicationEndDate())
+                .minAge(benefit.getMinAge())
+                .build();
+    }
+
+    public static BenefitResDTO.FavoriteBenefitStatusDTO toFavoriteBenefitStatusDTO(Long benefitId, Boolean favorite) {
+        return BenefitResDTO.FavoriteBenefitStatusDTO.builder()
+                .benefitId(benefitId)
+                .isFavorite(favorite)
+                .build();
+    }
+
+    public static List<BenefitResDTO.DeadlineSoonBenefitDTO> toDeadlineSoonBenefitList(
+            List<WelfareBenefit> benefits, LocalDate today) {
+        return benefits.stream()
+                .map(benefit -> toDeadlineSoonBenefitDTO(benefit, today))
+                .toList();
+    }
+
+    public static BenefitResDTO.DeadlineSoonBenefitDTO toDeadlineSoonBenefitDTO(
+            WelfareBenefit benefit, LocalDate today) {
+
+        LocalDate endDate = benefit.getApplicationEndDate();
+
+        return BenefitResDTO.DeadlineSoonBenefitDTO.builder()
+                .benefitId(benefit.getId())
+                .title(benefit.getTitle())
+                .applicationEndDate(endDate)
+                .dDay(endDate==null? null : (int) ChronoUnit.DAYS.between(today, endDate))
+                .build();
     }
 }
