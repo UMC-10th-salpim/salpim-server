@@ -118,6 +118,10 @@ public class BokjiroApiClient {
 
         }
 
+        if (!searchWrd.isEmpty() && results.isEmpty()) {
+            throw new BokjiroException(BokjiroErrorCode.BOKJIRO_API_ERROR);
+        }
+
         return mergeRes(results);
     }
 
