@@ -9,6 +9,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationPurpose;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationTargetType;
 import salpim.umc10thsalpim.domain.auth.enums.TokenPurpose;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
@@ -45,6 +47,9 @@ class PasswordResetServiceTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private PasswordVerificationAttemptService passwordVerificationAttemptService;
+
     @InjectMocks
     private PasswordResetService passwordResetService;
 
@@ -66,6 +71,16 @@ class PasswordResetServiceTest {
         assertThat(result.passwordResetToken()).isEqualTo(PASSWORD_RESET_TOKEN);
         verify(passwordEncoder).matches(RECOVERY_ANSWER, ENCODED_RECOVERY_ANSWER);
         verify(tokenService).issuePasswordResetToken(member);
+        verify(passwordVerificationAttemptService).validateAttemptAllowed(
+                PasswordVerificationPurpose.PASSWORD_RESET,
+                PasswordVerificationTargetType.PHONE_NUMBER,
+                PHONE_NUMBER
+        );
+        verify(passwordVerificationAttemptService).clearFailures(
+                PasswordVerificationPurpose.PASSWORD_RESET,
+                PasswordVerificationTargetType.PHONE_NUMBER,
+                PHONE_NUMBER
+        );
     }
 
     @Test
@@ -82,6 +97,11 @@ class PasswordResetServiceTest {
                                 .isEqualTo(AuthErrorCode.PASSWORD_RESET_VERIFICATION_FAILED));
 
         verifyNoInteractions(passwordEncoder, tokenService);
+        verify(passwordVerificationAttemptService).recordFailure(
+                PasswordVerificationPurpose.PASSWORD_RESET,
+                PasswordVerificationTargetType.PHONE_NUMBER,
+                PHONE_NUMBER
+        );
     }
 
     @Test
@@ -100,6 +120,11 @@ class PasswordResetServiceTest {
                                 .isEqualTo(AuthErrorCode.PASSWORD_RESET_VERIFICATION_FAILED));
 
         verify(tokenService, never()).issuePasswordResetToken(member);
+        verify(passwordVerificationAttemptService).recordFailure(
+                PasswordVerificationPurpose.PASSWORD_RESET,
+                PasswordVerificationTargetType.PHONE_NUMBER,
+                PHONE_NUMBER
+        );
     }
 
     @Test
