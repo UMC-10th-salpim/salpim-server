@@ -46,7 +46,8 @@ public class BenefitConverter {
                 welfareBenefit.getApplicationUrl(),
                 categoryName,
                 welfareBenefit.getMinAge(),
-                welfareBenefit.getMaxAge()
+                welfareBenefit.getMaxAge(),
+                welfareBenefit.getAgeConditionStatus()
         );
     }
 

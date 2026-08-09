@@ -46,6 +46,7 @@ public class BenefitResDTO {
         String applicationUrl,
         String welfareCategoryName,
         Integer minAge,
-        Integer maxAge
+        Integer maxAge,
+        AgeConditionStatus ageConditionStatus
     ){}
 }
