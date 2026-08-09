@@ -9,8 +9,7 @@ import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -69,5 +68,45 @@ public class RegionQueryService {
         }
 
         return ancestorRegion;
+    }
+
+    public Map<Long, String> getAncestorRegionNameMap(Long regionId) {
+        Map<Long, String> regionNameMap = new HashMap<>();
+        if (regionId == null) {
+            return regionNameMap;
+        }
+
+        List<Region> path = new ArrayList<>();
+        Set<Long> visitedIds = new HashSet<>();
+        Region current = regionRepository.findById(regionId)
+                .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+
+        //엔티티 수집 (학익1동 -> 미추홀구 -> 인천광역시)
+        while (current != null) {
+            if (!visitedIds.add(current.getId())) {
+                throw new RegionException(RegionErrorCode.REGION_HIERARCHY_INVALID);
+            }
+            path.add(current);
+
+            if (current.getParentId() == null) break;
+
+            current = regionRepository.findById(current.getParentId())
+                    .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+        }
+        //내려오면서 이름 누적 조립
+        Collections.reverse(path);
+        StringBuilder fullName = new StringBuilder();
+
+        for (Region r : path) {
+            if (fullName.length() > 0) {
+                fullName.append(" ");
+            }
+            fullName.append(r.getName());
+
+            // Map에 저장 (예: 1L -> "인천광역시", 2L -> "인천광역시 미추홀구")
+            regionNameMap.put(r.getId(), fullName.toString());
+        }
+
+        return regionNameMap;
     }
 }

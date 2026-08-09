@@ -9,9 +9,9 @@ public class MapResDTO {
 
     @Builder
     public record FacilityInfoResDTO(
-            @Schema(description = "Facility name", example = "Hakik 1-dong Administrative Welfare Center")
+            @Schema(description = "Facility name", example = "학익1동 행정복지센터")
             String name,
-            @Schema(description = "Facility address", example = "381 Maesoho-ro, Michuhol-gu, Incheon")
+            @Schema(description = "Facility address", example = "인천 미추홀구 매소홀로")
             String address,
             @Schema(description = "Operating hours", example = "09:00 - 18:00")
             String hour,
@@ -41,10 +41,16 @@ public class MapResDTO {
 
     @Builder
     public record BenefitDTO(
+            //페이징 커서용 DB PK
+            @Schema(description = "DB Primary Key (커서 페이징용)", example = "34")
+            Long benefitId,
+            //자세히 보기 버튼 조회용 servId
             @Schema(description = "Service identifier used as a cursor", example = "WLF00001234")
             String servId,
+
             @Schema(description = "Provided region", example = "Nationwide")
             String region,
+
             @Schema(description = "Service name", example = "Youth monthly rent support")
             String serviceName
     ) {

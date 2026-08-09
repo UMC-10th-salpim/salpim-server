@@ -35,11 +35,12 @@ public class BenefitResDTO {
     ) {}
 
     // 혜택 요약, 자격, 혜택 내용, 내용
+    @Builder
     public record GetBenefitDetailDTO(
         String title,
         String easySummary,
         String whoCanReceive,
-        String whatCanReceive,
+        String whatYouReceive,
         String recommendedFor,
         LocalDate applicationStartDate,
         LocalDate applicationEndDate,
@@ -48,5 +49,27 @@ public class BenefitResDTO {
         Integer minAge,
         Integer maxAge,
         AgeConditionStatus ageConditionStatus
+    ){}
+
+    @Builder
+    public record FavoriteBenefitDTO(
+            Long benefitId,
+            String title,
+            LocalDate applicationEndDate,
+            Integer minAge
+    ){}
+
+    @Builder
+    public record FavoriteBenefitStatusDTO(
+            Long benefitId,
+            Boolean isFavorite
+    ) {}
+
+    @Builder
+    public record DeadlineSoonBenefitDTO (
+           Long benefitId,
+           String title,
+           LocalDate applicationEndDate,
+           Integer dDay
     ){}
 }
