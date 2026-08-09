@@ -72,4 +72,10 @@ public class BenefitResDTO {
            LocalDate applicationEndDate,
            Integer dDay
     ){}
+
+    @Builder
+    public record BenefitShareDTO(
+            String title,
+            String summary
+    ){}
 }
