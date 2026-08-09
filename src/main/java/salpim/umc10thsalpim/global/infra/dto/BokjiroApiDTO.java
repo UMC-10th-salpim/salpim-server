@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,12 +15,15 @@ import java.util.List;
 public class BokjiroApiDTO {
 
     @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     @JacksonXmlRootElement(localName = "wantedList")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class BenefitListRes {
         private int totalCount;
-        private int pageNo;
-        private int numOfRows;
+//        private int pageNo;
+//        private int numOfRows;
         private String resultMessage;
         private String resultCode;
 
