@@ -45,3 +45,8 @@ bokjiro:
   local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
   service-key: ${BOKJIRO_SERVICE_KEY}
   local-service-key: ${LOCAL_BOKJIRO_SERVICE_KEY}
+
+solapi:
+  api-key: ${SOLAPI_API_KEY}
+  api-secret: ${SOLAPI_API_SECRET}
+  sender-number: ${SOLAPI_SENDER_NUMBER}
