@@ -31,6 +31,11 @@ jwt:
   access-token-expiration-millis: ${JWT_ACCESS_TOKEN_EXPIRATION_MILLIS:3600000}
   refresh-token-expiration-millis: ${JWT_REFRESH_TOKEN_EXPIRATION_MILLIS:1209600000}
   signup-token-expiration-millis: ${JWT_SIGNUP_TOKEN_EXPIRATION_MILLIS:600000}
+  password-reset-token-expiration-millis: ${JWT_PASSWORD_RESET_TOKEN_EXPIRATION_MILLIS:300000}
+
+password-verification-attempt:
+  max-failure-count: ${PASSWORD_VERIFICATION_MAX_FAILURE_COUNT:5}
+  lock-duration-millis: ${PASSWORD_VERIFICATION_LOCK_DURATION_MILLIS:900000}
 
 discord:
   otp-webhook-url: ${DISCORD_OTP_WEBHOOK_URL:}

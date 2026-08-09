@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/recommendations/result").authenticated()
                         .requestMatchers("/api/map/details").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/terms/agreements").authenticated()
+                        .requestMatchers("/api/password-reset/**").permitAll()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
