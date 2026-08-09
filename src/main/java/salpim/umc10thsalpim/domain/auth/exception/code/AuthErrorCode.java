@@ -75,6 +75,9 @@ public enum AuthErrorCode implements BaseErrorCode {
     PASSWORD_RESET_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST,
             "AUTH400_PASSWORD_RESET_VERIFICATION",
             "전화번호 또는 비밀번호 복구 답변이 일치하지 않습니다."),
+    PASSWORD_VERIFICATION_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS,
+            "AUTH429_PASSWORD_VERIFICATION_ATTEMPTS",
+            "비밀번호 검증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요."),
     ;
 
     private final HttpStatus status;
