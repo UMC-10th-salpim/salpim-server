@@ -39,8 +39,11 @@ public class TermService {
 
     // 회원가입 약관 동의 화면 - 약관 종류별 현재 게시(PUBLISHED) 버전 목록 조회
     public List<TermResDTO.TermsSummary> getSignupTerms() {
-        return termsTypeRepository.findAllByOrderByDisplayOrderAsc().stream()
-                .map(type -> TermConverter.toTermsSummary(type, getPublishedVersionOrThrow(type)))
+        List<TermsType> types = termsTypeRepository.findAllByOrderByDisplayOrderAsc();
+        Map<Long, TermsVersion> publishedByTypeId = getPublishedVersionsByType(types);
+
+        return types.stream()
+                .map(type -> TermConverter.toTermsSummary(type, getPublishedVersionOrThrow(type, publishedByTypeId)))
                 .toList();
     }
 
@@ -68,7 +71,7 @@ public class TermService {
                         TermReqDTO.AgreementItem::termsVersionId,
                         TermReqDTO.AgreementItem::agreed));
 
-        List<TermsVersion> versions = termsVersionRepository.findAllById(agreedByVersionId.keySet());
+        List<TermsVersion> versions = termsVersionRepository.findAllByIdInFetchTermsType(agreedByVersionId.keySet());
         if (versions.size() != agreedByVersionId.size()) {
             throw new AgreementException(AgreementErrorCode.TERM_NOT_FOUND);
         }
@@ -88,9 +91,10 @@ public class TermService {
 
     private void validateRequiredTermsAgreed(Map<Long, Boolean> agreedByVersionId) {
         List<TermsType> requiredTypes = termsTypeRepository.findAllByIsRequiredTrue();
+        Map<Long, TermsVersion> publishedByTypeId = getPublishedVersionsByType(requiredTypes);
 
         for (TermsType type : requiredTypes) {
-            TermsVersion published = getPublishedVersionOrThrow(type);
+            TermsVersion published = getPublishedVersionOrThrow(type, publishedByTypeId);
             Boolean agreed = agreedByVersionId.get(published.getId());
 
             if (agreed == null || !agreed) {
@@ -99,8 +103,17 @@ public class TermService {
         }
     }
 
-    private TermsVersion getPublishedVersionOrThrow(TermsType type) {
-        return termsVersionRepository.findByTermsTypeAndStatus(type, TermsVersionStatus.PUBLISHED)
-                .orElseThrow(() -> new AgreementException(AgreementErrorCode.TERM_NOT_FOUND));
+    // 약관 종류 목록에 대한 게시(PUBLISHED) 버전을 한 번의 쿼리로 일괄 조회
+    private Map<Long, TermsVersion> getPublishedVersionsByType(List<TermsType> types) {
+        return termsVersionRepository.findAllByTermsTypeInAndStatus(types, TermsVersionStatus.PUBLISHED).stream()
+                .collect(Collectors.toMap(version -> version.getTermsType().getId(), version -> version));
+    }
+
+    private TermsVersion getPublishedVersionOrThrow(TermsType type, Map<Long, TermsVersion> publishedByTypeId) {
+        TermsVersion version = publishedByTypeId.get(type.getId());
+        if (version == null) {
+            throw new AgreementException(AgreementErrorCode.TERM_NOT_FOUND);
+        }
+        return version;
     }
 }
