@@ -7,6 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationPurpose;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationTargetType;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.member.entity.Member;
@@ -20,20 +22,44 @@ public class PasswordResetService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final PasswordVerificationAttemptService passwordVerificationAttemptService;
 
     @Transactional(readOnly = true)
     public AuthResDTO.PasswordResetVerifyResult verifyRecoveryAnswer(
             AuthReqDTO.PasswordResetVerify request
     ) {
-        Member member = memberRepository.findByPhoneNumber(
-                normalizePhoneNumber(request.phoneNumber())
-        ).orElseThrow(this::passwordResetVerificationFailed);
+        String phoneNumber = normalizePhoneNumber(request.phoneNumber());
 
-        validateRecoveryAnswer(member, request.recoveryAnswer());
-
-        return new AuthResDTO.PasswordResetVerifyResult(
-                tokenService.issuePasswordResetToken(member)
+        passwordVerificationAttemptService.validateAttemptAllowed(
+                PasswordVerificationPurpose.PASSWORD_RESET,
+                PasswordVerificationTargetType.PHONE_NUMBER,
+                phoneNumber
         );
+
+        try{
+            Member member = memberRepository.findByPhoneNumber(phoneNumber)
+                    .orElseThrow(this::passwordResetVerificationFailed);
+
+            validateRecoveryAnswer(member, request.recoveryAnswer());
+
+            passwordVerificationAttemptService.clearFailures(
+                    PasswordVerificationPurpose.PASSWORD_RESET,
+                    PasswordVerificationTargetType.PHONE_NUMBER,
+                    phoneNumber
+            );
+
+            return new AuthResDTO.PasswordResetVerifyResult(
+                    tokenService.issuePasswordResetToken(member)
+            );
+        } catch (AuthException e) {
+            passwordVerificationAttemptService.recordFailure(
+                    PasswordVerificationPurpose.PASSWORD_RESET,
+                    PasswordVerificationTargetType.PHONE_NUMBER,
+                    phoneNumber
+            );
+
+            throw e;
+        }
     }
 
     @Transactional

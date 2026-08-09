@@ -2,6 +2,7 @@ package salpim.umc10thsalpim.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.config.PasswordVerificationAttemptProperties;
 import salpim.umc10thsalpim.domain.auth.entity.PasswordVerificationAttempt;
@@ -39,7 +40,7 @@ public class PasswordVerificationAttemptService {
         });
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordFailure(
             PasswordVerificationPurpose purpose,
             PasswordVerificationTargetType targetType,
@@ -67,7 +68,7 @@ public class PasswordVerificationAttemptService {
         attemptRepository.save(attempt);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void clearFailures(
             PasswordVerificationPurpose purpose,
             PasswordVerificationTargetType targetType,
