@@ -78,6 +78,9 @@ public enum AuthErrorCode implements BaseErrorCode {
     PASSWORD_VERIFICATION_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS,
             "AUTH429_PASSWORD_VERIFICATION_ATTEMPTS",
             "비밀번호 검증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요."),
+    SMS_SEND_FAILED(HttpStatus.BAD_GATEWAY,
+            "AUTH502_SMS_SEND",
+            "인증번호 문자 발송에 실패했습니다."),
     ;
 
     private final HttpStatus status;
