@@ -36,6 +36,10 @@ public class JwtProperties {
     @Positive(message = "JWT signup token expiration must be positive.")
     private Long signupTokenExpirationMillis;
 
+    @NotNull(message = "JWT password reset token expiration is required.")
+    @Positive(message = "JWT password reset token expiration must be positive.")
+    private Long passwordResetTokenExpirationMillis;
+
     @AssertTrue(message = "JWT secret key must be at least 32 bytes.")
     public boolean isSecretKeyAtLeast32Bytes() {
         return secretKey != null

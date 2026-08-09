@@ -5,8 +5,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationPurpose;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationTargetType;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.service.PasswordVerificationAttemptService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
 import salpim.umc10thsalpim.domain.member.converter.MemberConverter;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
@@ -32,6 +35,7 @@ public class MemberService {
     private final PhoneVerificationService phoneVerificationService;
     private final PasswordEncoder passwordEncoder;
 
+    private final PasswordVerificationAttemptService passwordVerificationAttemptService;
     private final RegionQueryService regionQueryService;
 
     @Transactional(readOnly = true)
@@ -89,7 +93,16 @@ public class MemberService {
     ) {
         Member member = getLocalMemberOrThrow(memberId);
 
-        validateCurrentPassword(member, request.currentPassword());
+        validatePasswordChangeAttemptAllowed(memberId);
+
+        try {
+            validateCurrentPassword(member, request.currentPassword());
+        } catch (MemberException e) {
+            recordPasswordChangeFailure(memberId);
+            throw e;
+        }
+
+        clearPasswordChangeFailures(memberId);
 
         return new MemberResDTO.PasswordVerificationResult(true);
     }
@@ -101,7 +114,16 @@ public class MemberService {
     ) {
         Member member = getLocalMemberOrThrow(memberId);
 
-        validateRecoveryAnswer(member, request.recoveryAnswer());
+        validatePasswordChangeAttemptAllowed(memberId);
+
+        try {
+            validateRecoveryAnswer(member, request.recoveryAnswer());
+        } catch (MemberException e) {
+            recordPasswordChangeFailure(memberId);
+            throw e;
+        }
+
+        clearPasswordChangeFailures(memberId);
 
         return new MemberResDTO.PasswordVerificationResult(true);
     }
@@ -113,8 +135,19 @@ public class MemberService {
     ) {
         Member member = getLocalMemberOrThrow(memberId);
 
-        validatePasswordVerification(member, request);
+        validatePasswordChangeAttemptAllowed(memberId);
 
+        try {
+            validatePasswordVerification(member, request);
+        } catch (MemberException e) {
+            if (isPasswordVerificationFailure(e)) {
+                recordPasswordChangeFailure(memberId);
+            }
+
+            throw e;
+        }
+
+        clearPasswordChangeFailures(memberId);
         member.changePassword(passwordEncoder.encode(request.newPassword()));
     }
 
@@ -216,4 +249,32 @@ public class MemberService {
 
     }
 
+    private void validatePasswordChangeAttemptAllowed(Long memberId) {
+        passwordVerificationAttemptService.validateAttemptAllowed(
+                PasswordVerificationPurpose.PASSWORD_CHANGE,
+                PasswordVerificationTargetType.MEMBER,
+                memberId.toString()
+        );
+    }
+
+    private void recordPasswordChangeFailure(Long memberId) {
+        passwordVerificationAttemptService.recordFailure(
+                PasswordVerificationPurpose.PASSWORD_CHANGE,
+                PasswordVerificationTargetType.MEMBER,
+                memberId.toString()
+        );
+    }
+
+    private void clearPasswordChangeFailures(Long memberId) {
+        passwordVerificationAttemptService.clearFailures(
+                PasswordVerificationPurpose.PASSWORD_CHANGE,
+                PasswordVerificationTargetType.MEMBER,
+                memberId.toString()
+        );
+    }
+
+    private boolean isPasswordVerificationFailure(MemberException e) {
+        return e.getErrorCode() == MemberErrorCode.PASSWORD_MISMATCH
+                || e.getErrorCode() == MemberErrorCode.RECOVERY_ANSWER_MISMATCH;
+    }
 }

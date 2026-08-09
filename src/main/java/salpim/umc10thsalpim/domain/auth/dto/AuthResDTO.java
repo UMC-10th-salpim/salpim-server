@@ -43,4 +43,10 @@ public class AuthResDTO {
             String phoneVerificationToken
     ) {
     }
+
+    @Builder
+    public record PasswordResetVerifyResult(
+            String passwordResetToken
+    ){
+    }
 }
