@@ -72,7 +72,7 @@ public class TermsVersion {
     // 동시 게시 요청이 와도 약관종류당 PUBLISHED 버전이 2개 이상 저장될 수 없다.
     @Getter(AccessLevel.NONE)
     @Column(name = "published_terms_type_id", insertable = false, updatable = false,
-            columnDefinition = "BIGINT GENERATED ALWAYS AS (CASE WHEN status = 'PUBLISHED' THEN terms_type_id END) VIRTUAL")
+            columnDefinition = "BIGINT GENERATED ALWAYS AS (CASE WHEN status = 'PUBLISHED' THEN terms_type_id END)")
     private Long publishedTermsTypeId;
 
     @OneToMany(mappedBy = "termsVersion")
