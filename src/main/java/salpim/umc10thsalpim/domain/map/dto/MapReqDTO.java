@@ -13,30 +13,30 @@ public class MapReqDTO {
 
     @Builder
     public record FacilityInfoRequest(
-            @Schema(description = "Facility name", example = "Hakik 1-dong Administrative Welfare Center")
-            @NotBlank(message = "facilityName is required.")
+            @Schema(description = "시설이름", example = "학익1동 행정복지센터")
+            @NotBlank
             String facilityName,
 
-            @Schema(description = "Facility address", example = "381 Maesoho-ro, Michuhol-gu, Incheon")
-            @NotBlank(message = "address is required.")
+            @Schema(description = "주소", example = "인천 미추홀구 매소홀로")
+            @NotBlank
             String address,
 
             @Schema(description = "Latitude", example = "37.4475")
-            @NotNull(message = "latitude is required.")
+            @NotNull
             @DecimalMin(value = "-90.0", message = "latitude must be greater than or equal to -90.")
             @DecimalMax(value = "90.0", message = "latitude must be less than or equal to 90.")
             BigDecimal latitude,
 
             @Schema(description = "Longitude", example = "126.6675")
-            @NotNull(message = "longitude is required.")
+            @NotNull
             @DecimalMin(value = "-180.0", message = "longitude must be greater than or equal to -180.")
             @DecimalMax(value = "180.0", message = "longitude must be less than or equal to 180.")
             BigDecimal longitude,
 
-            @Schema(description = "Cursor from the previous response", example = "WLF00001234")
+            @Schema(example = "306")
             String cursor,
 
-            @Schema(description = "Requested page size", example = "10")
+            @Schema(example = "10")
             Integer size
     ) {
     }

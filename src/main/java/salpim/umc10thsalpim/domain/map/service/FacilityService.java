@@ -2,8 +2,12 @@ package salpim.umc10thsalpim.domain.map.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
+import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
+import salpim.umc10thsalpim.domain.benefit.repository.WelfareBenefitRepository;
 import salpim.umc10thsalpim.domain.map.converter.WelfareConverter;
 import salpim.umc10thsalpim.domain.map.dto.MapReqDTO;
 import salpim.umc10thsalpim.domain.map.dto.MapResDTO;
@@ -21,6 +25,7 @@ import salpim.umc10thsalpim.global.util.GeoUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -30,7 +35,8 @@ public class FacilityService {
 
     private final MemberRepository memberRepository;
     private final RegionQueryService regionQueryService;
-    private final BokjiroApiClient bokjiroApiClient;
+
+    private final WelfareBenefitRepository welfareBenefitRepository;
     private final WelfareConverter welfareConverter;
 
     public MapResDTO.FacilityInfoResDTO getFacilityInfo(
@@ -75,26 +81,40 @@ public class FacilityService {
                 request.latitude(), request.longitude()
         );
 
-        List<MapResDTO.BenefitDTO> totalBenefits = new ArrayList<>();
 
-        // 중앙 혜택 리스트 추가 (BokjiroApiClient 사용)
-        BokjiroApiDTO.BenefitListRes centralResponse = bokjiroApiClient.searchNationalBenefits(1, 100, null, null);
-        totalBenefits.addAll(welfareConverter.toCentralBenefitDTO(centralResponse));
+        Map<Long, String> regionNameMap = regionQueryService.getAncestorRegionNameMap(member.getRegionId());
+        List<Long> upperRegionIds = new ArrayList<>(regionNameMap.keySet());
 
-        // 지자체 혜택 리스트 추가 (RegionQueryService 사용)
-        if (member.getRegionId() != null) {
-            String[] location = regionQueryService.getSidoAndSigungu(member.getRegionId());
-            String sido = location[0];
-            String sigungu = location[1];
+        Long cursorId = (cursor != null && !cursor.isBlank()) ? Long.parseLong(cursor) : 0L;
+        PageRequest pageRequest = PageRequest.of(0, size + 1);
 
-            if (sido != null && sigungu != null) {
-                BokjiroApiDTO.BenefitListRes localResponse = bokjiroApiClient.searchLocalBenefits(1, 100, null, null, sido, sigungu);
-                totalBenefits.addAll(welfareConverter.toLocalBenefitDTO(localResponse, sido, sigungu));
-            }
+        // DB 단일 쿼리로 중앙 + 지자체 혜택 중 VISIT만 페이징
+        List<WelfareBenefit> queriedBenefits = welfareBenefitRepository.findWelfareBenefitsByRegionAndCursorAndAppType(
+                upperRegionIds,
+                ApplicationType.VISIT,
+                cursorId,
+                pageRequest
+        );
+
+        boolean hasNext = queriedBenefits.size() > size;
+        if(hasNext){
+            queriedBenefits.remove(size);
         }
 
-        // 메모리 기반 커서 페이징 처리
-        MapResDTO.BenefitPageDTO benefitPageDTO = paginateBenefits(totalBenefits, cursor, size);
+        //엔티티를 DTO리스트로 변환
+        List<MapResDTO.BenefitDTO> benefitDTOList = welfareConverter.toBenefitDTOList(queriedBenefits, regionNameMap);
+
+        String nextCursor = (hasNext && !queriedBenefits.isEmpty())
+                ? String.valueOf(queriedBenefits.get(queriedBenefits.size() - 1).getId())
+                : null;
+
+        MapResDTO.BenefitPageDTO benefitPageDTO = MapResDTO.BenefitPageDTO.builder()
+                .data(benefitDTOList)
+                .hasNext(hasNext)
+                .nextCursor(nextCursor)
+                .pageSize(benefitDTOList.size())
+                .totalCount(0) // 무한 스크롤이므로 0으로 처리하거나 필요시 별도 count 쿼리 적용
+                .build();
 
         return welfareConverter.toFacilityInfoResDTO(request, calculatedDistance, isMatched, benefitPageDTO);
     }
