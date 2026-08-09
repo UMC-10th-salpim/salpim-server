@@ -392,4 +392,14 @@ public class BenefitService {
 
         return BenefitConverter.toDeadlineSoonBenefitList(benefits, today);
     }
+
+    @Transactional(readOnly = true)
+    public BenefitResDTO.BenefitShareDTO getBenefitShareInfo(Long benefitId){
+        // 1. DB에서 benefitId로 혜택 조회
+        WelfareBenefit benefit = welfareBenefitRepository.findById(benefitId)
+                .orElseThrow(() -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND));
+
+        // 2. DTO로 변환하여 반환
+        return BenefitConverter.toBenefitShareDTO(benefit);
+    }
 }

@@ -948,4 +948,40 @@ class BenefitServiceTest {
         assertThat(exception.getErrorCode())
                 .isEqualTo(BenefitErrorCode.BENEFIT_APPLICATION_URL_INVALID);
     }
+
+    @Test
+    @DisplayName("카카오톡 공유하기용 혜택 정보 정상 조회")
+    void returnsBenefitShareInfo() {
+        Long benefitId = 100L;
+        WelfareBenefit benefit = WelfareBenefit.builder()
+                .id(benefitId)
+                .title("청년월세 특별지원")
+                .easySummary("청년 가구에 월세를 지원합니다.")
+                .build();
+
+        given(welfareBenefitRepository.findById(benefitId))
+                .willReturn(Optional.of(benefit));
+
+        BenefitResDTO.BenefitShareDTO result = benefitService.getBenefitShareInfo(benefitId);
+
+        assertThat(result.title()).isEqualTo("청년월세 특별지원");
+        assertThat(result.summary()).isEqualTo("청년 가구에 월세를 지원합니다.");
+    }
+
+    @Test
+    @DisplayName("카카오톡 공유하기용 혜택 조회 시 혜택이 없으면 예외가 발생한다")
+    void throwsExceptionWhenBenefitNotFoundForShareInfo() {
+        Long benefitId = 100L;
+
+        given(welfareBenefitRepository.findById(benefitId))
+                .willReturn(Optional.empty());
+
+        BenefitException exception = assertThrows(
+                BenefitException.class,
+                () -> benefitService.getBenefitShareInfo(benefitId)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(BenefitErrorCode.BENEFIT_NOT_FOUND);
+    }
 }
