@@ -33,7 +33,7 @@ public class MapReqDTO {
             @DecimalMax(value = "180.0", message = "longitude must be less than or equal to 180.")
             BigDecimal longitude,
 
-            @Schema(example = "WLF00001234")
+            @Schema(example = "306")
             String cursor,
 
             @Schema(example = "10")
