@@ -121,4 +121,27 @@ class BenefitControllerTest {
 
         verify(benefitService).getOnlineApplicationUrl(benefitId);
     }
+
+    @Test
+    @DisplayName("카카오톡 공유하기용 혜택 정보 정상 조회 API")
+    void returnsBenefitShareInfo() throws Exception {
+        Long benefitId = 100L;
+        BenefitResDTO.BenefitShareDTO response = BenefitResDTO.BenefitShareDTO.builder()
+                .title("청년월세 특별지원")
+                .summary("청년 가구에 월세를 지원합니다.")
+                .build();
+
+        given(benefitService.getBenefitShareInfo(benefitId))
+                .willReturn(response);
+
+        mockMvc.perform(get("/api/benefits/{benefitId}/share", benefitId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("SHARE200_1"))
+                .andExpect(jsonPath("$.result.title").value("청년월세 특별지원"))
+                .andExpect(jsonPath("$.result.summary").value("청년 가구에 월세를 지원합니다."));
+
+        verify(benefitService).getBenefitShareInfo(benefitId);
+    }
 }
