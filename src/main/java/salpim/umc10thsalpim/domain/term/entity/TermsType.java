@@ -15,7 +15,12 @@ import java.util.List;
  * 예: 서비스 이용약관, 개인정보 수집 및 이용 동의, 민감정보 수집 및 이용 동의, 위치정보 수집 및 이용 동의
  */
 @Entity
-@Table(name = "terms_type")
+@Table(name = "terms_type",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_terms_type_code",
+                columnNames = {"code"}
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TermsType {

@@ -12,7 +12,12 @@ import lombok.NoArgsConstructor;
  * TEXT(@Lob)로 매핑한다. DB 컬럼 타입도 TEXT로 변경 필요.
  */
 @Entity
-@Table(name = "terms_clause")
+@Table(name = "terms_clause",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_terms_clause_version_clause_no",
+                columnNames = {"terms_version_id", "clause_no"}
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TermsClause {

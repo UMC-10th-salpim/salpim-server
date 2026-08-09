@@ -48,6 +48,9 @@ public class TermService {
     public TermResDTO.TermsDetail getTermsDetail(Long termsVersionId) {
         TermsVersion version = termsVersionRepository.findById(termsVersionId)
                 .orElseThrow(() -> new AgreementException(AgreementErrorCode.TERM_NOT_FOUND));
+        if (!version.isPublished()) {
+            throw new AgreementException(AgreementErrorCode.TERM_NOT_FOUND);
+        }
 
         List<TermsClause> clauses = termsClauseRepository.findAllByTermsVersionOrderByDisplayOrderAsc(version);
 
@@ -67,6 +70,9 @@ public class TermService {
 
         List<TermsVersion> versions = termsVersionRepository.findAllById(agreedByVersionId.keySet());
         if (versions.size() != agreedByVersionId.size()) {
+            throw new AgreementException(AgreementErrorCode.TERM_NOT_FOUND);
+        }
+        if (versions.stream().anyMatch(version -> !version.isPublished())) {
             throw new AgreementException(AgreementErrorCode.TERM_NOT_FOUND);
         }
 

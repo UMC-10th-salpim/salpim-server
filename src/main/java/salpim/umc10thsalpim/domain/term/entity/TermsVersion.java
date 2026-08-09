@@ -19,7 +19,21 @@ import java.util.List;
  * 변경이 필요하면 새로운 버전을 생성한다.
  */
 @Entity
-@Table(name = "terms_version")
+@Table(name = "terms_version",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_terms_version_type_version",
+                        columnNames = {"terms_type_id", "version"}
+                ),
+                // status가 PUBLISHED일 때만 terms_type_id 값을 가지는 생성 컬럼(published_terms_type_id)에
+                // 유니크 제약을 걸어, 약관종류당 PUBLISHED 버전이 동시에 2개 이상 존재할 수 없도록 DB 차원에서 강제한다.
+                // MySQL은 partial unique index를 지원하지 않으므로 이 우회 방식을 사용한다.
+                @UniqueConstraint(
+                        name = "uk_terms_version_published_type",
+                        columnNames = {"published_terms_type_id"}
+                )
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TermsVersion {
@@ -52,6 +66,14 @@ public class TermsVersion {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    // DB 생성 컬럼: status='PUBLISHED'일 때만 terms_type_id, 그 외에는 NULL.
+    // uk_terms_version_published_type 유니크 제약이 이 컬럼에 걸려 있어
+    // 동시 게시 요청이 와도 약관종류당 PUBLISHED 버전이 2개 이상 저장될 수 없다.
+    @Getter(AccessLevel.NONE)
+    @Column(name = "published_terms_type_id", insertable = false, updatable = false,
+            columnDefinition = "BIGINT GENERATED ALWAYS AS (CASE WHEN status = 'PUBLISHED' THEN terms_type_id END) VIRTUAL")
+    private Long publishedTermsTypeId;
 
     @OneToMany(mappedBy = "termsVersion")
     private List<TermsClause> clauses = new ArrayList<>();
