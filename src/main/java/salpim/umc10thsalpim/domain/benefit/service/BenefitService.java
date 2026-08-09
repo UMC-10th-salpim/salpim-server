@@ -1,9 +1,14 @@
 package salpim.umc10thsalpim.domain.benefit.service;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.benefit.converter.BenefitConverter;
+import salpim.umc10thsalpim.domain.benefit.dto.BenefitReqDTO;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.entity.BenefitRule;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
@@ -13,6 +18,7 @@ import salpim.umc10thsalpim.domain.benefit.enums.RegionScope;
 import salpim.umc10thsalpim.domain.benefit.exception.BenefitException;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitErrorCode;
 import salpim.umc10thsalpim.domain.benefit.repository.BenefitRuleRepository;
+import salpim.umc10thsalpim.domain.benefit.repository.FavoriteBenefitRepository;
 import salpim.umc10thsalpim.domain.benefit.repository.WelfareBenefitRepository;
 import salpim.umc10thsalpim.domain.benefit.repository.WelfareCategoryRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;
@@ -32,6 +38,7 @@ import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.ZoneId;
 import java.util.List;
 import java.net.URI;
 import java.util.*;
@@ -47,6 +54,8 @@ public class BenefitService {
     private static final int MAX_SERV_NUMBER=2000;
     private static final String SOURCE_NATIONAL = "NATIONAL";
     private static final String SOURCE_LOCAL = "LOCAL";
+    private static final int DEADLINE_SOON_LIMIT = 3;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final WelfareBenefitRepository welfareBenefitRepository;
     private final BenefitRuleRepository benefitRuleRepository;
@@ -54,6 +63,7 @@ public class BenefitService {
     private final MemberRepository memberRepository;
     private final WelfareCategoryRepository welfareCategoryRepository;
     private final RegionQueryService regionQueryService;
+    private final FavoriteBenefitRepository favoriteBenefitRepository;
 
     @Transactional(readOnly = true)
     public BenefitResDTO.GetApplicationHelperInfo getApplicationHelperInfo(
@@ -88,6 +98,21 @@ public class BenefitService {
         return BenefitConverter.toGetApplicationHelperInfo(
                 welfareBenefit, isOnlineApplicationAvailable,
                 applicationTypeList, isRegionSatisfied, isAgeSatisfied);
+    }
+
+    @Transactional(readOnly = true)
+    public BenefitResDTO.GetBenefitDetailDTO getBenefitDetail(BenefitReqDTO.GetBenefitDetailDTO request) {
+        WelfareBenefit welfareBenefit = welfareBenefitRepository.findById(request.benefitId())
+                .orElseThrow(() -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND));
+
+        String categoryName = null;
+        if (welfareBenefit.getCategoryId() != null) {
+            categoryName = welfareCategoryRepository.findById(welfareBenefit.getCategoryId())
+                    .map(WelfareCategory::getName)
+                    .orElse(null);
+        }
+
+        return BenefitConverter.toGetBenefitDetailDTO(welfareBenefit, categoryName);
     }
 
     @Transactional(readOnly = true)
@@ -208,11 +233,33 @@ public class BenefitService {
     @Transactional(readOnly = true)
     public CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO> getSearchResult(String searchKey, List<Long> regionIds, List<Long> categoryIds, String cursor, Integer pageSize, String sort) {
 
+        List<String> searchKeyList = (searchKey == null)
+                ? List.of("")
+                : List.of(searchKey.split(", "));
+
         String nextCursor;
         Integer totalCount;
 
-        //지자체 복지 검색에 쓸 리스트
-        List<Region> regions=regionRepository.findAllById(regionIds);
+        //지자체 복지 검색에 쓸 리스트 만들기 & 검증
+        Region sido = null;
+        Region sigungu = null;
+
+        for (Long regionId : regionIds) {
+            Region region = regionRepository.findById(regionId)
+                    .orElseThrow(() -> new RegionException(RegionErrorCode.REGION_NOT_FOUND));
+
+            switch (region.getRegionLevel()) {
+                case SIDO -> sido = region;
+                case SIGUNGU -> sigungu = region;
+                default -> throw new RegionException(RegionErrorCode.REGION_SEARCH_LEVEL_INVALID);
+            }
+        }
+        if (sido == null || sigungu == null) {
+            throw new RegionException(RegionErrorCode.REGION_SEARCH_LEVEL_INVALID);
+        }
+        if (!sido.getId().equals(sigungu.getParentId())) {
+            throw new RegionException(RegionErrorCode.REGION_HIERARCHY_MISMATCH);
+        }
 
         //조회수를 담을 list
         Map<String, Integer> viewCountMap =  new HashMap<>();
@@ -224,10 +271,10 @@ public class BenefitService {
         int pageNumber = 1;
         while(servIds_N.size()<MAX_SERV_NUMBER && servIds_L.size()<MAX_SERV_NUMBER){
             BokjiroApiDTO.BenefitListRes NationalRes =
-                    bokjiroApiClient.searchNationalBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
+                    bokjiroApiClient.searchBenefits(pageNumber, API_MAX_SIZE, searchKeyList, null, "National", sido.getName(), sigungu.getName());
 
             BokjiroApiDTO.BenefitListRes LocalRes =
-                    bokjiroApiClient.searchLocalBenefits(pageNumber, API_MAX_SIZE, searchKey, null, regions.get(0).getName(), regions.get(1).getName());
+                    bokjiroApiClient.searchBenefits(pageNumber, API_MAX_SIZE, searchKeyList, null, "Local", sido.getName(), sigungu.getName());
 
             NationalRes.getBenefitList().forEach(item -> {servIds_N.add(item.getServId());
                 viewCountMap.put(SOURCE_NATIONAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));
@@ -236,12 +283,12 @@ public class BenefitService {
                 viewCountMap.put(SOURCE_LOCAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));
             });
 
-            if (pageNumber*API_MAX_SIZE>=NationalRes.getTotalCount()&&
-            pageNumber*API_MAX_SIZE>=LocalRes.getTotalCount()){ break; }
+            if (pageNumber*API_MAX_SIZE>=NationalRes.getMaxTotalCount()&&
+            pageNumber*API_MAX_SIZE>=LocalRes.getMaxTotalCount()){ break; }
             pageNumber++;
         }
 
-        //DB 매칭 & 카테고리 필터링
+        //DB 매칭 & 카테고리/마감일 필터링
         List<WelfareBenefit> matched = new ArrayList<>();
         if (!servIds_N.isEmpty()) {
             matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_N, SOURCE_NATIONAL));
@@ -250,9 +297,12 @@ public class BenefitService {
             matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_L, SOURCE_LOCAL));
         }
 
+        LocalDate today = LocalDate.now(KST);
+
         List<WelfareBenefit> filtered = matched.stream()
                 .filter(b -> categoryIds==null || categoryIds.isEmpty()||
                         categoryIds.contains(b.getCategoryId()))
+                .filter(b -> b.getApplicationEndDate()==null || !b.getApplicationEndDate().isBefore(today))
                 .toList();
 
         totalCount=filtered.size();
@@ -305,5 +355,58 @@ public class BenefitService {
             }
         }
         return Collections.emptyList();
+    }
+
+    @Transactional(readOnly = true)
+    public CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO> getFavoriteBenefits(Long memberId, Integer pageNumber, @Positive Integer pageSize) {
+
+        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
+
+        Page<WelfareBenefit> favoriteBenefits = favoriteBenefitRepository.findFavoriteBenefitsByMemberId(memberId, pageRequest);
+
+        return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits.getContent(), favoriteBenefits.getTotalElements(), favoriteBenefits.hasNext());
+    }
+
+    @Transactional
+    public BenefitResDTO.FavoriteBenefitStatusDTO toggleFavoriteBenefit(Long memberId, Long benefitId, @NotNull(message = "찜 상태는 필수입니다.") Boolean favorite) {
+
+        memberRepository.findById(memberId).orElseThrow(
+                () -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND)
+        );
+
+        welfareBenefitRepository.findById(benefitId).orElseThrow(
+                () -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND)
+        );
+
+        boolean alreadyFavorite =
+                favoriteBenefitRepository.existsByMemberIdAndBenefitId(memberId, benefitId);
+
+        if (favorite&&!alreadyFavorite) {
+            favoriteBenefitRepository.insertIgnore(memberId, benefitId);
+        }else if (!favorite&&alreadyFavorite) {
+            favoriteBenefitRepository.deleteByMemberIdAndBenefitId(memberId, benefitId);
+        }
+
+        return BenefitConverter.toFavoriteBenefitStatusDTO(benefitId, favorite);
+    }
+
+    public List<BenefitResDTO.DeadlineSoonBenefitDTO> getDeadlineSoonBenefits(Long memberId) {
+
+        LocalDate today = LocalDate.now(KST);
+
+        List<WelfareBenefit> benefits = favoriteBenefitRepository.findDeadlineSoonFavoriteBenefits(
+                memberId, today, PageRequest.of(0, DEADLINE_SOON_LIMIT));
+
+        return BenefitConverter.toDeadlineSoonBenefitList(benefits, today);
+    }
+
+    @Transactional(readOnly = true)
+    public BenefitResDTO.BenefitShareDTO getBenefitShareInfo(Long benefitId){
+        // 1. DB에서 benefitId로 혜택 조회
+        WelfareBenefit benefit = welfareBenefitRepository.findById(benefitId)
+                .orElseThrow(() -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND));
+
+        // 2. DTO로 변환하여 반환
+        return BenefitConverter.toBenefitShareDTO(benefit);
     }
 }

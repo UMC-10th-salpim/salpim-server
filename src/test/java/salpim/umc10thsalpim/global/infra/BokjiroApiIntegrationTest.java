@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -19,8 +21,8 @@ public class BokjiroApiIntegrationTest {
     @Test
     @DisplayName("중앙부처 복지로 api 연결 확인")
     void nationalBokjiroApiTest(){
-        var res = bokjiroApiClient.searchNationalBenefits(1, 10, null, null);
-        assertThat(res.getTotalCount()).isPositive();
+        var res = bokjiroApiClient.searchBenefits(1, 10, List.of(""), null, "National", null, null);
+        assertThat(res.getMaxTotalCount()).isPositive();
         assertThat(res.getBenefitList()).isNotEmpty();
         assertThat(res.getBenefitList().get(0).getServId()).isNotBlank();
     }
@@ -28,8 +30,8 @@ public class BokjiroApiIntegrationTest {
     @Test
     @DisplayName("지자체 복지로 api 연결 확인")
     void localBokjiroApiTest(){
-        var res = bokjiroApiClient.searchLocalBenefits(1, 10, null, null, "인천", null);
-        assertThat(res.getTotalCount()).isPositive();
+        var res = bokjiroApiClient.searchBenefits(1, 10, List.of(""), null, "Local", "인천", null);
+        assertThat(res.getMaxTotalCount()).isPositive();
         assertThat(res.getBenefitList()).isNotEmpty();
         assertThat(res.getBenefitList().get(0).getServId()).isNotBlank();
     }

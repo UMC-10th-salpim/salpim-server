@@ -18,10 +18,13 @@ import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
-import salpim.umc10thsalpim.domain.term.entity.MemberTermAgreement;
-import salpim.umc10thsalpim.domain.term.entity.Term;
+import salpim.umc10thsalpim.domain.term.entity.MemberAgreement;
+import salpim.umc10thsalpim.domain.term.entity.TermsType;
+import salpim.umc10thsalpim.domain.term.entity.TermsVersion;
+import salpim.umc10thsalpim.domain.term.enums.TermsTypeCode;
 import salpim.umc10thsalpim.domain.term.repository.MemberTermAgreementRepository;
-import salpim.umc10thsalpim.domain.term.repository.TermRepository;
+import salpim.umc10thsalpim.domain.term.repository.TermsTypeRepository;
+import salpim.umc10thsalpim.domain.term.repository.TermsVersionRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -47,7 +50,10 @@ class MemberWithdrawalServiceTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
-    private TermRepository termRepository;
+    private TermsTypeRepository termsTypeRepository;
+
+    @Autowired
+    private TermsVersionRepository termsVersionRepository;
 
     @Autowired
     private MemberTermAgreementRepository memberTermAgreementRepository;
@@ -74,14 +80,21 @@ class MemberWithdrawalServiceTest {
                 .token("refresh-token")
                 .expiredAt(LocalDateTime.now().plusDays(1))
                 .build());
-        Term term = termRepository.save(Term.builder()
-                .title("terms")
-                .required(true)
+        TermsType termsType = termsTypeRepository.save(TermsType.builder()
+                .code(TermsTypeCode.SERVICE)
+                .name("서비스 이용약관")
+                .isRequired(true)
+                .displayOrder(1)
                 .build());
-        memberTermAgreementRepository.save(MemberTermAgreement.builder()
+        TermsVersion termsVersion = termsVersionRepository.save(TermsVersion.builder()
+                .termsType(termsType)
+                .version("1.0.0")
+                .effectiveDate(LocalDate.now())
+                .build());
+        memberTermAgreementRepository.save(MemberAgreement.builder()
                 .member(member)
-                .term(term)
-                .agreedAt(LocalDateTime.now())
+                .termsVersion(termsVersion)
+                .agreed(true)
                 .build());
 
         memberWithdrawalService.withdraw(member.getId());

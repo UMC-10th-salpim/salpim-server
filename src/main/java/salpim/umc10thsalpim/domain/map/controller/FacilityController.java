@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.domain.map.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -15,6 +16,7 @@ import salpim.umc10thsalpim.domain.map.service.FacilityService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 import salpim.umc10thsalpim.global.apiPayload.code.BaseSuccessCode;
 
+@Tag(name = "지도", description = "지도 내 시설(행정복지센터 등) 관련 정보 및 혜택 조회 API입니다.")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/map")

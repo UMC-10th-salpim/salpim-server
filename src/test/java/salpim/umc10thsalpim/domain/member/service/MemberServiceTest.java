@@ -7,8 +7,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationPurpose;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationTargetType;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.service.PasswordVerificationAttemptService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
@@ -35,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -58,6 +62,9 @@ class MemberServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private PasswordVerificationAttemptService passwordVerificationAttemptService;
 
     @InjectMocks
     private MemberService memberService;
@@ -615,6 +622,11 @@ class MemberServiceTest {
         assertThat(member.getPassword()).isEqualTo("new-encoded-password");
         verify(passwordEncoder).matches("123456", "encoded-password");
         verify(passwordEncoder).encode("654321");
+        verify(passwordVerificationAttemptService).clearFailures(
+                PasswordVerificationPurpose.PASSWORD_CHANGE,
+                PasswordVerificationTargetType.MEMBER,
+                MEMBER_ID.toString()
+        );
     }
 
     @Test
@@ -686,6 +698,62 @@ class MemberServiceTest {
         assertThat(exception.getErrorCode())
                 .isEqualTo(MemberErrorCode.INVALID_PASSWORD_VERIFICATION);
         verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    @DisplayName("현재 비밀번호와 복구 답변 실패는 같은 회원 기준으로 누적한다")
+    void passwordVerificationFailuresShareMemberTarget() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.VerifyCurrentPassword passwordRequest =
+                new MemberReqDTO.VerifyCurrentPassword("123456");
+        MemberReqDTO.VerifyRecoveryAnswer answerRequest =
+                new MemberReqDTO.VerifyRecoveryAnswer("wrong-answer");
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("123456", "encoded-password")).willReturn(false);
+        given(passwordEncoder.matches("wrong-answer", "encoded-answer")).willReturn(false);
+
+        assertThrows(
+                MemberException.class,
+                () -> memberService.verifyCurrentPassword(MEMBER_ID, passwordRequest)
+        );
+        assertThrows(
+                MemberException.class,
+                () -> memberService.verifyRecoveryAnswer(MEMBER_ID, answerRequest)
+        );
+
+        verify(passwordVerificationAttemptService, times(2)).recordFailure(
+                PasswordVerificationPurpose.PASSWORD_CHANGE,
+                PasswordVerificationTargetType.MEMBER,
+                MEMBER_ID.toString()
+        );
+    }
+
+    @Test
+    @DisplayName("검증 API를 거치지 않고 비밀번호를 변경해도 실패 횟수를 기록한다")
+    void changePasswordRecordsFailureWithoutPriorVerification() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.CURRENT_PASSWORD,
+                "123456",
+                null,
+                "654321"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("123456", "encoded-password")).willReturn(false);
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.changePassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(MemberErrorCode.PASSWORD_MISMATCH);
+        verify(passwordVerificationAttemptService).recordFailure(
+                PasswordVerificationPurpose.PASSWORD_CHANGE,
+                PasswordVerificationTargetType.MEMBER,
+                MEMBER_ID.toString()
+        );
     }
 
     private Member createLocalMember(
