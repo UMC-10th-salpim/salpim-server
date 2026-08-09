@@ -199,4 +199,14 @@ public class BenefitController {
     ){
         return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_VIEW, benefitService.getDeadlineSoonBenefits(memberId));
     }
+
+    @Operation(summary = "카카오톡 공유하기용 혜택 조회", description = "카카오톡 공유하기 시 보여줄 혜택의 제목과 요약 정보를 조회합니다.")
+    @GetMapping("/{benefitId}/share")
+    public ApiResponse<BenefitResDTO.BenefitShareDTO> getBenefitShareInfo(
+            @Parameter(description = "조회할 복지 혜택 ID", example = "1")
+            @PathVariable Long benefitId
+    ){
+        BenefitResDTO.BenefitShareDTO result = benefitService.getBenefitShareInfo(benefitId);
+        return ApiResponse.onSuccess(BenefitSuccessCode.BENEFIT_SHARE_SUCCESS, result);
+    }
 }

@@ -123,4 +123,11 @@ public class BenefitConverter {
           .dDay(endDate == null ? null : (int) ChronoUnit.DAYS.between(today, endDate))
           .build();
    }
+
+   public static BenefitResDTO.BenefitShareDTO toBenefitShareDTO(WelfareBenefit benefit){
+       return BenefitResDTO.BenefitShareDTO.builder()
+               .title(benefit.getTitle())
+               .summary(benefit.getEasySummary())
+               .build();
+   }
 }
