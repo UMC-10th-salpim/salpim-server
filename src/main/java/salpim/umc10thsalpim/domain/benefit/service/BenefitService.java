@@ -283,8 +283,8 @@ public class BenefitService {
                 viewCountMap.put(SOURCE_LOCAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));
             });
 
-            if (pageNumber*API_MAX_SIZE>=NationalRes.getTotalCount()&&
-            pageNumber*API_MAX_SIZE>=LocalRes.getTotalCount()){ break; }
+            if (pageNumber*API_MAX_SIZE>=NationalRes.getMaxTotalCount()&&
+            pageNumber*API_MAX_SIZE>=LocalRes.getMaxTotalCount()){ break; }
             pageNumber++;
         }
 

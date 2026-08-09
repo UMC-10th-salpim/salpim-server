@@ -27,7 +27,7 @@ public class BokjiroApiClient {
     private final String localServiceKey;
     private final XmlMapper xmlMapper;
 
-    private BokjiroApiClient(@Qualifier("bokjiroNationalWebClient") WebClient nationalWebClient,
+    public BokjiroApiClient(@Qualifier("bokjiroNationalWebClient") WebClient nationalWebClient,
                             @Value("${bokjiro.service-key}") String serviceKey,
                             @Qualifier("bokjiroLocalWebClient") WebClient localWebClient,
                             @Value("${bokjiro.local-service-key}") String localServiceKey,
@@ -139,7 +139,12 @@ public class BokjiroApiClient {
                         .stream()
                         .toList();
 
-        int totalCount =  benefitList.size();
+        int totalCount = results.stream()
+                .filter(Objects::nonNull)
+                .mapToInt(BokjiroApiDTO.BenefitListRes::getMaxTotalCount)
+                .max()
+                .orElse(0);
+
         String resultMessage = null;
         String resultCode = null;
 
@@ -147,7 +152,7 @@ public class BokjiroApiClient {
                 .resultCode(resultCode)
                 .resultMessage(resultMessage)
                 .benefitList(benefitList)
-                .totalCount(totalCount)
+                .maxTotalCount(totalCount)
                 .build();
     }
 
