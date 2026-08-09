@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.benefit.converter.BenefitConverter;
+import salpim.umc10thsalpim.domain.benefit.dto.BenefitReqDTO;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.entity.BenefitRule;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
@@ -97,6 +98,21 @@ public class BenefitService {
         return BenefitConverter.toGetApplicationHelperInfo(
                 welfareBenefit, isOnlineApplicationAvailable,
                 applicationTypeList, isRegionSatisfied, isAgeSatisfied);
+    }
+
+    @Transactional(readOnly = true)
+    public BenefitResDTO.GetBenefitDetailDTO getBenefitDetail(BenefitReqDTO.GetBenefitDetailDTO request) {
+        WelfareBenefit welfareBenefit = welfareBenefitRepository.findById(request.benefitId())
+                .orElseThrow(() -> new BenefitException(BenefitErrorCode.BENEFIT_NOT_FOUND));
+
+        String categoryName = null;
+        if (welfareBenefit.getCategoryId() != null) {
+            categoryName = welfareCategoryRepository.findById(welfareBenefit.getCategoryId())
+                    .map(WelfareCategory::getName)
+                    .orElse(null);
+        }
+
+        return BenefitConverter.toGetBenefitDetailDTO(welfareBenefit, categoryName);
     }
 
     @Transactional(readOnly = true)
