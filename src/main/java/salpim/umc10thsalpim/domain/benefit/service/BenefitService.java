@@ -288,7 +288,7 @@ public class BenefitService {
             pageNumber++;
         }
 
-        //DB 매칭 & 카테고리 필터링
+        //DB 매칭 & 카테고리/마감일 필터링
         List<WelfareBenefit> matched = new ArrayList<>();
         if (!servIds_N.isEmpty()) {
             matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_N, SOURCE_NATIONAL));
@@ -297,9 +297,12 @@ public class BenefitService {
             matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_L, SOURCE_LOCAL));
         }
 
+        LocalDate today = LocalDate.now(KST);
+
         List<WelfareBenefit> filtered = matched.stream()
                 .filter(b -> categoryIds==null || categoryIds.isEmpty()||
                         categoryIds.contains(b.getCategoryId()))
+                .filter(b -> b.getApplicationEndDate()==null || !b.getApplicationEndDate().isBefore(today))
                 .toList();
 
         totalCount=filtered.size();
