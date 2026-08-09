@@ -21,6 +21,7 @@ public class BokjiroApiDTO {
     @JacksonXmlRootElement(localName = "wantedList")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class BenefitListRes {
+        @JacksonXmlProperty(localName = "totalCount")
         private int maxTotalCount;
 //        private int pageNo;
 //        private int numOfRows;
