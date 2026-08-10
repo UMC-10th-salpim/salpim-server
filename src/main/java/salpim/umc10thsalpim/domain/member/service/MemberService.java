@@ -74,6 +74,8 @@ public class MemberService {
 
         updatePhoneNumberIfRequested(member, request);
 
+        String welfareCenter = region.getName();
+
         member.updateProfile(
                 request.name().trim(),
                 request.birthDate(),
@@ -82,7 +84,8 @@ public class MemberService {
                 MemberConverter.normalizeNullableText(request.detailAddress()),
                 request.latitude(),
                 request.longitude(),
-                region
+                region,
+                welfareCenter
         );
     }
 

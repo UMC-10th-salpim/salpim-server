@@ -112,7 +112,11 @@ public class BenefitService {
                     .orElse(null);
         }
 
-        return BenefitConverter.toGetBenefitDetailDTO(welfareBenefit, categoryName);
+        List<BenefitRule> benefitRules = getBenefitRulesOrThrow(request.benefitId());
+
+        Boolean isOnlineApplicationAvailable = isOnlineApplicationAvailable(benefitRules);
+
+        return BenefitConverter.toGetBenefitDetailDTO(welfareBenefit, categoryName, isOnlineApplicationAvailable);
     }
 
     @Transactional(readOnly = true)
