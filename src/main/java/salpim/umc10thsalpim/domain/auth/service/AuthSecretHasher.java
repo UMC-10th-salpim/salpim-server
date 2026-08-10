@@ -38,6 +38,15 @@ public class AuthSecretHasher {
         return hash(REFRESH_TOKEN_CONTEXT, refreshToken);
     }
 
+    public boolean matchesRefreshToken(String refreshToken, String expectedHash) {
+        if (refreshToken == null || expectedHash == null) {
+            return false;
+        }
+        byte[] actual = hashRefreshToken(refreshToken).getBytes(StandardCharsets.US_ASCII);
+        byte[] expected = expectedHash.getBytes(StandardCharsets.US_ASCII);
+        return MessageDigest.isEqual(actual, expected);
+    }
+
     private String hash(String context, String value) {
         try {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);

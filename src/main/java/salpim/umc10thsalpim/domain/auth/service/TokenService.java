@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -53,11 +54,7 @@ public class TokenService {
                 TokenPurpose.ACCESS,
                 jwtProperties.getAccessTokenExpirationMillis()
         );
-        String refreshToken = createMemberToken(
-                lockedMember,
-                TokenPurpose.REFRESH,
-                jwtProperties.getRefreshTokenExpirationMillis()
-        );
+        String refreshToken = createRefreshToken(lockedMember);
         LocalDateTime refreshTokenExpiredAt = LocalDateTime.now()
                 .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
         String refreshTokenHash = authSecretHasher.hashRefreshToken(refreshToken);
@@ -78,6 +75,46 @@ public class TokenService {
         return AuthResDTO.TokenResult.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .build();
+    }
+
+    @Transactional
+    public AuthResDTO.TokenResult reissueLoginTokens(String refreshToken) {
+        TokenDTO.RefreshTokenClaims claims = parseRefreshToken(refreshToken);
+        RefreshToken savedRefreshToken = refreshTokenRepository
+                .findByMemberIdForUpdate(claims.memberId())
+                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+
+        LocalDateTime now = LocalDateTime.now();
+        if (!savedRefreshToken.getExpiredAt().isAfter(now)) {
+            throw new AuthException(AuthErrorCode.EXPIRED_REFRESH_TOKEN);
+        }
+        if (!authSecretHasher.matchesRefreshToken(
+                refreshToken,
+                savedRefreshToken.getTokenHash()
+        )) {
+            throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        Member member = savedRefreshToken.getMember();
+        String accessToken = createMemberToken(
+                member,
+                TokenPurpose.ACCESS,
+                jwtProperties.getAccessTokenExpirationMillis()
+        );
+        String rotatedRefreshToken = createRefreshToken(member);
+        LocalDateTime rotatedRefreshTokenExpiredAt = now
+                .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
+
+        savedRefreshToken.updateTokenHash(
+                authSecretHasher.hashRefreshToken(rotatedRefreshToken),
+                rotatedRefreshTokenExpiredAt
+        );
+        refreshTokenRepository.save(savedRefreshToken);
+
+        return AuthResDTO.TokenResult.builder()
+                .accessToken(accessToken)
+                .refreshToken(rotatedRefreshToken)
                 .build();
     }
 
@@ -128,6 +165,33 @@ public class TokenService {
         }
     }
 
+    public TokenDTO.RefreshTokenClaims parseRefreshToken(String token) {
+        try {
+            var claims = Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            TokenPurpose purpose = TokenPurpose.valueOf(
+                    claims.get(CLAIM_PURPOSE, String.class)
+            );
+            if (purpose != TokenPurpose.REFRESH) {
+                throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+            }
+            return new TokenDTO.RefreshTokenClaims(
+                    purpose,
+                    Long.parseLong(claims.getSubject())
+            );
+        } catch (AuthException exception) {
+            throw exception;
+        } catch (ExpiredJwtException exception) {
+            throw new AuthException(AuthErrorCode.EXPIRED_REFRESH_TOKEN);
+        } catch (RuntimeException exception) {
+            throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+        }
+    }
+
     public String issuePasswordResetToken(Member member){
         return createMemberToken(
                 member,
@@ -172,6 +236,22 @@ public class TokenService {
         return Jwts.builder()
                 .subject(String.valueOf(member.getId()))
                 .claim(CLAIM_PURPOSE, purpose.name())
+                .issuedAt(now)
+                .expiration(expiredAt)
+                .signWith(getSecretKey())
+                .compact();
+    }
+
+    private String createRefreshToken(Member member) {
+        Date now = new Date();
+        Date expiredAt = new Date(
+                now.getTime() + jwtProperties.getRefreshTokenExpirationMillis()
+        );
+
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(String.valueOf(member.getId()))
+                .claim(CLAIM_PURPOSE, TokenPurpose.REFRESH.name())
                 .issuedAt(now)
                 .expiration(expiredAt)
                 .signWith(getSecretKey())

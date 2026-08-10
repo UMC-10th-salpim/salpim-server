@@ -12,6 +12,12 @@ public class TokenDTO {
     ) {
     }
 
+    public record RefreshTokenClaims(
+            TokenPurpose purpose,
+            Long memberId
+    ) {
+    }
+
     public record PasswordResetTokenClaims(
             TokenPurpose purpose,
             Long memberId

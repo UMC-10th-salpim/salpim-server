@@ -30,6 +30,13 @@ public class AuthReqDTO {
     ) {
     }
 
+    public record TokenReissue(
+            @Schema(example = "refresh_token")
+            @NotBlank(message = "refreshToken is required.")
+            String refreshToken
+    ) {
+    }
+
     public record PhoneSend(
             @NotBlank(message = "phoneNumber is required.")
             @Pattern(regexp = KOREAN_MOBILE_PHONE_PATTERN, message = "phoneNumber must be a valid Korean mobile number.")
