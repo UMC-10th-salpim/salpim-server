@@ -15,9 +15,6 @@ import java.time.LocalDate;
 public class AuthReqDTO {
 
     private static final String KOREAN_MOBILE_PHONE_PATTERN = "^01[016789]-?\\d{3,4}-?\\d{4}$";
-    private static final String STRONG_PASSWORD_PATTERN =
-            "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z\\d\\s])\\S{8,64}$";
-
     public record LocalLogin(
             @Schema(example = "01012345678")
             @NotBlank(message = "phoneNumber is required.")
@@ -80,11 +77,11 @@ public class AuthReqDTO {
             @Pattern(regexp = KOREAN_MOBILE_PHONE_PATTERN, message = "phoneNumber must be a valid Korean mobile number.")
             String phoneNumber,
 
-            @Schema(example = "Salpim123!")
+            @Schema(example = "123456")
             @NotBlank(message = "password is required.")
             @Pattern(
-                    regexp = STRONG_PASSWORD_PATTERN,
-                    message = "password must be 8-64 characters and include a letter, number, and special character."
+                    regexp = "^\\d{6}$",
+                    message = "password must be exactly 6 digits."
             )
             String password,
 

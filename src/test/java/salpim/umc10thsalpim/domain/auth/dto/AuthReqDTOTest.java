@@ -31,8 +31,8 @@ class AuthReqDTOTest {
     }
 
     @Test
-    void localSignupAcceptsStrongPassword() {
-        AuthReqDTO.LocalSignup request = localSignup("Salpim123!");
+    void localSignupAcceptsSixDigitPassword() {
+        AuthReqDTO.LocalSignup request = localSignup("123456");
 
         Set<ConstraintViolation<AuthReqDTO.LocalSignup>> violations = validator.validate(request);
 
@@ -40,17 +40,16 @@ class AuthReqDTOTest {
     }
 
     @Test
-    void localSignupRejectsWeakPassword() {
-        AuthReqDTO.LocalSignup request = localSignup("123456");
+    void localSignupRejectsPasswordThatIsNotSixDigits() {
+        AuthReqDTO.LocalSignup request = localSignup("Salpim123!");
 
         Set<ConstraintViolation<AuthReqDTO.LocalSignup>> violations = validator.validate(request);
 
         assertThat(violations)
                 .anySatisfy(violation -> {
                     assertThat(violation.getPropertyPath()).hasToString("password");
-                    assertThat(violation.getMessage()).isEqualTo(
-                            "password must be 8-64 characters and include a letter, number, and special character."
-                    );
+                    assertThat(violation.getMessage())
+                            .isEqualTo("password must be exactly 6 digits.");
                 });
     }
 
