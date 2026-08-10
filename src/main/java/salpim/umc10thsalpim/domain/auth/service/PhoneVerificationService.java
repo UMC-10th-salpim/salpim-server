@@ -40,6 +40,7 @@ public class PhoneVerificationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthSecretHasher authSecretHasher;
     private final DiscordWebhookNotifier discordWebhookNotifier;
+    private final SolapiSmsSender solapiSmsSender;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
@@ -196,6 +197,8 @@ public class PhoneVerificationService {
         } catch (DataIntegrityViolationException exception) {
             throw new AuthException(AuthErrorCode.PHONE_VERIFICATION_RESEND_TOO_SOON);
         }
+
+        solapiSmsSender.sendVerificationCode(normalizedPhoneNumber, code);
 
         discordWebhookNotifier.sendVerificationCode(
                 maskPhoneNumber(normalizedPhoneNumber),

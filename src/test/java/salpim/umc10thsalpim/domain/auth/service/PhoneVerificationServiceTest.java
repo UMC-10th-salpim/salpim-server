@@ -4,6 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,6 +29,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
 import static org.mockito.BDDMockito.verifyNoInteractions;
+import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,6 +58,9 @@ class PhoneVerificationServiceTest {
 
     @Mock
     private DiscordWebhookNotifier discordWebhookNotifier;
+
+    @Mock
+    private SolapiSmsSender solapiSmsSender;
 
     @InjectMocks
     private PhoneVerificationService phoneVerificationService;
@@ -98,6 +104,17 @@ class PhoneVerificationServiceTest {
         assertThat(savedVerification.getVerified()).isFalse();
         assertThat(savedVerification.getSentAt()).isAfter(beforeRequest);
         assertThat(savedVerification.getExpiredAt()).isAfter(beforeRequest.plusMinutes(4));
+
+        InOrder inOrder = inOrder(solapiSmsSender, discordWebhookNotifier);
+        inOrder.verify(solapiSmsSender).sendVerificationCode(
+                NORMALIZED_PHONE_NUMBER,
+                codeCaptor.getValue()
+        );
+        inOrder.verify(discordWebhookNotifier).sendVerificationCode(
+                "****5678",
+                codeCaptor.getValue(),
+                PhoneVerificationPurpose.PHONE_CHANGE
+        );
     }
 
     @Test
@@ -132,6 +149,28 @@ class PhoneVerificationServiceTest {
                 PhoneVerificationPurpose.PHONE_CHANGE
         );
         verify(phoneVerificationRepository, never()).flush();
+        verifyNoInteractions(solapiSmsSender, discordWebhookNotifier);
+    }
+
+    @Test
+    @DisplayName("SMS 발송에 실패하면 인증번호를 Discord로 전송하지 않는다")
+    void throwsExceptionWhenSmsDeliveryFails() {
+        given(memberRepository.existsByPhoneNumber(NORMALIZED_PHONE_NUMBER)).willReturn(false);
+        given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.SIGNUP
+        )).willReturn(Optional.empty());
+        willThrow(new AuthException(AuthErrorCode.SMS_SEND_FAILED))
+                .given(solapiSmsSender)
+                .sendVerificationCode(anyString(), anyString());
+
+        AuthException exception = assertThrows(
+                AuthException.class,
+                () -> phoneVerificationService.sendVerificationCode(PHONE_NUMBER)
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.SMS_SEND_FAILED);
+        verifyNoInteractions(discordWebhookNotifier);
     }
 
     @Test

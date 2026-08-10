@@ -10,7 +10,8 @@ public class RecommendationResDTO {
     public record RecommendationOptionDTO(
       Long optionId,
       Integer optionOrder,
-      String optionText
+      String optionText,
+      String searchWrds
     ){}
 
     @Builder

@@ -24,9 +24,19 @@ jwt:
   access-token-expiration-millis: 3600000
   refresh-token-expiration-millis: 1209600000
   signup-token-expiration-millis: 600000
+  password-reset-token-expiration-millis: 300000
+
+password-verification-attempt:
+  max-failure-count: 5
+  lock-duration-millis: 900000
 
 bokjiro:
   base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
   local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
   service-key: test-service-key
   local-service-key: test-local-service-key
+
+solapi:
+  api-key: test-api-key
+  api-secret: test-api-secret
+  sender-number: 01012345678

@@ -11,13 +11,13 @@ import salpim.umc10thsalpim.domain.map.dto.MapReqDTO;
 import salpim.umc10thsalpim.domain.map.dto.MapResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
+import salpim.umc10thsalpim.domain.benefit.repository.WelfareBenefitRepository;
 import salpim.umc10thsalpim.domain.region.service.RegionQueryService;
-import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
-import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
@@ -33,7 +33,7 @@ class FacilityServiceTest {
     private RegionQueryService regionQueryService;
 
     @Mock
-    private BokjiroApiClient bokjiroApiClient;
+    private WelfareBenefitRepository welfareBenefitRepository;
 
     @Mock
     private WelfareConverter welfareConverter;
@@ -42,7 +42,7 @@ class FacilityServiceTest {
     private FacilityService facilityService;
 
     @Test
-    void requestsLocalBenefitsWithUpperRegionsForMemberUnderGeneralGu() {
+    void getFacilityInfo_Success() {
         Member member = Member.builder()
                 .id(1L)
                 .regionId(4L)
@@ -58,26 +58,33 @@ class FacilityServiceTest {
                 null,
                 10
         );
-        BokjiroApiDTO.BenefitListRes response = new BokjiroApiDTO.BenefitListRes();
 
+        Map<Long, String> regionNameMap = Map.of(4L, "Michuhol-gu");
         when(memberRepository.findById(1L)).thenReturn(java.util.Optional.of(member));
-        when(regionQueryService.getSidoAndSigungu(4L))
-                .thenReturn(new String[]{"Incheon", "Michuhol-gu"});
-        when(bokjiroApiClient.searchNationalBenefits(1, 100, null, null)).thenReturn(response);
-        when(bokjiroApiClient.searchLocalBenefits(1, 100, null, null, "Incheon", "Michuhol-gu"))
-                .thenReturn(response);
-        when(welfareConverter.toCentralBenefitDTO(response)).thenReturn(List.of());
-        when(welfareConverter.toLocalBenefitDTO(response, "Incheon", "Michuhol-gu")).thenReturn(List.of());
+        when(regionQueryService.getAncestorRegionNameMap(4L)).thenReturn(regionNameMap);
+        when(welfareBenefitRepository.findWelfareBenefitsByRegionAndCursorAndAppType(
+                org.mockito.ArgumentMatchers.eq(List.of(4L)),
+                org.mockito.ArgumentMatchers.eq(salpim.umc10thsalpim.domain.benefit.enums.ApplicationType.VISIT),
+                org.mockito.ArgumentMatchers.eq(0L),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.PageRequest.class)))
+                .thenReturn(List.of());
+        when(welfareConverter.toBenefitDTOList(org.mockito.ArgumentMatchers.eq(List.of()), org.mockito.ArgumentMatchers.eq(regionNameMap)))
+                .thenReturn(List.of());
+        when(welfareConverter.toFacilityInfoResDTO(
+                org.mockito.ArgumentMatchers.eq(request),
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.eq(true),
+                org.mockito.ArgumentMatchers.any(MapResDTO.BenefitPageDTO.class)))
+                .thenReturn(MapResDTO.FacilityInfoResDTO.builder().build());
 
-        facilityService.getFacilityInfo(1L, request);
+        MapResDTO.FacilityInfoResDTO result = facilityService.getFacilityInfo(1L, request);
 
-        verify(bokjiroApiClient).searchLocalBenefits(
-                1,
-                100,
-                null,
-                null,
-                "Incheon",
-                "Michuhol-gu"
+        assertNotNull(result);
+        verify(welfareBenefitRepository).findWelfareBenefitsByRegionAndCursorAndAppType(
+                org.mockito.ArgumentMatchers.eq(List.of(4L)),
+                org.mockito.ArgumentMatchers.eq(salpim.umc10thsalpim.domain.benefit.enums.ApplicationType.VISIT),
+                org.mockito.ArgumentMatchers.eq(0L),
+                org.mockito.ArgumentMatchers.any(org.springframework.data.domain.PageRequest.class)
         );
     }
 

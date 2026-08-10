@@ -11,4 +11,10 @@ public class TokenDTO {
             String providerId
     ) {
     }
+
+    public record PasswordResetTokenClaims(
+            TokenPurpose purpose,
+            Long memberId
+    ){
+    }
 }

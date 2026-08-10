@@ -161,4 +161,32 @@ public class AuthReqDTO {
             Long regionId
     ) {
     }
+
+    public record PasswordResetVerify(
+            @Schema(example = "01012345678")
+            @NotBlank(message = "전화번호는 필수입니다.")
+            @Pattern(
+                    regexp = "^[0-9-]+$",
+                    message = "전화번호는 숫자와 -만으로 이루어져야 합니다."
+            )
+            String phoneNumber,
+
+            @Schema(example = "짜장면")
+            @NotBlank(message = "복구 질문 답변은 필수입니다.")
+            @Size(max = 255, message = "복구 질문 답변은 255자 이하여야 합니다.")
+            String recoveryAnswer
+    ){
+    }
+
+    public record PasswordReset(
+            @NotBlank(message = "비밀번호 재설정 토큰은 필수입니다.")
+            String passwordResetToken,
+
+            @NotBlank(message = "새 비밀번호는 필수입니다.")
+            @Pattern(
+                    regexp = "^\\d{6}$",
+                    message = "비밀번호는 6자리 숫자여야 합니다.")
+            String newPassword
+    ){
+    }
 }

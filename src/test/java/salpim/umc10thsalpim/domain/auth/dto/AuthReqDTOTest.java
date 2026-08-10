@@ -54,6 +54,28 @@ class AuthReqDTOTest {
                 });
     }
 
+    @Test
+    void passwordResetAcceptsSixDigitPassword() {
+        AuthReqDTO.PasswordReset request = new AuthReqDTO.PasswordReset("reset-token", "123456");
+
+        Set<ConstraintViolation<AuthReqDTO.PasswordReset>> violations = validator.validate(request);
+
+        assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passwordResetRejectsPasswordThatIsNotSixDigits() {
+        AuthReqDTO.PasswordReset request = new AuthReqDTO.PasswordReset("reset-token", "12345");
+
+        Set<ConstraintViolation<AuthReqDTO.PasswordReset>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .anySatisfy(violation -> {
+                    assertThat(violation.getPropertyPath()).hasToString("newPassword");
+                    assertThat(violation.getMessage()).isEqualTo("비밀번호는 6자리 숫자여야 합니다.");
+                });
+    }
+
     private AuthReqDTO.LocalSignup localSignup(String password) {
         return new AuthReqDTO.LocalSignup(
                 "Jihong",

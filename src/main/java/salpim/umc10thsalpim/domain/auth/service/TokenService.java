@@ -128,6 +128,43 @@ public class TokenService {
         }
     }
 
+    public String issuePasswordResetToken(Member member){
+        return createMemberToken(
+                member,
+                TokenPurpose.PASSWORD_RESET,
+                jwtProperties.getPasswordResetTokenExpirationMillis()
+        );
+    }
+
+    public TokenDTO.PasswordResetTokenClaims parsePasswordResetToken(String token){
+        try{
+            var claims = Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            TokenPurpose purpose = TokenPurpose.valueOf(
+                    claims.get(CLAIM_PURPOSE, String.class)
+            );
+
+            if (purpose != TokenPurpose.PASSWORD_RESET) {
+                throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_TYPE_INVALID);
+            }
+
+            return new TokenDTO.PasswordResetTokenClaims(
+                    purpose,
+                    Long.parseLong(claims.getSubject())
+            );
+        } catch (AuthException e) {
+            throw e;
+        } catch (ExpiredJwtException e){
+            throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
+        } catch (IllegalArgumentException | JwtException e) {
+            throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
+        }
+    }
+
     private String createMemberToken(Member member, TokenPurpose purpose, Long expirationMillis) {
         Date now = new Date();
         Date expiredAt = new Date(now.getTime() + expirationMillis);
