@@ -37,6 +37,7 @@ public class TokenService {
     private static final String CLAIM_PURPOSE = "purpose";
     private static final String CLAIM_PROVIDER = "provider";
     private static final String CLAIM_PROVIDER_ID = "providerId";
+    private static final String CLAIM_PROVIDER_PHONE_NUMBER = "providerPhoneNumber";
     private static final int MIN_SECRET_LENGTH = 32;
 
     private final JwtProperties jwtProperties;
@@ -126,15 +127,23 @@ public class TokenService {
                 .nextStep(NextStep.LOGIN_COMPLETE)
                 .accessToken(tokenResult.accessToken())
                 .refreshToken(tokenResult.refreshToken())
+                .phoneVerificationRequired(false)
                 .build();
     }
 
-    public AuthResDTO.KakaoLoginResult issueSignupRequiredToken(SocialProvider provider, String providerId) {
-        String signupToken = createSignupToken(provider, providerId);
+    public AuthResDTO.KakaoLoginResult issueSignupRequiredToken(
+            SocialProvider provider,
+            String providerId,
+            String providerPhoneNumber
+    ) {
+        String signupToken = createSignupToken(provider, providerId, providerPhoneNumber);
+        boolean phoneVerificationRequired = !StringUtils.hasText(providerPhoneNumber);
         return AuthResDTO.KakaoLoginResult.builder()
                 .isNewMember(true)
                 .nextStep(NextStep.SIGNUP_REQUIRED)
                 .signupToken(signupToken)
+                .phoneNumber(providerPhoneNumber)
+                .phoneVerificationRequired(phoneVerificationRequired)
                 .build();
     }
 
@@ -154,7 +163,8 @@ public class TokenService {
             return new TokenDTO.SignupTokenClaims(
                     purpose,
                     SocialProvider.valueOf(claims.get(CLAIM_PROVIDER, String.class)),
-                    claims.get(CLAIM_PROVIDER_ID, String.class)
+                    claims.get(CLAIM_PROVIDER_ID, String.class),
+                    claims.get(CLAIM_PROVIDER_PHONE_NUMBER, String.class)
             );
         } catch (AuthException e) {
             throw e;
@@ -258,18 +268,24 @@ public class TokenService {
                 .compact();
     }
 
-    private String createSignupToken(SocialProvider provider, String providerId) {
+    private String createSignupToken(
+            SocialProvider provider,
+            String providerId,
+            String providerPhoneNumber
+    ) {
         Date now = new Date();
         Date expiredAt = new Date(now.getTime() + jwtProperties.getSignupTokenExpirationMillis());
 
-        return Jwts.builder()
+        var tokenBuilder = Jwts.builder()
                 .claim(CLAIM_PURPOSE, TokenPurpose.SIGNUP.name())
                 .claim(CLAIM_PROVIDER, provider.name())
                 .claim(CLAIM_PROVIDER_ID, providerId)
                 .issuedAt(now)
-                .expiration(expiredAt)
-                .signWith(getSecretKey())
-                .compact();
+                .expiration(expiredAt);
+        if (StringUtils.hasText(providerPhoneNumber)) {
+            tokenBuilder.claim(CLAIM_PROVIDER_PHONE_NUMBER, providerPhoneNumber);
+        }
+        return tokenBuilder.signWith(getSecretKey()).compact();
     }
 
     public Long validateAccessTokenAndGetMemberId(String token) {

@@ -34,7 +34,9 @@ public class AuthResDTO {
             NextStep nextStep,
             String accessToken,
             String refreshToken,
-            String signupToken
+            String signupToken,
+            String phoneNumber,
+            Boolean phoneVerificationRequired
     ) {
     }
 

@@ -11,11 +11,13 @@ import salpim.umc10thsalpim.domain.auth.config.JwtProperties;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
 import salpim.umc10thsalpim.domain.auth.entity.RefreshToken;
+import salpim.umc10thsalpim.domain.auth.enums.NextStep;
 import salpim.umc10thsalpim.domain.auth.enums.TokenPurpose;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.repository.RefreshTokenRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;
+import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
 import javax.crypto.SecretKey;
@@ -190,6 +192,35 @@ class TokenServiceTest {
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(AuthErrorCode.INVALID_REFRESH_TOKEN));
         verify(refreshTokenRepository, never()).findByMemberIdForUpdate(MEMBER_ID);
+    }
+
+    @Test
+    void marksPhoneVerificationRequiredWhenKakaoDoesNotProvidePhoneNumber() {
+        AuthResDTO.KakaoLoginResult result = tokenService.issueSignupRequiredToken(
+                SocialProvider.KAKAO,
+                "kakao-123",
+                null
+        );
+
+        assertThat(result.nextStep()).isEqualTo(NextStep.SIGNUP_REQUIRED);
+        assertThat(result.phoneNumber()).isNull();
+        assertThat(result.phoneVerificationRequired()).isTrue();
+        assertThat(tokenService.parseSignupToken(result.signupToken()).providerPhoneNumber())
+                .isNull();
+    }
+
+    @Test
+    void includesTrustedKakaoPhoneNumberInSignupToken() {
+        AuthResDTO.KakaoLoginResult result = tokenService.issueSignupRequiredToken(
+                SocialProvider.KAKAO,
+                "kakao-123",
+                "01012345678"
+        );
+
+        assertThat(result.phoneNumber()).isEqualTo("01012345678");
+        assertThat(result.phoneVerificationRequired()).isFalse();
+        assertThat(tokenService.parseSignupToken(result.signupToken()).providerPhoneNumber())
+                .isEqualTo("01012345678");
     }
 
     private String createToken(TokenPurpose purpose, Date expiration) {

@@ -140,7 +140,6 @@ public class AuthReqDTO {
             Gender gender,
 
             @Schema(example = "01012345678")
-            @NotBlank(message = "phoneNumber is required.")
             @Pattern(regexp = KOREAN_MOBILE_PHONE_PATTERN, message = "phoneNumber must be a valid Korean mobile number.")
             String phoneNumber,
 

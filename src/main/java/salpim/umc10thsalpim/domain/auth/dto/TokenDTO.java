@@ -8,7 +8,8 @@ public class TokenDTO {
     public record SignupTokenClaims(
             TokenPurpose purpose,
             SocialProvider provider,
-            String providerId
+            String providerId,
+            String providerPhoneNumber
     ) {
     }
 
