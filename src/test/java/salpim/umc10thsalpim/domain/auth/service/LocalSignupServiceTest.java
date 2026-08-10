@@ -50,12 +50,12 @@ class LocalSignupServiceTest {
 
     @Test
     void signupSavesMemberWithAdministrativeAreaAsWelfareCenter() {
-        AuthReqDTO.LocalSignup request = validRequest("Salpim123!", "Seoul");
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
         Region region = region();
 
         when(signupValidationService.normalizePhoneNumber("010-3176-8867")).thenReturn("01031768867");
         when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(region);
-        when(passwordEncoder.encode("Salpim123!")).thenReturn("encoded-password");
+        when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
         when(passwordEncoder.encode("Seoul")).thenReturn("encoded-recovery-answer");
         when(memberRepository.saveAndFlush(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -72,7 +72,7 @@ class LocalSignupServiceTest {
 
     @Test
     void signupFailsWhenRegionDoesNotExist() {
-        AuthReqDTO.LocalSignup request = validRequest("Salpim123!", "Seoul");
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
 
         when(signupValidationService.normalizePhoneNumber("010-3176-8867")).thenReturn("01031768867");
         when(signupValidationService.findLeafRegion(REGION_ID))
@@ -86,7 +86,7 @@ class LocalSignupServiceTest {
 
     @Test
     void signupFailsWhenRegionIsNotLeaf() {
-        AuthReqDTO.LocalSignup request = validRequest("Salpim123!", "Seoul");
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
 
         when(signupValidationService.normalizePhoneNumber("010-3176-8867")).thenReturn("01031768867");
         when(signupValidationService.findLeafRegion(REGION_ID))
@@ -109,7 +109,7 @@ class LocalSignupServiceTest {
 
     @Test
     void signupFailsWhenPasswordRecoveryAnswerIsBlank() {
-        AuthReqDTO.LocalSignup request = validRequest("Salpim123!", " ");
+        AuthReqDTO.LocalSignup request = validRequest("123456", " ");
 
         assertThatThrownBy(() -> localSignupService.signup(request))
                 .isInstanceOfSatisfying(MemberException.class, exception ->
@@ -118,13 +118,13 @@ class LocalSignupServiceTest {
 
     @Test
     void signupConvertsConcurrentPhoneNumberConflictToDomainConflict() {
-        AuthReqDTO.LocalSignup request = validRequest("Salpim123!", "Seoul");
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
         Region region = region();
 
         when(signupValidationService.normalizePhoneNumber("010-3176-8867"))
                 .thenReturn("01031768867");
         when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(region);
-        when(passwordEncoder.encode("Salpim123!")).thenReturn("encoded-password");
+        when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
         when(passwordEncoder.encode("Seoul")).thenReturn("encoded-recovery-answer");
         when(memberRepository.saveAndFlush(any(Member.class)))
                 .thenThrow(new DataIntegrityViolationException("uk_member_phone_number"));
@@ -133,6 +133,26 @@ class LocalSignupServiceTest {
                 .isInstanceOfSatisfying(MemberException.class, exception ->
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(MemberErrorCode.DUPLICATE_PHONE_NUMBER));
+        verify(phoneVerificationService, never()).deleteVerification(any());
+    }
+
+    @Test
+    void signupRethrowsNonPhoneIntegrityViolation() {
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
+        Region region = region();
+        DataIntegrityViolationException integrityViolation =
+                new DataIntegrityViolationException("fk_member_region");
+
+        when(signupValidationService.normalizePhoneNumber("010-3176-8867"))
+                .thenReturn("01031768867");
+        when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(region);
+        when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
+        when(passwordEncoder.encode("Seoul")).thenReturn("encoded-recovery-answer");
+        when(memberRepository.saveAndFlush(any(Member.class)))
+                .thenThrow(integrityViolation);
+
+        assertThatThrownBy(() -> localSignupService.signup(request))
+                .isSameAs(integrityViolation);
         verify(phoneVerificationService, never()).deleteVerification(any());
     }
 

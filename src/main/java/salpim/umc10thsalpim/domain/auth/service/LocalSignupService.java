@@ -47,7 +47,13 @@ public class LocalSignupService {
                     )
             );
         } catch (DataIntegrityViolationException exception) {
-            throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
+            if (MemberConstraintViolationClassifier.isViolationOf(
+                    exception,
+                    MemberConstraintViolationClassifier.PHONE_NUMBER_CONSTRAINT
+            )) {
+                throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
+            }
+            throw exception;
         }
         phoneVerificationService.deleteVerification(normalizedPhoneNumber);
     }

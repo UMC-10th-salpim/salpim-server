@@ -1,6 +1,7 @@
 package salpim.umc10thsalpim.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -78,7 +79,25 @@ public class KakaoAuthService {
         }
         Region region = signupValidationService.findLeafRegion(request.regionId());
 
-        memberRepository.save(MemberConverter.toKakaoMember(request, normalizedPhoneNumber, kakaoId, region));
+        try {
+            memberRepository.saveAndFlush(
+                    MemberConverter.toKakaoMember(request, normalizedPhoneNumber, kakaoId, region)
+            );
+        } catch (DataIntegrityViolationException exception) {
+            if (MemberConstraintViolationClassifier.isViolationOf(
+                    exception,
+                    MemberConstraintViolationClassifier.PHONE_NUMBER_CONSTRAINT
+            )) {
+                throw new MemberException(MemberErrorCode.DUPLICATE_PHONE_NUMBER);
+            }
+            if (MemberConstraintViolationClassifier.isViolationOf(
+                    exception,
+                    MemberConstraintViolationClassifier.KAKAO_ACCOUNT_CONSTRAINT
+            )) {
+                throw new MemberException(MemberErrorCode.DUPLICATE_KAKAO_ACCOUNT);
+            }
+            throw exception;
+        }
         if (requiresPhoneVerification) {
             phoneVerificationService.deleteVerification(normalizedPhoneNumber);
         }

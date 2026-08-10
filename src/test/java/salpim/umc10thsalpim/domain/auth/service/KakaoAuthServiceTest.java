@@ -6,6 +6,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import salpim.umc10thsalpim.domain.auth.client.KakaoOAuthClient;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
@@ -18,6 +19,8 @@ import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.exception.MemberException;
+import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
@@ -121,12 +124,13 @@ class KakaoAuthServiceTest {
         when(memberRepository.existsByLoginTypeAndKakaoId(SocialProvider.KAKAO, KAKAO_ID)).thenReturn(false);
         when(signupValidationService.normalizePhoneNumber(request.phoneNumber())).thenReturn("01012345678");
         when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(administrativeArea);
-        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.saveAndFlush(any(Member.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         kakaoAuthService.signup("Bearer " + SIGNUP_TOKEN, request);
 
         ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
-        verify(memberRepository).save(memberCaptor.capture());
+        verify(memberRepository).saveAndFlush(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getLoginType()).isEqualTo(SocialProvider.KAKAO);
         assertThat(memberCaptor.getValue().getRegion()).isSameAs(administrativeArea);
         verify(phoneVerificationService).validateVerifiedPhoneNumber("01012345678");
@@ -147,7 +151,7 @@ class KakaoAuthServiceTest {
                 .isInstanceOfSatisfying(RegionException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(RegionErrorCode.REGION_NOT_LEAF));
 
-        verify(memberRepository, never()).save(any(Member.class));
+        verify(memberRepository, never()).saveAndFlush(any(Member.class));
     }
 
     @Test
@@ -164,13 +168,13 @@ class KakaoAuthServiceTest {
         when(memberRepository.existsByLoginTypeAndKakaoId(SocialProvider.KAKAO, KAKAO_ID))
                 .thenReturn(false);
         when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(administrativeArea);
-        when(memberRepository.save(any(Member.class)))
+        when(memberRepository.saveAndFlush(any(Member.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         kakaoAuthService.signup("Bearer " + SIGNUP_TOKEN, request);
 
         ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
-        verify(memberRepository).save(memberCaptor.capture());
+        verify(memberRepository).saveAndFlush(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getPhoneNumber()).isEqualTo("01099998888");
         verify(signupValidationService, never()).normalizePhoneNumber(any());
         verifyNoInteractions(phoneVerificationService);
@@ -188,7 +192,59 @@ class KakaoAuthServiceTest {
                 .isInstanceOfSatisfying(AuthException.class, exception ->
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(AuthErrorCode.KAKAO_PHONE_VERIFICATION_REQUIRED));
-        verify(memberRepository, never()).save(any(Member.class));
+        verify(memberRepository, never()).saveAndFlush(any(Member.class));
+    }
+
+    @Test
+    void signupConvertsConcurrentPhoneConflictToDomainConflict() {
+        AuthReqDTO.KakaoSignup request = validRequest();
+        Region administrativeArea = Region.create(
+                null,
+                "Hwajeong-dong",
+                RegionLevel.ADMINISTRATIVE_AREA
+        );
+
+        when(tokenService.parseSignupToken(SIGNUP_TOKEN)).thenReturn(signupClaims(null));
+        when(memberRepository.existsByLoginTypeAndKakaoId(SocialProvider.KAKAO, KAKAO_ID))
+                .thenReturn(false);
+        when(signupValidationService.normalizePhoneNumber(request.phoneNumber()))
+                .thenReturn("01012345678");
+        when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(administrativeArea);
+        when(memberRepository.saveAndFlush(any(Member.class)))
+                .thenThrow(new DataIntegrityViolationException("uk_member_phone_number"));
+
+        assertThatThrownBy(() -> kakaoAuthService.signup("Bearer " + SIGNUP_TOKEN, request))
+                .isInstanceOfSatisfying(MemberException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(MemberErrorCode.DUPLICATE_PHONE_NUMBER));
+        verify(phoneVerificationService, never()).deleteVerification(any());
+    }
+
+    @Test
+    void signupConvertsConcurrentKakaoAccountConflictToDomainConflict() {
+        AuthReqDTO.KakaoSignup request = validRequest();
+        Region administrativeArea = Region.create(
+                null,
+                "Hwajeong-dong",
+                RegionLevel.ADMINISTRATIVE_AREA
+        );
+
+        when(tokenService.parseSignupToken(SIGNUP_TOKEN)).thenReturn(signupClaims(null));
+        when(memberRepository.existsByLoginTypeAndKakaoId(SocialProvider.KAKAO, KAKAO_ID))
+                .thenReturn(false);
+        when(signupValidationService.normalizePhoneNumber(request.phoneNumber()))
+                .thenReturn("01012345678");
+        when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(administrativeArea);
+        when(memberRepository.saveAndFlush(any(Member.class)))
+                .thenThrow(new DataIntegrityViolationException(
+                        "uk_member_login_type_kakao_id"
+                ));
+
+        assertThatThrownBy(() -> kakaoAuthService.signup("Bearer " + SIGNUP_TOKEN, request))
+                .isInstanceOfSatisfying(MemberException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(MemberErrorCode.DUPLICATE_KAKAO_ACCOUNT));
+        verify(phoneVerificationService, never()).deleteVerification(any());
     }
 
     private TokenDTO.SignupTokenClaims signupClaims(String providerPhoneNumber) {
