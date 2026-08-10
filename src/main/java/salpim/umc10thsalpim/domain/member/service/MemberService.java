@@ -62,6 +62,13 @@ public class MemberService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public MemberResDTO.WelfareCenterInfo getWelfareCenter(Long memberId) {
+        Member member = getMemberOrThrow(memberId);
+
+        return MemberConverter.toWelfareCenterInfo(member);
+    }
+
     @Transactional
     public void updateProfile(Long memberId, MemberReqDTO.UpdateProfile request) {
         Member member = getMemberOrThrow(memberId);

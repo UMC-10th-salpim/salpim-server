@@ -43,6 +43,7 @@ class MemberAuditingTest {
                 .longitude(BigDecimal.valueOf(126.1234567))
                 .region(region)
                 .passwordRecoveryAnswer("Seoul")
+                .welfareCenter("Hwajeon Welfare Center")
                 .build();
 
         Member savedMember = memberRepository.saveAndFlush(member);

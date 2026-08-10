@@ -81,7 +81,7 @@ public class Member extends BaseEntity {
     @Column(name = "password_recovery_answer")
     private String passwordRecoveryAnswer;
 
-    @Column(name = "welfare_center")
+    @Column(name = "welfare_center", nullable = false)
     private String welfareCenter;
 
     @PrePersist

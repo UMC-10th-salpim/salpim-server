@@ -67,6 +67,21 @@ public class MemberController {
         );
     }
 
+    @GetMapping("/users/me/welfare-center")
+    @Operation(
+            summary = "소속 복지관 조회",
+            description = "현재 회원의 지역을 기준으로 배정된 복지관 정보를 조회합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<MemberResDTO.WelfareCenterInfo> getWelfareCenter(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_WELFARE_CENTER_VIEW,
+                memberService.getWelfareCenter(memberId)
+        );
+    }
+
     @PutMapping("/users/me")
     @Operation(
             summary = "개인정보 수정",
