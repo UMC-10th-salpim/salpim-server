@@ -21,6 +21,9 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     MEMBER_PASSWORD_CHANGED(HttpStatus.OK,
             "MEMBER200_4",
             "비밀번호를 성공적으로 변경했습니다."),
+    MEMBER_WELFARE_CENTER_VIEW(HttpStatus.OK,
+            "MEMBER200_5",
+            "복지관 정보를 성공적으로 조회했습니다."),
     ;
 
     private final HttpStatus status;
