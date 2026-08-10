@@ -371,6 +371,36 @@ class PhoneVerificationServiceTest {
     }
 
     @Test
+    @DisplayName("잠금 시간이 지나면 인증번호 실패 횟수를 초기화한다")
+    void resetsFailedAttemptsAfterLockExpires() {
+        PhoneVerification verification = PhoneVerification.builder()
+                .phoneNumber(NORMALIZED_PHONE_NUMBER)
+                .purpose(PhoneVerificationPurpose.SIGNUP)
+                .codeHash(CODE_HASH)
+                .expiredAt(LocalDateTime.now().plusMinutes(5))
+                .sentAt(LocalDateTime.now().minusMinutes(1))
+                .verified(false)
+                .failedAttempts(5)
+                .lockedUntil(LocalDateTime.now().minusSeconds(1))
+                .build();
+
+        given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
+                NORMALIZED_PHONE_NUMBER,
+                PhoneVerificationPurpose.SIGNUP
+        )).willReturn(Optional.of(verification));
+        given(authSecretHasher.matchesVerificationCode("000000", CODE_HASH)).willReturn(false);
+
+        AuthException exception = assertThrows(
+                AuthException.class,
+                () -> phoneVerificationService.verifyCode(PHONE_NUMBER, "000000")
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_VERIFICATION_CODE);
+        assertThat(verification.getFailedAttempts()).isEqualTo(1);
+        assertThat(verification.getLockedUntil()).isNull();
+    }
+
+    @Test
     @DisplayName("유효한 전화번호 변경 인증 토큰은 한 번만 사용할 수 있다")
     void validateAndConsumePhoneChangeTokenSuccess() {
         Member member = createMember();

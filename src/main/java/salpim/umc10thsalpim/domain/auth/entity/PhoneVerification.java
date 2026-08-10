@@ -109,6 +109,13 @@ public class PhoneVerification extends BaseEntity {
         return lockedUntil != null && lockedUntil.isAfter(now);
     }
 
+    public void resetFailedAttemptsIfLockExpired(LocalDateTime now) {
+        if (lockedUntil != null && !lockedUntil.isAfter(now)) {
+            this.failedAttempts = 0;
+            this.lockedUntil = null;
+        }
+    }
+
     public void recordFailedAttempt(int maxAttempts, LocalDateTime lockedUntil) {
         this.failedAttempts++;
         if (this.failedAttempts >= maxAttempts) {

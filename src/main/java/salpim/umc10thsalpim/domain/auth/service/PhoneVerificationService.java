@@ -280,6 +280,8 @@ public class PhoneVerificationService {
             String code
     ) {
         LocalDateTime now = LocalDateTime.now();
+        phoneVerification.resetFailedAttemptsIfLockExpired(now);
+
         if (isExpired(phoneVerification.getExpiredAt(), now)) {
             throw new AuthException(AuthErrorCode.EXPIRED_VERIFICATION_CODE);
         }
