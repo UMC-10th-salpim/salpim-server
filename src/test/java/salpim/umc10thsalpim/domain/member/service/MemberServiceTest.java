@@ -19,6 +19,7 @@ import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.PasswordVerificationMethod;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -224,6 +225,32 @@ class MemberServiceTest {
         assertThat(member.getRegionId()).isEqualTo(request.regionId());
         assertThat(member.getWelfareCenter()).isEqualTo(newDong.getName());
         verifyNoInteractions(phoneVerificationService);
+    }
+
+    @Test
+    @DisplayName("회원의 글자 크기를 변경한다")
+    void updateWordSizeSuccess() {
+        Member member = createMember(DONG_ID);
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+
+        memberService.updateWordSize(MEMBER_ID, WordSize.LARGE);
+
+        assertThat(member.getWordSize()).isEqualTo(WordSize.LARGE);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 회원의 글자 크기를 변경하면 예외가 발생한다")
+    void throwsExceptionWhenUpdatingWordSizeForMissingMember() {
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.empty());
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.updateWordSize(MEMBER_ID, WordSize.LARGE)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
     }
 
     @Test
