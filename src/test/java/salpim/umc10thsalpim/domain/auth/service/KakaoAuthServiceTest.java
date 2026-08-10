@@ -19,6 +19,7 @@ import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -133,6 +134,7 @@ class KakaoAuthServiceTest {
         verify(memberRepository).saveAndFlush(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getLoginType()).isEqualTo(SocialProvider.KAKAO);
         assertThat(memberCaptor.getValue().getRegion()).isSameAs(administrativeArea);
+        assertThat(memberCaptor.getValue().getWordSize()).isEqualTo(WordSize.LARGE);
         verify(phoneVerificationService).validateVerifiedPhoneNumber("01012345678");
         verify(phoneVerificationService).deleteVerification("01012345678");
     }
@@ -265,6 +267,7 @@ class KakaoAuthServiceTest {
                 "Jihong",
                 LocalDate.of(2002, 3, 11),
                 Gender.MALE,
+                WordSize.LARGE,
                 phoneNumber,
                 "Goyang-si Deogyang-gu Hwarang-ro 28",
                 "B",

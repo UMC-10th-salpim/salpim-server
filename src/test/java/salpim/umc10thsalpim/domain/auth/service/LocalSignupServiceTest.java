@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -64,6 +65,7 @@ class LocalSignupServiceTest {
         ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
         verify(memberRepository).saveAndFlush(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getRegion()).isSameAs(region);
+        assertThat(memberCaptor.getValue().getWordSize()).isEqualTo(WordSize.LARGE);
         assertThat(memberCaptor.getValue().getWelfareCenter()).isEqualTo("Hwajeon");
         assertThat(memberCaptor.getValue().getPasswordRecoveryAnswer())
                 .isEqualTo("encoded-recovery-answer");
@@ -161,6 +163,7 @@ class LocalSignupServiceTest {
                 "Jihong",
                 LocalDate.of(2002, 3, 11),
                 Gender.MALE,
+                WordSize.LARGE,
                 "010-3176-8867",
                 password,
                 "Goyang Deogyang Hwarang-ro 28",

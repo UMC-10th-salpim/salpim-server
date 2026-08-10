@@ -9,6 +9,7 @@ import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 
 import java.time.LocalDate;
 
@@ -71,6 +72,10 @@ public class AuthReqDTO {
             @Schema(example = "MALE")
             @NotNull(message = "gender is required.")
             Gender gender,
+
+            @Schema(example = "MEDIUM")
+            @NotNull(message = "wordSize is required.")
+            WordSize wordSize,
 
             @Schema(example = "01012345678")
             @NotBlank(message = "phoneNumber is required.")
@@ -135,6 +140,10 @@ public class AuthReqDTO {
             @Schema(example = "MALE")
             @NotNull(message = "gender is required.")
             Gender gender,
+
+            @Schema(example = "MEDIUM")
+            @NotNull(message = "wordSize is required.")
+            WordSize wordSize,
 
             @Schema(example = "01012345678")
             @Pattern(regexp = KOREAN_MOBILE_PHONE_PATTERN, message = "phoneNumber must be a valid Korean mobile number.")

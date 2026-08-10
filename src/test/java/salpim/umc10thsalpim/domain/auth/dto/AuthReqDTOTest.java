@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -80,6 +81,7 @@ class AuthReqDTOTest {
                 "Jihong",
                 LocalDate.of(2002, 3, 11),
                 Gender.MALE,
+                WordSize.MEDIUM,
                 "010-3176-8867",
                 password,
                 "Goyang Deogyang Hwarang-ro 28",
