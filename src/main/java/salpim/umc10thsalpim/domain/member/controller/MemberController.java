@@ -43,7 +43,7 @@ public class MemberController {
             description = "Bearer Access Token으로 인증된 현재 회원과 회원 소유 인증·약관 동의 데이터를 삭제합니다. 탈퇴 후 기존 토큰은 사용할 수 없습니다.",
             security = @SecurityRequirement(name = "JWT TOKEN")
     )
-    @DeleteMapping("/members/me")
+    @DeleteMapping("/users/me")
     public ResponseEntity<ApiResponse<Void>> withdraw(
             @AuthenticationPrincipal Long memberId
     ) {
