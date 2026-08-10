@@ -150,6 +150,10 @@ public class Member extends BaseEntity {
         this.welfareCenter = welfareCenter;
     }
 
+    public void updateWordSize(WordSize wordSize) {
+        this.wordSize = wordSize;
+    }
+
     public void updatePhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
