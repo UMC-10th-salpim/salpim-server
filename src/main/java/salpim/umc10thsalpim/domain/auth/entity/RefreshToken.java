@@ -35,7 +35,7 @@ public class RefreshToken extends BaseEntity {
     @JoinColumn(name = "member_id", nullable = false, unique = true)
     private Member member;
 
-    @Column(name = "token", nullable = false, unique = true, length = 100)
+    @Column(name = "token", nullable = false, unique = true, length = 1000)
     private String tokenHash;
 
     @Column(name = "expired_at", nullable = false)
