@@ -33,8 +33,8 @@ public class PhoneVerification extends BaseEntity {
     @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
 
-    @Column(name = "code", nullable = false)
-    private String code;
+    @Column(name = "code", nullable = false, length = 100)
+    private String codeHash;
 
     @Column(name = "expired_at", nullable = false)
     private LocalDateTime expiredAt;
@@ -62,15 +62,24 @@ public class PhoneVerification extends BaseEntity {
     @Column(name = "used_at")
     private LocalDateTime usedAt;
 
+    @Builder.Default
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
     public void updateCode(
-            String code,
+            String codeHash,
             LocalDateTime expiredAt,
             LocalDateTime sentAt
     ) {
-        this.code = code;
+        this.codeHash = codeHash;
         this.expiredAt = expiredAt;
         this.sentAt = sentAt;
         this.verified = false;
+        this.failedAttempts = 0;
+        this.lockedUntil = null;
         this.verificationTokenHash = null;
         this.tokenExpiredAt = null;
         this.usedAt = null;
@@ -78,6 +87,8 @@ public class PhoneVerification extends BaseEntity {
 
     public void verify() {
         this.verified = true;
+        this.failedAttempts = 0;
+        this.lockedUntil = null;
     }
 
     public void verifyAndIssueToken(
@@ -92,6 +103,24 @@ public class PhoneVerification extends BaseEntity {
 
     public void consumeVerificationToken() {
         this.usedAt = LocalDateTime.now();
+    }
+
+    public boolean isLockedAt(LocalDateTime now) {
+        return lockedUntil != null && lockedUntil.isAfter(now);
+    }
+
+    public void resetFailedAttemptsIfLockExpired(LocalDateTime now) {
+        if (lockedUntil != null && !lockedUntil.isAfter(now)) {
+            this.failedAttempts = 0;
+            this.lockedUntil = null;
+        }
+    }
+
+    public void recordFailedAttempt(int maxAttempts, LocalDateTime lockedUntil) {
+        this.failedAttempts++;
+        if (this.failedAttempts >= maxAttempts) {
+            this.lockedUntil = lockedUntil;
+        }
     }
 
 }

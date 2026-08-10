@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 
 import java.time.LocalDate;
 import java.util.Set;
@@ -41,14 +42,15 @@ class AuthReqDTOTest {
 
     @Test
     void localSignupRejectsPasswordThatIsNotSixDigits() {
-        AuthReqDTO.LocalSignup request = localSignup("qwer1234");
+        AuthReqDTO.LocalSignup request = localSignup("Salpim123!");
 
         Set<ConstraintViolation<AuthReqDTO.LocalSignup>> violations = validator.validate(request);
 
         assertThat(violations)
                 .anySatisfy(violation -> {
                     assertThat(violation.getPropertyPath()).hasToString("password");
-                    assertThat(violation.getMessage()).isEqualTo("password must be exactly 6 digits.");
+                    assertThat(violation.getMessage())
+                            .isEqualTo("password must be exactly 6 digits.");
                 });
     }
 
@@ -79,6 +81,7 @@ class AuthReqDTOTest {
                 "Jihong",
                 LocalDate.of(2002, 3, 11),
                 Gender.MALE,
+                WordSize.MEDIUM,
                 "010-3176-8867",
                 password,
                 "Goyang Deogyang Hwarang-ro 28",

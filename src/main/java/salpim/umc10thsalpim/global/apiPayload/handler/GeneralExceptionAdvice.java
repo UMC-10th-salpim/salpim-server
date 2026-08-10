@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.global.apiPayload.handler;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -75,5 +76,15 @@ public class GeneralExceptionAdvice {
         BaseErrorCode code = GeneralErrorCode.BAD_REQUEST;
         return ResponseEntity.status(code.getStatus())
                 .body(ApiResponse.onFailure(code, errors));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException e
+    ) {
+        BaseErrorCode code = GeneralErrorCode.BAD_REQUEST;
+
+        return ResponseEntity.status(code.getStatus())
+                .body(ApiResponse.onFailure(code, null));
     }
 }

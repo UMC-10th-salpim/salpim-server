@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.domain.member.dto;
 import jakarta.validation.constraints.*;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.PasswordVerificationMethod;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,6 +46,11 @@ public class MemberReqDTO {
             String phoneNumber,
 
             String phoneVerificationToken
+    ){}
+
+    public record UpdateWordSize(
+            @NotNull
+            WordSize wordSize
     ){}
 
     public record VerifyCurrentPassword(

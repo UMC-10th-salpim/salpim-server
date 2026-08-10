@@ -31,11 +31,14 @@ public class PhoneVerificationService {
     private static final long VERIFICATION_RESEND_INTERVAL_SECONDS = 60L;
     private static final long PHONE_CHANGE_TOKEN_EXPIRATION_MINUTES = 10L;
     private static final int VERIFICATION_CODE_BOUND = 1_000_000;
+    private static final int MAX_VERIFICATION_ATTEMPTS = 5;
+    private static final long VERIFICATION_LOCK_MINUTES = 15L;
     private static final int PHONE_CHANGE_TOKEN_BYTE_LENGTH = 32;
 
     private final PhoneVerificationRepository phoneVerificationRepository;
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthSecretHasher authSecretHasher;
     private final DiscordWebhookNotifier discordWebhookNotifier;
     private final SolapiSmsSender solapiSmsSender;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -87,12 +90,12 @@ public class PhoneVerificationService {
         );
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = AuthException.class)
     public AuthResDTO.PhoneVerifyResult verifyCode(String phoneNumber, String code) {
         String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
 
         PhoneVerification phoneVerification = phoneVerificationRepository
-                .findByPhoneNumberAndPurpose(
+                .findByPhoneNumberAndPurposeForUpdate(
                         normalizedPhoneNumber,
                         PhoneVerificationPurpose.SIGNUP
                 )
@@ -104,7 +107,7 @@ public class PhoneVerificationService {
         return AuthConverter.toPhoneVerifyResult(true);
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = AuthException.class)
     public AuthResDTO.PhoneChangeVerifyResult verifyPhoneChangeCode(
             Long memberId,
             String phoneNumber,
@@ -114,7 +117,7 @@ public class PhoneVerificationService {
         String normalizedPhoneNumber = normalizePhoneNumber(phoneNumber);
 
         PhoneVerification phoneVerification = phoneVerificationRepository
-                .findByMemberAndPhoneNumberAndPurpose(
+                .findByMemberAndPhoneNumberAndPurposeForUpdate(
                         member,
                         normalizedPhoneNumber,
                         PhoneVerificationPurpose.PHONE_CHANGE
@@ -149,7 +152,7 @@ public class PhoneVerificationService {
             throw new AuthException(AuthErrorCode.PHONE_NOT_VERIFIED);
         }
 
-        if (phoneVerification.getExpiredAt().isBefore(LocalDateTime.now())) {
+        if (isExpired(phoneVerification.getExpiredAt(), LocalDateTime.now())) {
             throw new AuthException(AuthErrorCode.EXPIRED_VERIFICATION_CODE);
         }
     }
@@ -168,6 +171,7 @@ public class PhoneVerificationService {
             PhoneVerificationPurpose purpose
     ) {
         String code = generateVerificationCode();
+        String codeHash = authSecretHasher.hashVerificationCode(code);
         LocalDateTime sentAt = LocalDateTime.now();
         LocalDateTime expiredAt = sentAt
                 .plusMinutes(VERIFICATION_EXPIRATION_MINUTES);
@@ -177,13 +181,13 @@ public class PhoneVerificationService {
                 normalizedPhoneNumber,
                 purpose
         ).map(existingVerification -> {
-            existingVerification.updateCode(code, expiredAt, sentAt);
+            existingVerification.updateCode(codeHash, expiredAt, sentAt);
             return existingVerification;
         }).orElseGet(() -> AuthConverter.toPhoneVerification(
                 member,
                 normalizedPhoneNumber,
                 purpose,
-                code,
+                codeHash,
                 expiredAt,
                 sentAt
         ));
@@ -228,7 +232,7 @@ public class PhoneVerificationService {
             throw new AuthException(AuthErrorCode.INVALID_PHONE_VERIFICATION_TOKEN);
         }
 
-        if (phoneVerification.getTokenExpiredAt().isBefore(LocalDateTime.now())) {
+        if (isExpired(phoneVerification.getTokenExpiredAt(), LocalDateTime.now())) {
             throw new AuthException(AuthErrorCode.EXPIRED_PHONE_VERIFICATION_TOKEN);
         }
 
@@ -275,13 +279,31 @@ public class PhoneVerificationService {
             PhoneVerification phoneVerification,
             String code
     ) {
-        if (phoneVerification.getExpiredAt().isBefore(LocalDateTime.now())) {
+        LocalDateTime now = LocalDateTime.now();
+        phoneVerification.resetFailedAttemptsIfLockExpired(now);
+
+        if (isExpired(phoneVerification.getExpiredAt(), now)) {
             throw new AuthException(AuthErrorCode.EXPIRED_VERIFICATION_CODE);
         }
 
-        if (!phoneVerification.getCode().equals(code)) {
+        if (phoneVerification.isLockedAt(now)) {
+            throw new AuthException(AuthErrorCode.PHONE_VERIFICATION_ATTEMPTS_EXCEEDED);
+        }
+
+        if (!authSecretHasher.matchesVerificationCode(code, phoneVerification.getCodeHash())) {
+            phoneVerification.recordFailedAttempt(
+                    MAX_VERIFICATION_ATTEMPTS,
+                    now.plusMinutes(VERIFICATION_LOCK_MINUTES)
+            );
+            if (phoneVerification.getFailedAttempts() >= MAX_VERIFICATION_ATTEMPTS) {
+                throw new AuthException(AuthErrorCode.PHONE_VERIFICATION_ATTEMPTS_EXCEEDED);
+            }
             throw new AuthException(AuthErrorCode.INVALID_VERIFICATION_CODE);
         }
+    }
+
+    private boolean isExpired(LocalDateTime expiresAt, LocalDateTime now) {
+        return !expiresAt.isAfter(now);
     }
 
     private Member getMemberOrThrow(Long memberId) {

@@ -44,6 +44,21 @@ class MemberTest {
     }
 
     @Test
+    void localMemberRequiresPhoneNumber() {
+        Member member = baseMemberBuilder()
+                .loginType(SocialProvider.LOCAL)
+                .phoneNumber(" ")
+                .password("encoded-password")
+                .passwordRecoveryAnswer("encoded-answer")
+                .build();
+
+        assertThatThrownBy(member::validateLoginTypeFields)
+                .isInstanceOfSatisfying(MemberException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(MemberErrorCode.REQUIRED_LOCAL_PHONE_NUMBER));
+    }
+
+    @Test
     void localMemberRequiresPasswordRecoveryAnswer() {
         Member member = baseMemberBuilder()
                 .loginType(SocialProvider.LOCAL)

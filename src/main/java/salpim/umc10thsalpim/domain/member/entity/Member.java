@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.region.entity.Region;
@@ -55,6 +56,11 @@ public class Member extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
+    @Builder.Default
+    @Column(name = "word_size", nullable = false, columnDefinition = "varchar(20) default 'MEDIUM'")
+    @Enumerated(EnumType.STRING)
+    private WordSize wordSize = WordSize.MEDIUM;
+
     @Column(name = "road_address", nullable = false)
     private String roadAddress;
 
@@ -81,7 +87,7 @@ public class Member extends BaseEntity {
     @Column(name = "password_recovery_answer")
     private String passwordRecoveryAnswer;
 
-    @Column(name = "welfare_center")
+    @Column(name = "welfare_center", nullable = false)
     private String welfareCenter;
 
     @PrePersist
@@ -96,6 +102,9 @@ public class Member extends BaseEntity {
     }
 
     private void validateLocalMemberFields() {
+        if (isBlank(phoneNumber)) {
+            throw new MemberException(MemberErrorCode.REQUIRED_LOCAL_PHONE_NUMBER);
+        }
         if (isBlank(password)) {
             throw new MemberException(MemberErrorCode.REQUIRED_LOCAL_PASSWORD);
         }
@@ -139,6 +148,10 @@ public class Member extends BaseEntity {
         this.longitude = longitude;
         this.region = region;
         this.welfareCenter = welfareCenter;
+    }
+
+    public void updateWordSize(WordSize wordSize) {
+        this.wordSize = wordSize;
     }
 
     public void updatePhoneNumber(String phoneNumber) {

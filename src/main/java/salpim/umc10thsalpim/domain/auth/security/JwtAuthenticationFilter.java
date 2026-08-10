@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
+import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
@@ -35,21 +36,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         String token = resolveBearerToken(request);
         if (token != null) {
-            authenticate(token);
+            authenticate(request, token);
         }
         filterChain.doFilter(request, response);
     }
 
-    private void authenticate(String token) {
+    private void authenticate(HttpServletRequest request, String token) {
         try {
             Long memberId = tokenService.validateAccessTokenAndGetMemberId(token);
             if (memberRepository.existsById(memberId)) {
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(memberId, null, List.of());
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
+                request.setAttribute(
+                        JwtAuthenticationEntryPoint.AUTH_ERROR_ATTRIBUTE,
+                        AuthErrorCode.INVALID_TOKEN
+                );
             }
         } catch (AuthException e) {
             SecurityContextHolder.clearContext();
+            request.setAttribute(
+                    JwtAuthenticationEntryPoint.AUTH_ERROR_ATTRIBUTE,
+                    e.getErrorCode()
+            );
         }
     }
 

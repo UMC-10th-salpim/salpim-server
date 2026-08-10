@@ -43,7 +43,7 @@ public class MemberController {
             description = "Bearer Access Token으로 인증된 현재 회원과 회원 소유 인증·약관 동의 데이터를 삭제합니다. 탈퇴 후 기존 토큰은 사용할 수 없습니다.",
             security = @SecurityRequirement(name = "JWT TOKEN")
     )
-    @DeleteMapping("/members/me")
+    @DeleteMapping("/users/me")
     public ResponseEntity<ApiResponse<Void>> withdraw(
             @AuthenticationPrincipal Long memberId
     ) {
@@ -67,6 +67,21 @@ public class MemberController {
         );
     }
 
+    @GetMapping("/users/me/welfare-center")
+    @Operation(
+            summary = "소속 복지관 조회",
+            description = "현재 회원의 지역을 기준으로 배정된 복지관 정보를 조회합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<MemberResDTO.WelfareCenterInfo> getWelfareCenter(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_WELFARE_CENTER_VIEW,
+                memberService.getWelfareCenter(memberId)
+        );
+    }
+
     @PutMapping("/users/me")
     @Operation(
             summary = "개인정보 수정",
@@ -83,6 +98,24 @@ public class MemberController {
 
         return ApiResponse.onSuccess(
                 MemberSuccessCode.MEMBER_PROFILE_UPDATED,
+                null
+        );
+    }
+
+    @PutMapping("/users/me/word-size")
+    @Operation(
+            summary = "글자 크기 수정",
+            description = "회원이 설정한 글자 크기를 변경합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<Void> updateWordSize(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody MemberReqDTO.UpdateWordSize request
+    ) {
+        memberService.updateWordSize(memberId, request.wordSize());
+
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_WORD_SIZE_UPDATED,
                 null
         );
     }

@@ -25,7 +25,7 @@ public class LocalLoginService {
     public AuthResDTO.TokenResult login(AuthReqDTO.LocalLogin request) {
         String normalizedPhoneNumber = normalizePhoneNumber(request.phoneNumber());
         Member member = memberRepository.findByPhoneNumber(normalizedPhoneNumber)
-                .orElseThrow(() -> new AuthException(AuthErrorCode.LOGIN_MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
 
         validateLocalPassword(member, request.password());
         return tokenService.issueLoginTokens(member);
@@ -35,7 +35,7 @@ public class LocalLoginService {
         if (member.getLoginType() != SocialProvider.LOCAL
                 || member.getPassword() == null
                 || !passwordEncoder.matches(rawPassword, member.getPassword())) {
-            throw new AuthException(AuthErrorCode.INVALID_PASSWORD);
+            throw new AuthException(AuthErrorCode.INVALID_LOGIN_CREDENTIALS);
         }
     }
 

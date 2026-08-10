@@ -26,4 +26,8 @@ public class MemberResDTO {
     public record PasswordVerificationResult(
             boolean isVerified
     ) {}
+
+    public record WelfareCenterInfo(
+            String welfareCenter
+    ) {}
 }

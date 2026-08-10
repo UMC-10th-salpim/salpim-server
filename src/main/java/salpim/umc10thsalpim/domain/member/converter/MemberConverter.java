@@ -27,6 +27,7 @@ public final class MemberConverter {
                 .name(request.name().trim())
                 .birthDate(request.birthDate())
                 .gender(request.gender())
+                .wordSize(request.wordSize())
                 .roadAddress(request.roadAddress().trim())
                 .detailAddress(normalizeNullableText(request.detailAddress()))
                 .latitude(BigDecimal.valueOf(request.latitude()))
@@ -50,11 +51,13 @@ public final class MemberConverter {
                 .name(request.name().trim())
                 .birthDate(request.birthDate())
                 .gender(request.gender())
+                .wordSize(request.wordSize())
                 .roadAddress(request.roadAddress().trim())
                 .detailAddress(normalizeNullableText(request.detailAddress()))
                 .latitude(BigDecimal.valueOf(request.latitude()))
                 .longitude(BigDecimal.valueOf(request.longitude()))
                 .region(region)
+                .welfareCenter(region.getName())
                 .build();
     }
 
@@ -82,6 +85,10 @@ public final class MemberConverter {
                 administrativeArea
 
         );
+    }
+
+    public static MemberResDTO.WelfareCenterInfo toWelfareCenterInfo(Member member) {
+        return new MemberResDTO.WelfareCenterInfo(member.getWelfareCenter());
     }
 
     public static String normalizeNullableText(String value) {

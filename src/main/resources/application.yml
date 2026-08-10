@@ -36,6 +36,10 @@ jwt:
   signup-token-expiration-millis: ${JWT_SIGNUP_TOKEN_EXPIRATION_MILLIS:600000}
   password-reset-token-expiration-millis: ${JWT_PASSWORD_RESET_TOKEN_EXPIRATION_MILLIS:300000}
 
+auth:
+  secret:
+    hmac-key: ${AUTH_SECRET_HMAC_KEY}
+
 password-verification-attempt:
   max-failure-count: ${PASSWORD_VERIFICATION_MAX_FAILURE_COUNT:5}
   lock-duration-millis: ${PASSWORD_VERIFICATION_LOCK_DURATION_MILLIS:900000}

@@ -22,11 +22,11 @@ import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -36,11 +36,12 @@ public class TokenService {
     private static final String CLAIM_PURPOSE = "purpose";
     private static final String CLAIM_PROVIDER = "provider";
     private static final String CLAIM_PROVIDER_ID = "providerId";
-    private static final int MIN_SECRET_LENGTH = 32;
+    private static final String CLAIM_PROVIDER_PHONE_NUMBER = "providerPhoneNumber";
 
     private final JwtProperties jwtProperties;
     private final RefreshTokenRepository refreshTokenRepository;
     private final MemberRepository memberRepository;
+    private final AuthSecretHasher authSecretHasher;
 
     @Transactional
     public AuthResDTO.TokenResult issueLoginTokens(Member member) {
@@ -52,22 +53,19 @@ public class TokenService {
                 TokenPurpose.ACCESS,
                 jwtProperties.getAccessTokenExpirationMillis()
         );
-        String refreshToken = createMemberToken(
-                lockedMember,
-                TokenPurpose.REFRESH,
-                jwtProperties.getRefreshTokenExpirationMillis()
-        );
+        String refreshToken = createRefreshToken(lockedMember);
         LocalDateTime refreshTokenExpiredAt = LocalDateTime.now()
                 .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
+        String refreshTokenHash = authSecretHasher.hashRefreshToken(refreshToken);
 
         RefreshToken savedRefreshToken = refreshTokenRepository.findByMember(lockedMember)
                 .map(existingToken -> {
-                    existingToken.updateToken(refreshToken, refreshTokenExpiredAt);
+                    existingToken.updateTokenHash(refreshTokenHash, refreshTokenExpiredAt);
                     return existingToken;
                 })
                 .orElseGet(() -> RefreshToken.builder()
                         .member(lockedMember)
-                        .token(refreshToken)
+                        .tokenHash(refreshTokenHash)
                         .expiredAt(refreshTokenExpiredAt)
                         .build());
 
@@ -76,6 +74,49 @@ public class TokenService {
         return AuthResDTO.TokenResult.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .wordSize(lockedMember.getWordSize())
+                .build();
+    }
+
+    @Transactional(noRollbackFor = AuthException.class)
+    public AuthResDTO.TokenResult reissueLoginTokens(String refreshToken) {
+        TokenDTO.RefreshTokenClaims claims = parseRefreshToken(refreshToken);
+        Member lockedMember = memberRepository.findByIdForUpdate(claims.memberId())
+                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+        RefreshToken savedRefreshToken = refreshTokenRepository.findByMember(lockedMember)
+                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+
+        LocalDateTime now = LocalDateTime.now();
+        if (!savedRefreshToken.getExpiredAt().isAfter(now)) {
+            throw new AuthException(AuthErrorCode.EXPIRED_REFRESH_TOKEN);
+        }
+        if (!authSecretHasher.matchesRefreshToken(
+                refreshToken,
+                savedRefreshToken.getTokenHash()
+        )) {
+            refreshTokenRepository.delete(savedRefreshToken);
+            throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        String accessToken = createMemberToken(
+                lockedMember,
+                TokenPurpose.ACCESS,
+                jwtProperties.getAccessTokenExpirationMillis()
+        );
+        String rotatedRefreshToken = createRefreshToken(lockedMember);
+        LocalDateTime rotatedRefreshTokenExpiredAt = now
+                .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
+
+        savedRefreshToken.updateTokenHash(
+                authSecretHasher.hashRefreshToken(rotatedRefreshToken),
+                rotatedRefreshTokenExpiredAt
+        );
+        refreshTokenRepository.save(savedRefreshToken);
+
+        return AuthResDTO.TokenResult.builder()
+                .accessToken(accessToken)
+                .refreshToken(rotatedRefreshToken)
+                .wordSize(lockedMember.getWordSize())
                 .build();
     }
 
@@ -87,15 +128,24 @@ public class TokenService {
                 .nextStep(NextStep.LOGIN_COMPLETE)
                 .accessToken(tokenResult.accessToken())
                 .refreshToken(tokenResult.refreshToken())
+                .phoneVerificationRequired(false)
+                .wordSize(tokenResult.wordSize())
                 .build();
     }
 
-    public AuthResDTO.KakaoLoginResult issueSignupRequiredToken(SocialProvider provider, String providerId) {
-        String signupToken = createSignupToken(provider, providerId);
+    public AuthResDTO.KakaoLoginResult issueSignupRequiredToken(
+            SocialProvider provider,
+            String providerId,
+            String providerPhoneNumber
+    ) {
+        String signupToken = createSignupToken(provider, providerId, providerPhoneNumber);
+        boolean phoneVerificationRequired = !StringUtils.hasText(providerPhoneNumber);
         return AuthResDTO.KakaoLoginResult.builder()
                 .isNewMember(true)
                 .nextStep(NextStep.SIGNUP_REQUIRED)
                 .signupToken(signupToken)
+                .phoneNumber(providerPhoneNumber)
+                .phoneVerificationRequired(phoneVerificationRequired)
                 .build();
     }
 
@@ -115,7 +165,8 @@ public class TokenService {
             return new TokenDTO.SignupTokenClaims(
                     purpose,
                     SocialProvider.valueOf(claims.get(CLAIM_PROVIDER, String.class)),
-                    claims.get(CLAIM_PROVIDER_ID, String.class)
+                    claims.get(CLAIM_PROVIDER_ID, String.class),
+                    claims.get(CLAIM_PROVIDER_PHONE_NUMBER, String.class)
             );
         } catch (AuthException e) {
             throw e;
@@ -123,6 +174,33 @@ public class TokenService {
             throw new AuthException(AuthErrorCode.SIGNUP_TOKEN_EXPIRED);
         } catch (IllegalArgumentException | JwtException e) {
             throw new AuthException(AuthErrorCode.SIGNUP_TOKEN_INVALID);
+        }
+    }
+
+    public TokenDTO.RefreshTokenClaims parseRefreshToken(String token) {
+        try {
+            var claims = Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            TokenPurpose purpose = TokenPurpose.valueOf(
+                    claims.get(CLAIM_PURPOSE, String.class)
+            );
+            if (purpose != TokenPurpose.REFRESH) {
+                throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+            }
+            return new TokenDTO.RefreshTokenClaims(
+                    purpose,
+                    Long.parseLong(claims.getSubject())
+            );
+        } catch (AuthException exception) {
+            throw exception;
+        } catch (ExpiredJwtException exception) {
+            throw new AuthException(AuthErrorCode.EXPIRED_REFRESH_TOKEN);
+        } catch (RuntimeException exception) {
+            throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
         }
     }
 
@@ -176,18 +254,40 @@ public class TokenService {
                 .compact();
     }
 
-    private String createSignupToken(SocialProvider provider, String providerId) {
+    private String createRefreshToken(Member member) {
         Date now = new Date();
-        Date expiredAt = new Date(now.getTime() + jwtProperties.getSignupTokenExpirationMillis());
+        Date expiredAt = new Date(
+                now.getTime() + jwtProperties.getRefreshTokenExpirationMillis()
+        );
 
         return Jwts.builder()
-                .claim(CLAIM_PURPOSE, TokenPurpose.SIGNUP.name())
-                .claim(CLAIM_PROVIDER, provider.name())
-                .claim(CLAIM_PROVIDER_ID, providerId)
+                .id(UUID.randomUUID().toString())
+                .subject(String.valueOf(member.getId()))
+                .claim(CLAIM_PURPOSE, TokenPurpose.REFRESH.name())
                 .issuedAt(now)
                 .expiration(expiredAt)
                 .signWith(getSecretKey())
                 .compact();
+    }
+
+    private String createSignupToken(
+            SocialProvider provider,
+            String providerId,
+            String providerPhoneNumber
+    ) {
+        Date now = new Date();
+        Date expiredAt = new Date(now.getTime() + jwtProperties.getSignupTokenExpirationMillis());
+
+        var tokenBuilder = Jwts.builder()
+                .claim(CLAIM_PURPOSE, TokenPurpose.SIGNUP.name())
+                .claim(CLAIM_PROVIDER, provider.name())
+                .claim(CLAIM_PROVIDER_ID, providerId)
+                .issuedAt(now)
+                .expiration(expiredAt);
+        if (StringUtils.hasText(providerPhoneNumber)) {
+            tokenBuilder.claim(CLAIM_PROVIDER_PHONE_NUMBER, providerPhoneNumber);
+        }
+        return tokenBuilder.signWith(getSecretKey()).compact();
     }
 
     public Long validateAccessTokenAndGetMemberId(String token) {
@@ -210,10 +310,9 @@ public class TokenService {
     }
 
     private SecretKey getSecretKey() {
-        if (!StringUtils.hasText(jwtProperties.getSecretKey())
-                || jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_LENGTH) {
+        if (!jwtProperties.isSecretKeySecure()) {
             throw new AuthException(AuthErrorCode.INVALID_TOKEN);
         }
-        return Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(jwtProperties.getDecodedSecretKey());
     }
 }

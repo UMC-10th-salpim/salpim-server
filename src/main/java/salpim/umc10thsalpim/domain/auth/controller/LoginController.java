@@ -15,6 +15,7 @@ import salpim.umc10thsalpim.domain.auth.enums.NextStep;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthSuccessCode;
 import salpim.umc10thsalpim.domain.auth.service.KakaoAuthService;
 import salpim.umc10thsalpim.domain.auth.service.LocalLoginService;
+import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 
 @Tag(name = "Login", description = "Login API")
@@ -25,6 +26,7 @@ public class LoginController {
 
     private final LocalLoginService localLoginService;
     private final KakaoAuthService kakaoAuthService;
+    private final TokenService tokenService;
 
     @Operation(summary = "Local login API")
     @PostMapping("/local")
@@ -34,6 +36,16 @@ public class LoginController {
         AuthResDTO.TokenResult response = localLoginService.login(request);
         return ResponseEntity.status(AuthSuccessCode.LOGIN_SUCCESS.getStatus())
                 .body(ApiResponse.onSuccess(AuthSuccessCode.LOGIN_SUCCESS, response));
+    }
+
+    @Operation(summary = "Access and refresh token reissue API")
+    @PostMapping("/reissue")
+    public ResponseEntity<ApiResponse<AuthResDTO.TokenResult>> reissueTokens(
+            @Valid @RequestBody AuthReqDTO.TokenReissue request
+    ) {
+        AuthResDTO.TokenResult response = tokenService.reissueLoginTokens(request.refreshToken());
+        return ResponseEntity.status(AuthSuccessCode.TOKEN_REISSUED.getStatus())
+                .body(ApiResponse.onSuccess(AuthSuccessCode.TOKEN_REISSUED, response));
     }
 
     @Operation(summary = "Kakao login API")
