@@ -222,6 +222,7 @@ class MemberServiceTest {
         assertThat(member.getLatitude()).isEqualByComparingTo(request.latitude());
         assertThat(member.getLongitude()).isEqualByComparingTo(request.longitude());
         assertThat(member.getRegionId()).isEqualTo(request.regionId());
+        assertThat(member.getWelfareCenter()).isEqualTo(newDong.getName());
         verifyNoInteractions(phoneVerificationService);
     }
 
