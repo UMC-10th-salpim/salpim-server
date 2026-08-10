@@ -114,12 +114,9 @@ public class BenefitService {
 
         List<BenefitRule> benefitRules = getBenefitRulesOrThrow(request.benefitId());
 
-        List<ApplicationType> applicationTypeList = benefitRules.stream()
-                .map(BenefitRule::getApplicationType)
-                .distinct()
-                .toList();
+        Boolean isOnlineApplicationAvailable = isOnlineApplicationAvailable(benefitRules);
 
-        return BenefitConverter.toGetBenefitDetailDTO(welfareBenefit, categoryName, applicationTypeList);
+        return BenefitConverter.toGetBenefitDetailDTO(welfareBenefit, categoryName, isOnlineApplicationAvailable);
     }
 
     @Transactional(readOnly = true)

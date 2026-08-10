@@ -49,7 +49,7 @@ public class BenefitResDTO {
         Integer minAge,
         Integer maxAge,
         AgeConditionStatus ageConditionStatus,
-        List<ApplicationType> applicationTypeList
+        Boolean isOnlineApplicationAvailable
     ){}
 
     @Builder
