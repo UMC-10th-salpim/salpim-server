@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @Getter
 @Setter
@@ -41,11 +41,36 @@ public class JwtProperties {
     @Positive(message = "JWT password reset token expiration must be positive.")
     private Long passwordResetTokenExpirationMillis;
 
-    @AssertTrue(message = "JWT secret key must be at least 32 bytes and must not use the example value.")
+    @AssertTrue(message = "JWT secret key must be a Base64-encoded random value of at least 32 bytes.")
     public boolean isSecretKeySecure() {
-        return secretKey != null
-                && secretKey.getBytes(StandardCharsets.UTF_8).length >= MIN_SECRET_LENGTH_BYTES
-                && !EXAMPLE_SECRET.equals(secretKey)
-                && !secretKey.startsWith("your_jwt_secret_key");
+        if (secretKey == null
+                || EXAMPLE_SECRET.equals(secretKey)
+                || secretKey.startsWith("your_jwt_secret_key")) {
+            return false;
+        }
+        try {
+            byte[] decodedKey = getDecodedSecretKey();
+            return decodedKey.length >= MIN_SECRET_LENGTH_BYTES
+                    && !containsOnlyRepeatedByte(decodedKey);
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
+    public byte[] getDecodedSecretKey() {
+        return Base64.getDecoder().decode(secretKey);
+    }
+
+    private boolean containsOnlyRepeatedByte(byte[] value) {
+        if (value.length == 0) {
+            return true;
+        }
+        byte first = value[0];
+        for (byte current : value) {
+            if (current != first) {
+                return false;
+            }
+        }
+        return true;
     }
 }

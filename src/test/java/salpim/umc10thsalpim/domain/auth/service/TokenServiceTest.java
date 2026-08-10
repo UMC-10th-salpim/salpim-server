@@ -21,8 +21,8 @@ import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 class TokenServiceTest {
 
     private static final Long MEMBER_ID = 1L;
-    private static final String SECRET_KEY = "password-reset-test-secret-key-must-be-at-least-32-bytes";
+    private static final String SECRET_KEY = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=";
 
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
@@ -234,6 +234,6 @@ class TokenServiceTest {
     }
 
     private SecretKey secretKey() {
-        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(Base64.getDecoder().decode(SECRET_KEY));
     }
 }

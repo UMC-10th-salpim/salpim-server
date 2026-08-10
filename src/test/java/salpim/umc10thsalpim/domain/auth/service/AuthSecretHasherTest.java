@@ -2,7 +2,7 @@ package salpim.umc10thsalpim.domain.auth.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import salpim.umc10thsalpim.domain.auth.config.JwtProperties;
+import salpim.umc10thsalpim.domain.auth.config.AuthSecretProperties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,8 +12,8 @@ class AuthSecretHasherTest {
 
     @BeforeEach
     void setUp() {
-        JwtProperties properties = new JwtProperties();
-        properties.setSecretKey("test-only-secret-key-that-is-longer-than-32-bytes");
+        AuthSecretProperties properties = new AuthSecretProperties();
+        properties.setHmacKey("YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODg5YWJjZGVm");
         authSecretHasher = new AuthSecretHasher(properties);
     }
 

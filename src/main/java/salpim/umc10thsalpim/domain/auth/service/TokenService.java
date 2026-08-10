@@ -22,7 +22,6 @@ import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -38,7 +37,6 @@ public class TokenService {
     private static final String CLAIM_PROVIDER = "provider";
     private static final String CLAIM_PROVIDER_ID = "providerId";
     private static final String CLAIM_PROVIDER_PHONE_NUMBER = "providerPhoneNumber";
-    private static final int MIN_SECRET_LENGTH = 32;
 
     private final JwtProperties jwtProperties;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -308,10 +306,9 @@ public class TokenService {
     }
 
     private SecretKey getSecretKey() {
-        if (!StringUtils.hasText(jwtProperties.getSecretKey())
-                || jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_LENGTH) {
+        if (!jwtProperties.isSecretKeySecure()) {
             throw new AuthException(AuthErrorCode.INVALID_TOKEN);
         }
-        return Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8));
+        return Keys.hmacShaKeyFor(jwtProperties.getDecodedSecretKey());
     }
 }

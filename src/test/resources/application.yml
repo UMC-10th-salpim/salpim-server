@@ -20,11 +20,15 @@ geocoding:
   api-key:
 
 jwt:
-  secret-key: test-jwt-secret-key-must-be-at-least-32-bytes
+  secret-key: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
   access-token-expiration-millis: 3600000
   refresh-token-expiration-millis: 1209600000
   signup-token-expiration-millis: 600000
   password-reset-token-expiration-millis: 300000
+
+auth:
+  secret:
+    hmac-key: YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODg5YWJjZGVm
 
 password-verification-attempt:
   max-failure-count: 5

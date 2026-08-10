@@ -2,7 +2,7 @@ package salpim.umc10thsalpim.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import salpim.umc10thsalpim.domain.auth.config.JwtProperties;
+import salpim.umc10thsalpim.domain.auth.config.AuthSecretProperties;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -19,7 +19,7 @@ public class AuthSecretHasher {
     private static final String OTP_CONTEXT = "phone-verification:";
     private static final String REFRESH_TOKEN_CONTEXT = "refresh-token:";
 
-    private final JwtProperties jwtProperties;
+    private final AuthSecretProperties authSecretProperties;
 
     public String hashVerificationCode(String code) {
         return hash(OTP_CONTEXT, code);
@@ -51,7 +51,7 @@ public class AuthSecretHasher {
         try {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
             mac.init(new SecretKeySpec(
-                    jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8),
+                    authSecretProperties.getDecodedHmacKey(),
                     HMAC_ALGORITHM
             ));
             byte[] digest = mac.doFinal((context + value).getBytes(StandardCharsets.UTF_8));
