@@ -16,6 +16,7 @@ public class RecommendationConverter {
                                                                 .optionId(option.getId())
                                                                 .optionOrder(option.getOptionOrder())
                                                                 .optionText(option.getOptionText())
+                                                                .searchWrds(option.getSearchKey())
                                                                 .build()
                                         )
                                 .toList()

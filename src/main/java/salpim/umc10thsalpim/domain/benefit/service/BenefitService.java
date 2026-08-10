@@ -240,6 +240,10 @@ public class BenefitService {
     @Transactional(readOnly = true)
     public CursorResDTO.Pagination<BenefitResDTO.WelfareSearchResultDTO> getSearchResult(String searchKey, List<Long> regionIds, List<Long> categoryIds, String cursor, Integer pageSize, String sort) {
 
+        List<String> searchKeyList = (searchKey == null)
+                ? List.of("")
+                : List.of(searchKey.split(", "));
+
         String nextCursor;
         Integer totalCount;
 
@@ -274,10 +278,10 @@ public class BenefitService {
         int pageNumber = 1;
         while(servIds_N.size()<MAX_SERV_NUMBER && servIds_L.size()<MAX_SERV_NUMBER){
             BokjiroApiDTO.BenefitListRes NationalRes =
-                    bokjiroApiClient.searchNationalBenefits(pageNumber, API_MAX_SIZE, searchKey, null);
+                    bokjiroApiClient.searchBenefits(pageNumber, API_MAX_SIZE, searchKeyList, null, "National", sido.getName(), sigungu.getName());
 
             BokjiroApiDTO.BenefitListRes LocalRes =
-                    bokjiroApiClient.searchLocalBenefits(pageNumber, API_MAX_SIZE, searchKey, null, sido.getName(), sigungu.getName());
+                    bokjiroApiClient.searchBenefits(pageNumber, API_MAX_SIZE, searchKeyList, null, "Local", sido.getName(), sigungu.getName());
 
             NationalRes.getBenefitList().forEach(item -> {servIds_N.add(item.getServId());
                 viewCountMap.put(SOURCE_NATIONAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));
@@ -286,12 +290,12 @@ public class BenefitService {
                 viewCountMap.put(SOURCE_LOCAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));
             });
 
-            if (pageNumber*API_MAX_SIZE>=NationalRes.getTotalCount()&&
-            pageNumber*API_MAX_SIZE>=LocalRes.getTotalCount()){ break; }
+            if (pageNumber*API_MAX_SIZE>=NationalRes.getMaxTotalCount()&&
+            pageNumber*API_MAX_SIZE>=LocalRes.getMaxTotalCount()){ break; }
             pageNumber++;
         }
 
-        //DB 매칭 & 카테고리 필터링
+        //DB 매칭 & 카테고리/마감일 필터링
         List<WelfareBenefit> matched = new ArrayList<>();
         if (!servIds_N.isEmpty()) {
             matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_N, SOURCE_NATIONAL));
@@ -300,9 +304,12 @@ public class BenefitService {
             matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_L, SOURCE_LOCAL));
         }
 
+        LocalDate today = LocalDate.now(KST);
+
         List<WelfareBenefit> filtered = matched.stream()
                 .filter(b -> categoryIds==null || categoryIds.isEmpty()||
                         categoryIds.contains(b.getCategoryId()))
+                .filter(b -> b.getApplicationEndDate()==null || !b.getApplicationEndDate().isBefore(today))
                 .toList();
 
         totalCount=filtered.size();

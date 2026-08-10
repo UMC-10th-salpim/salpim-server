@@ -1,7 +1,6 @@
 package salpim.umc10thsalpim.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,6 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Optional;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -39,6 +37,7 @@ public class PhoneVerificationService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final DiscordWebhookNotifier discordWebhookNotifier;
+    private final SolapiSmsSender solapiSmsSender;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
@@ -195,11 +194,8 @@ public class PhoneVerificationService {
             throw new AuthException(AuthErrorCode.PHONE_VERIFICATION_RESEND_TOO_SOON);
         }
 
-        log.info(
-                "[DEV] phone verification code. maskedPhoneNumber={}, code={}",
-                maskPhoneNumber(normalizedPhoneNumber),
-                code
-        );
+        solapiSmsSender.sendVerificationCode(normalizedPhoneNumber, code);
+
         discordWebhookNotifier.sendVerificationCode(
                 maskPhoneNumber(normalizedPhoneNumber),
                 code,

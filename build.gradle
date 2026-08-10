@@ -63,6 +63,9 @@ dependencies {
 	// xml parsing
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 
+	// solapi
+	implementation 'com.solapi:sdk:1.0.3'
+
 }
 
 tasks.named('test') {
