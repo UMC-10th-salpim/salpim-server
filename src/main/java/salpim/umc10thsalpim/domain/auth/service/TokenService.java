@@ -74,6 +74,7 @@ public class TokenService {
         return AuthResDTO.TokenResult.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .wordSize(lockedMember.getWordSize())
                 .build();
     }
 
@@ -115,6 +116,7 @@ public class TokenService {
         return AuthResDTO.TokenResult.builder()
                 .accessToken(accessToken)
                 .refreshToken(rotatedRefreshToken)
+                .wordSize(lockedMember.getWordSize())
                 .build();
     }
 
@@ -127,6 +129,7 @@ public class TokenService {
                 .accessToken(tokenResult.accessToken())
                 .refreshToken(tokenResult.refreshToken())
                 .phoneVerificationRequired(false)
+                .wordSize(tokenResult.wordSize())
                 .build();
     }
 

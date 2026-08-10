@@ -18,6 +18,7 @@ import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.repository.RefreshTokenRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
 import javax.crypto.SecretKey;
@@ -104,7 +105,10 @@ class TokenServiceTest {
                 TokenPurpose.REFRESH,
                 new Date(System.currentTimeMillis() + 60_000L)
         );
-        Member member = Member.builder().id(MEMBER_ID).build();
+        Member member = Member.builder()
+                .id(MEMBER_ID)
+                .wordSize(WordSize.LARGE)
+                .build();
         RefreshToken savedRefreshToken = RefreshToken.builder()
                 .member(member)
                 .tokenHash("stored-refresh-token-hash")
@@ -126,12 +130,37 @@ class TokenServiceTest {
 
         assertThat(result.accessToken()).isNotBlank();
         assertThat(result.refreshToken()).isNotBlank().isNotEqualTo(refreshToken);
+        assertThat(result.wordSize()).isEqualTo(WordSize.LARGE);
         assertThat(tokenService.validateAccessTokenAndGetMemberId(result.accessToken()))
                 .isEqualTo(MEMBER_ID);
         assertThat(tokenService.parseRefreshToken(result.refreshToken()).memberId())
                 .isEqualTo(MEMBER_ID);
         assertThat(savedRefreshToken.getTokenHash()).isEqualTo("rotated-refresh-token-hash");
         verify(refreshTokenRepository).save(savedRefreshToken);
+    }
+
+    @Test
+    void includesWordSizeWhenIssuingKakaoLoginTokens() {
+        Member member = Member.builder()
+                .id(MEMBER_ID)
+                .wordSize(WordSize.LARGE)
+                .build();
+
+        when(memberRepository.findByIdForUpdate(MEMBER_ID))
+                .thenReturn(java.util.Optional.of(member));
+        when(refreshTokenRepository.findByMember(member))
+                .thenReturn(java.util.Optional.empty());
+        when(authSecretHasher.hashRefreshToken(anyString()))
+                .thenReturn("refresh-token-hash");
+
+        AuthResDTO.KakaoLoginResult result = tokenService
+                .issueKakaoLoginCompleteTokens(member);
+
+        assertThat(result.isNewMember()).isFalse();
+        assertThat(result.nextStep()).isEqualTo(NextStep.LOGIN_COMPLETE);
+        assertThat(result.wordSize()).isEqualTo(WordSize.LARGE);
+        assertThat(result.accessToken()).isNotBlank();
+        assertThat(result.refreshToken()).isNotBlank();
     }
 
     @Test

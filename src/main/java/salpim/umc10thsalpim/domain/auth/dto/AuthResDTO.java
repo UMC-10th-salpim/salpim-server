@@ -3,13 +3,15 @@ package salpim.umc10thsalpim.domain.auth.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import salpim.umc10thsalpim.domain.auth.enums.NextStep;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 
 public class AuthResDTO {
 
     @Builder
     public record TokenResult(
             String accessToken,
-            String refreshToken
+            String refreshToken,
+            WordSize wordSize
     ) {
     }
 
@@ -36,7 +38,8 @@ public class AuthResDTO {
             String refreshToken,
             String signupToken,
             String phoneNumber,
-            Boolean phoneVerificationRequired
+            Boolean phoneVerificationRequired,
+            WordSize wordSize
     ) {
     }
 
