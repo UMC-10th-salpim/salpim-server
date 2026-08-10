@@ -70,7 +70,7 @@ public class MemberController {
     @GetMapping("/users/me/welfare-center")
     @Operation(
             summary = "소속 복지관 조회",
-            description = "회원가입 시 선택한 지역(regionId)을 기준으로 배정된 복지관 정보를 조회합니다.",
+            description = "현재 회원의 지역을 기준으로 배정된 복지관 정보를 조회합니다.",
             security = @SecurityRequirement(name = "JWT TOKEN")
     )
     public ApiResponse<MemberResDTO.WelfareCenterInfo> getWelfareCenter(
