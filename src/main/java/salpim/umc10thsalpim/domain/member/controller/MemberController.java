@@ -102,6 +102,24 @@ public class MemberController {
         );
     }
 
+    @PutMapping("/users/me/word-size")
+    @Operation(
+            summary = "글자 크기 수정",
+            description = "회원이 설정한 글자 크기를 변경합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<Void> updateWordSize(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody MemberReqDTO.UpdateWordSize request
+    ) {
+        memberService.updateWordSize(memberId, request.wordSize());
+
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_WORD_SIZE_UPDATED,
+                null
+        );
+    }
+
     @PostMapping("/users/me/phone-verification/send")
     @Operation(
             summary = "전화번호 변경 인증번호 발송",

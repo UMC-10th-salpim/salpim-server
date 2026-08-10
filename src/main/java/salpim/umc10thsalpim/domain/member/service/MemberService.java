@@ -16,6 +16,7 @@ import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -94,6 +95,13 @@ public class MemberService {
                 region,
                 welfareCenter
         );
+    }
+
+    @Transactional
+    public void updateWordSize(Long memberId, WordSize wordSize) {
+        Member member = getMemberOrThrow(memberId);
+
+        member.updateWordSize(wordSize);
     }
 
     @Transactional(readOnly = true)
