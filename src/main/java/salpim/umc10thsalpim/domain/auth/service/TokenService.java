@@ -77,11 +77,12 @@ public class TokenService {
                 .build();
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = AuthException.class)
     public AuthResDTO.TokenResult reissueLoginTokens(String refreshToken) {
         TokenDTO.RefreshTokenClaims claims = parseRefreshToken(refreshToken);
-        RefreshToken savedRefreshToken = refreshTokenRepository
-                .findByMemberIdForUpdate(claims.memberId())
+        Member lockedMember = memberRepository.findByIdForUpdate(claims.memberId())
+                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
+        RefreshToken savedRefreshToken = refreshTokenRepository.findByMember(lockedMember)
                 .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN));
 
         LocalDateTime now = LocalDateTime.now();
@@ -92,16 +93,16 @@ public class TokenService {
                 refreshToken,
                 savedRefreshToken.getTokenHash()
         )) {
+            refreshTokenRepository.delete(savedRefreshToken);
             throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
         }
 
-        Member member = savedRefreshToken.getMember();
         String accessToken = createMemberToken(
-                member,
+                lockedMember,
                 TokenPurpose.ACCESS,
                 jwtProperties.getAccessTokenExpirationMillis()
         );
-        String rotatedRefreshToken = createRefreshToken(member);
+        String rotatedRefreshToken = createRefreshToken(lockedMember);
         LocalDateTime rotatedRefreshTokenExpiredAt = now
                 .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
 

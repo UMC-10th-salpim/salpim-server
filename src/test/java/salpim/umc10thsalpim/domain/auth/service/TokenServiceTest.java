@@ -111,7 +111,9 @@ class TokenServiceTest {
                 .expiredAt(LocalDateTime.now().plusMinutes(1))
                 .build();
 
-        when(refreshTokenRepository.findByMemberIdForUpdate(MEMBER_ID))
+        when(memberRepository.findByIdForUpdate(MEMBER_ID))
+                .thenReturn(java.util.Optional.of(member));
+        when(refreshTokenRepository.findByMember(member))
                 .thenReturn(java.util.Optional.of(savedRefreshToken));
         when(authSecretHasher.matchesRefreshToken(
                 refreshToken,
@@ -138,13 +140,16 @@ class TokenServiceTest {
                 TokenPurpose.REFRESH,
                 new Date(System.currentTimeMillis() + 60_000L)
         );
+        Member member = Member.builder().id(MEMBER_ID).build();
         RefreshToken savedRefreshToken = RefreshToken.builder()
-                .member(Member.builder().id(MEMBER_ID).build())
+                .member(member)
                 .tokenHash("rotated-refresh-token-hash")
                 .expiredAt(LocalDateTime.now().plusMinutes(1))
                 .build();
 
-        when(refreshTokenRepository.findByMemberIdForUpdate(MEMBER_ID))
+        when(memberRepository.findByIdForUpdate(MEMBER_ID))
+                .thenReturn(java.util.Optional.of(member));
+        when(refreshTokenRepository.findByMember(member))
                 .thenReturn(java.util.Optional.of(savedRefreshToken));
         when(authSecretHasher.matchesRefreshToken(
                 refreshToken,
@@ -155,6 +160,7 @@ class TokenServiceTest {
                 .isInstanceOfSatisfying(AuthException.class, exception ->
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(AuthErrorCode.INVALID_REFRESH_TOKEN));
+        verify(refreshTokenRepository).delete(savedRefreshToken);
         verify(refreshTokenRepository, never()).save(savedRefreshToken);
     }
 
@@ -164,13 +170,16 @@ class TokenServiceTest {
                 TokenPurpose.REFRESH,
                 new Date(System.currentTimeMillis() + 60_000L)
         );
+        Member member = Member.builder().id(MEMBER_ID).build();
         RefreshToken savedRefreshToken = RefreshToken.builder()
-                .member(Member.builder().id(MEMBER_ID).build())
+                .member(member)
                 .tokenHash("stored-refresh-token-hash")
                 .expiredAt(LocalDateTime.now().minusSeconds(1))
                 .build();
 
-        when(refreshTokenRepository.findByMemberIdForUpdate(MEMBER_ID))
+        when(memberRepository.findByIdForUpdate(MEMBER_ID))
+                .thenReturn(java.util.Optional.of(member));
+        when(refreshTokenRepository.findByMember(member))
                 .thenReturn(java.util.Optional.of(savedRefreshToken));
 
         assertThatThrownBy(() -> tokenService.reissueLoginTokens(refreshToken))
@@ -178,6 +187,25 @@ class TokenServiceTest {
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(AuthErrorCode.EXPIRED_REFRESH_TOKEN));
         verify(authSecretHasher, never()).matchesRefreshToken(anyString(), anyString());
+    }
+
+    @Test
+    void rejectsRefreshTokenWhenStoredTokenIsMissing() {
+        String refreshToken = createToken(
+                TokenPurpose.REFRESH,
+                new Date(System.currentTimeMillis() + 60_000L)
+        );
+        Member member = Member.builder().id(MEMBER_ID).build();
+
+        when(memberRepository.findByIdForUpdate(MEMBER_ID))
+                .thenReturn(java.util.Optional.of(member));
+        when(refreshTokenRepository.findByMember(member))
+                .thenReturn(java.util.Optional.empty());
+
+        assertThatThrownBy(() -> tokenService.reissueLoginTokens(refreshToken))
+                .isInstanceOfSatisfying(AuthException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(AuthErrorCode.INVALID_REFRESH_TOKEN));
     }
 
     @Test
@@ -191,7 +219,7 @@ class TokenServiceTest {
                 .isInstanceOfSatisfying(AuthException.class, exception ->
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(AuthErrorCode.INVALID_REFRESH_TOKEN));
-        verify(refreshTokenRepository, never()).findByMemberIdForUpdate(MEMBER_ID);
+        verify(memberRepository, never()).findByIdForUpdate(MEMBER_ID);
     }
 
     @Test
