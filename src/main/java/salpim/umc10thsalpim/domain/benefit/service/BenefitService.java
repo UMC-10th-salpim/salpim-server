@@ -112,7 +112,14 @@ public class BenefitService {
                     .orElse(null);
         }
 
-        return BenefitConverter.toGetBenefitDetailDTO(welfareBenefit, categoryName);
+        List<BenefitRule> benefitRules = getBenefitRulesOrThrow(request.benefitId());
+
+        List<ApplicationType> applicationTypeList = benefitRules.stream()
+                .map(BenefitRule::getApplicationType)
+                .distinct()
+                .toList();
+
+        return BenefitConverter.toGetBenefitDetailDTO(welfareBenefit, categoryName, applicationTypeList);
     }
 
     @Transactional(readOnly = true)

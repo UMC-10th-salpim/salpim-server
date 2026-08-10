@@ -35,7 +35,8 @@ public class BenefitConverter {
 
    public static BenefitResDTO.GetBenefitDetailDTO toGetBenefitDetailDTO(
        WelfareBenefit welfareBenefit,
-       String categoryName
+       String categoryName,
+       List<ApplicationType> applicationTypeList
    ) {
       return BenefitResDTO.GetBenefitDetailDTO.builder()
           .title(welfareBenefit.getTitle())
@@ -50,6 +51,7 @@ public class BenefitConverter {
           .minAge(welfareBenefit.getMinAge())
           .maxAge(welfareBenefit.getMaxAge())
           .ageConditionStatus(welfareBenefit.getAgeConditionStatus())
+          .applicationTypeList(applicationTypeList)
           .build();
    }
 
