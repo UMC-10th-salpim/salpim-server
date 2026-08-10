@@ -126,7 +126,9 @@ public class Member extends BaseEntity {
             String detailAddress,
             BigDecimal latitude,
             BigDecimal longitude,
-            Region region
+            Region region,
+            String welfareCenter
+
     ) {
         this.name = name;
         this.birthDate = birthDate;
@@ -136,6 +138,7 @@ public class Member extends BaseEntity {
         this.latitude = latitude;
         this.longitude = longitude;
         this.region = region;
+        this.welfareCenter = welfareCenter;
     }
 
     public void updatePhoneNumber(String phoneNumber) {
