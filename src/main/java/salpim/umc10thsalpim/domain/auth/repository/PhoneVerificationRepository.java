@@ -36,5 +36,19 @@ public interface PhoneVerificationRepository extends JpaRepository<PhoneVerifica
             PhoneVerificationPurpose purpose
     );
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select phoneVerification
+            from PhoneVerification phoneVerification
+            where phoneVerification.member = :member
+              and phoneVerification.phoneNumber = :phoneNumber
+              and phoneVerification.purpose = :purpose
+            """)
+    Optional<PhoneVerification> findByMemberAndPhoneNumberAndPurposeForUpdate(
+            @Param("member") Member member,
+            @Param("phoneNumber") String phoneNumber,
+            @Param("purpose") PhoneVerificationPurpose purpose
+    );
+
     void deleteByPhoneNumberAndPurpose(String phoneNumber, PhoneVerificationPurpose purpose);
 }

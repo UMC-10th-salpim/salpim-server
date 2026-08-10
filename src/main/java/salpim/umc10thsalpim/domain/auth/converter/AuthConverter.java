@@ -17,7 +17,7 @@ public final class AuthConverter {
             Member member,
             String phoneNumber,
             PhoneVerificationPurpose purpose,
-            String code,
+            String codeHash,
             LocalDateTime expiredAt,
             LocalDateTime sentAt
     ) {
@@ -25,7 +25,7 @@ public final class AuthConverter {
                 .member(member)
                 .phoneNumber(phoneNumber)
                 .purpose(purpose)
-                .code(code)
+                .codeHash(codeHash)
                 .expiredAt(expiredAt)
                 .sentAt(sentAt)
                 .verified(false)

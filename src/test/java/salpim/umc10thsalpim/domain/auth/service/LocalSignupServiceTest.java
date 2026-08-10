@@ -6,10 +6,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -56,13 +58,14 @@ class LocalSignupServiceTest {
         when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(region);
         when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
         when(passwordEncoder.encode("Seoul")).thenReturn("encoded-recovery-answer");
-        when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(memberRepository.saveAndFlush(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         localSignupService.signup(request);
 
         ArgumentCaptor<Member> memberCaptor = ArgumentCaptor.forClass(Member.class);
-        verify(memberRepository).save(memberCaptor.capture());
+        verify(memberRepository).saveAndFlush(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getRegion()).isSameAs(region);
+        assertThat(memberCaptor.getValue().getWordSize()).isEqualTo(WordSize.LARGE);
         assertThat(memberCaptor.getValue().getWelfareCenter()).isEqualTo("Hwajeon");
         assertThat(memberCaptor.getValue().getPasswordRecoveryAnswer())
                 .isEqualTo("encoded-recovery-answer");
@@ -80,7 +83,7 @@ class LocalSignupServiceTest {
         assertThatThrownBy(() -> localSignupService.signup(request))
                 .isInstanceOfSatisfying(RegionException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(RegionErrorCode.REGION_NOT_FOUND));
-        verify(memberRepository, never()).save(any(Member.class));
+        verify(memberRepository, never()).saveAndFlush(any(Member.class));
     }
 
     @Test
@@ -94,7 +97,7 @@ class LocalSignupServiceTest {
         assertThatThrownBy(() -> localSignupService.signup(request))
                 .isInstanceOfSatisfying(RegionException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(RegionErrorCode.REGION_NOT_LEAF));
-        verify(memberRepository, never()).save(any(Member.class));
+        verify(memberRepository, never()).saveAndFlush(any(Member.class));
     }
 
     @Test
@@ -115,11 +118,52 @@ class LocalSignupServiceTest {
                         assertThat(exception.getErrorCode()).isEqualTo(MemberErrorCode.REQUIRED_PASSWORD_RECOVERY_ANSWER));
     }
 
+    @Test
+    void signupConvertsConcurrentPhoneNumberConflictToDomainConflict() {
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
+        Region region = region();
+
+        when(signupValidationService.normalizePhoneNumber("010-3176-8867"))
+                .thenReturn("01031768867");
+        when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(region);
+        when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
+        when(passwordEncoder.encode("Seoul")).thenReturn("encoded-recovery-answer");
+        when(memberRepository.saveAndFlush(any(Member.class)))
+                .thenThrow(new DataIntegrityViolationException("uk_member_phone_number"));
+
+        assertThatThrownBy(() -> localSignupService.signup(request))
+                .isInstanceOfSatisfying(MemberException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(MemberErrorCode.DUPLICATE_PHONE_NUMBER));
+        verify(phoneVerificationService, never()).deleteVerification(any());
+    }
+
+    @Test
+    void signupRethrowsNonPhoneIntegrityViolation() {
+        AuthReqDTO.LocalSignup request = validRequest("123456", "Seoul");
+        Region region = region();
+        DataIntegrityViolationException integrityViolation =
+                new DataIntegrityViolationException("fk_member_region");
+
+        when(signupValidationService.normalizePhoneNumber("010-3176-8867"))
+                .thenReturn("01031768867");
+        when(signupValidationService.findLeafRegion(REGION_ID)).thenReturn(region);
+        when(passwordEncoder.encode("123456")).thenReturn("encoded-password");
+        when(passwordEncoder.encode("Seoul")).thenReturn("encoded-recovery-answer");
+        when(memberRepository.saveAndFlush(any(Member.class)))
+                .thenThrow(integrityViolation);
+
+        assertThatThrownBy(() -> localSignupService.signup(request))
+                .isSameAs(integrityViolation);
+        verify(phoneVerificationService, never()).deleteVerification(any());
+    }
+
     private AuthReqDTO.LocalSignup validRequest(String password, String passwordAnswer) {
         return new AuthReqDTO.LocalSignup(
                 "Jihong",
                 LocalDate.of(2002, 3, 11),
                 Gender.MALE,
+                WordSize.LARGE,
                 "010-3176-8867",
                 password,
                 "Goyang Deogyang Hwarang-ro 28",

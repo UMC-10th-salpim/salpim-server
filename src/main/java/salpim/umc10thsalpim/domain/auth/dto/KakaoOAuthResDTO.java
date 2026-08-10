@@ -48,6 +48,9 @@ public class KakaoOAuthResDTO {
             @JsonProperty("phone_number")
             String phoneNumber,
 
+            @JsonProperty("phone_number_needs_agreement")
+            Boolean phoneNumberNeedsAgreement,
+
             Profile profile
     ) {
     }

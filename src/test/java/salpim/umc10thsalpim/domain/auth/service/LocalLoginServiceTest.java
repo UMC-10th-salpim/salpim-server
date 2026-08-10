@@ -12,6 +12,7 @@ import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
 import java.util.Optional;
@@ -44,7 +45,11 @@ class LocalLoginServiceTest {
     void loginSucceedsWithLocalMember() {
         AuthReqDTO.LocalLogin request = new AuthReqDTO.LocalLogin("010-3176-8867", RAW_PASSWORD);
         Member member = localMember();
-        AuthResDTO.TokenResult expectedToken = new AuthResDTO.TokenResult("access-token", "refresh-token");
+        AuthResDTO.TokenResult expectedToken = new AuthResDTO.TokenResult(
+                "access-token",
+                "refresh-token",
+                WordSize.LARGE
+        );
 
         when(memberRepository.findByPhoneNumber(PHONE_NUMBER)).thenReturn(Optional.of(member));
         when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
@@ -53,6 +58,7 @@ class LocalLoginServiceTest {
         AuthResDTO.TokenResult result = localLoginService.login(request);
 
         assertThat(result).isEqualTo(expectedToken);
+        assertThat(result.wordSize()).isEqualTo(WordSize.LARGE);
         verify(passwordEncoder).matches(RAW_PASSWORD, ENCODED_PASSWORD);
     }
 
@@ -63,7 +69,7 @@ class LocalLoginServiceTest {
 
         assertThatThrownBy(() -> localLoginService.login(request))
                 .isInstanceOfSatisfying(AuthException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.LOGIN_MEMBER_NOT_FOUND));
+                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
     }
 
     @Test
@@ -76,7 +82,7 @@ class LocalLoginServiceTest {
 
         assertThatThrownBy(() -> localLoginService.login(request))
                 .isInstanceOfSatisfying(AuthException.class, exception ->
-                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_PASSWORD));
+                        assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
     }
 
     private Member localMember() {
