@@ -66,7 +66,20 @@ public class TermService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        Map<Long, Boolean> agreedByVersionId = request.agreements().stream()
+        Map<TermsVersion, Boolean> resolvedAgreements = resolveAndValidateAgreements(request.agreements());
+
+        List<MemberAgreement> saved = resolvedAgreements.entrySet().stream()
+                .map(entry -> memberTermAgreementRepository.save(
+                        TermConverter.toMemberAgreement(member, entry.getKey(), entry.getValue())))
+                .toList();
+
+        return saved.stream().map(TermConverter::toAgreedTerms).toList();
+    }
+
+    // 약관 버전 ID 목록을 실제 게시된 TermsVersion으로 해석하고, 필수 약관 동의 여부를 검증한다.
+    // 회원가입 전 약관 동의 사전 검증(TermsAgreementVerificationService)에서도 재사용한다.
+    public Map<TermsVersion, Boolean> resolveAndValidateAgreements(List<TermReqDTO.AgreementItem> agreements) {
+        Map<Long, Boolean> agreedByVersionId = agreements.stream()
                 .collect(Collectors.toMap(
                         TermReqDTO.AgreementItem::termsVersionId,
                         TermReqDTO.AgreementItem::agreed));
@@ -81,12 +94,8 @@ public class TermService {
 
         validateRequiredTermsAgreed(agreedByVersionId);
 
-        List<MemberAgreement> saved = versions.stream()
-                .map(version -> memberTermAgreementRepository.save(
-                        TermConverter.toMemberAgreement(member, version, agreedByVersionId.get(version.getId()))))
-                .toList();
-
-        return saved.stream().map(TermConverter::toAgreedTerms).toList();
+        return versions.stream()
+                .collect(Collectors.toMap(version -> version, version -> agreedByVersionId.get(version.getId())));
     }
 
     private void validateRequiredTermsAgreed(Map<Long, Boolean> agreedByVersionId) {

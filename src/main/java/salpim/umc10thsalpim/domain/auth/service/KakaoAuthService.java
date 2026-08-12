@@ -10,14 +10,20 @@ import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.dto.KakaoOAuthResDTO;
 import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
+import salpim.umc10thsalpim.domain.auth.entity.TermsAgreementVerificationItem;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.member.converter.MemberConverter;
+import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.region.entity.Region;
+import salpim.umc10thsalpim.domain.term.converter.TermConverter;
+import salpim.umc10thsalpim.domain.term.repository.MemberTermAgreementRepository;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +37,8 @@ public class KakaoAuthService {
     private final MemberRepository memberRepository;
     private final SignupValidationService signupValidationService;
     private final PhoneVerificationService phoneVerificationService;
+    private final TermsAgreementVerificationService termsAgreementVerificationService;
+    private final MemberTermAgreementRepository memberTermAgreementRepository;
 
     @Transactional
     public AuthResDTO.KakaoLoginResult login(String authorizationCode) {
@@ -74,13 +82,16 @@ public class KakaoAuthService {
                 request.phoneNumber()
         );
         signupValidationService.validateDuplicatePhoneNumber(normalizedPhoneNumber);
+        List<TermsAgreementVerificationItem> agreedTerms = List.of();
         if (requiresPhoneVerification) {
             phoneVerificationService.validateVerifiedPhoneNumber(normalizedPhoneNumber);
+            agreedTerms = termsAgreementVerificationService.validateAgreedTerms(normalizedPhoneNumber);
         }
         Region region = signupValidationService.findLeafRegion(request.regionId());
 
+        Member member;
         try {
-            memberRepository.saveAndFlush(
+            member = memberRepository.saveAndFlush(
                     MemberConverter.toKakaoMember(request, normalizedPhoneNumber, kakaoId, region)
             );
         } catch (DataIntegrityViolationException exception) {
@@ -98,8 +109,12 @@ public class KakaoAuthService {
             }
             throw exception;
         }
+        agreedTerms.forEach(item -> memberTermAgreementRepository.save(
+                TermConverter.toMemberAgreement(member, item.getTermsVersion(), item.getAgreed())
+        ));
         if (requiresPhoneVerification) {
             phoneVerificationService.deleteVerification(normalizedPhoneNumber);
+            termsAgreementVerificationService.invalidate(normalizedPhoneNumber);
         }
     }
 
