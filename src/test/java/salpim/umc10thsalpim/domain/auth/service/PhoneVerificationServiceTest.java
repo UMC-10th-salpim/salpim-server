@@ -4,7 +4,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,7 +29,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.verify;
 import static org.mockito.BDDMockito.verifyNoInteractions;
 import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,9 +53,6 @@ class PhoneVerificationServiceTest {
 
     @Mock
     private AuthSecretHasher authSecretHasher;
-
-    @Mock
-    private DiscordWebhookNotifier discordWebhookNotifier;
 
     @Mock
     private SolapiSmsSender solapiSmsSender;
@@ -105,15 +100,9 @@ class PhoneVerificationServiceTest {
         assertThat(savedVerification.getSentAt()).isAfter(beforeRequest);
         assertThat(savedVerification.getExpiredAt()).isAfter(beforeRequest.plusMinutes(4));
 
-        InOrder inOrder = inOrder(solapiSmsSender, discordWebhookNotifier);
-        inOrder.verify(solapiSmsSender).sendVerificationCode(
+        verify(solapiSmsSender).sendVerificationCode(
                 NORMALIZED_PHONE_NUMBER,
                 codeCaptor.getValue()
-        );
-        inOrder.verify(discordWebhookNotifier).sendVerificationCode(
-                "****5678",
-                codeCaptor.getValue(),
-                PhoneVerificationPurpose.PHONE_CHANGE
         );
     }
 
@@ -149,7 +138,7 @@ class PhoneVerificationServiceTest {
                 PhoneVerificationPurpose.PHONE_CHANGE
         );
         verify(phoneVerificationRepository, never()).flush();
-        verifyNoInteractions(solapiSmsSender, discordWebhookNotifier);
+        verifyNoInteractions(solapiSmsSender);
     }
 
     @Test
@@ -170,7 +159,6 @@ class PhoneVerificationServiceTest {
         );
 
         assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.SMS_SEND_FAILED);
-        verifyNoInteractions(discordWebhookNotifier);
     }
 
     @Test

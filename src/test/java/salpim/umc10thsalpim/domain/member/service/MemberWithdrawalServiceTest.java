@@ -4,11 +4,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import salpim.umc10thsalpim.domain.auth.entity.PasswordResetToken;
+import salpim.umc10thsalpim.domain.auth.entity.PasswordVerificationAttempt;
+import salpim.umc10thsalpim.domain.auth.entity.PhoneVerification;
 import salpim.umc10thsalpim.domain.auth.entity.RefreshToken;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationPurpose;
+import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationTargetType;
+import salpim.umc10thsalpim.domain.auth.enums.PhoneVerificationPurpose;
+import salpim.umc10thsalpim.domain.auth.repository.PasswordResetTokenRepository;
+import salpim.umc10thsalpim.domain.auth.repository.PasswordVerificationAttemptRepository;
+import salpim.umc10thsalpim.domain.auth.repository.PhoneVerificationRepository;
 import salpim.umc10thsalpim.domain.auth.repository.RefreshTokenRepository;
+import salpim.umc10thsalpim.domain.benefit.entity.FavoriteBenefit;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 import salpim.umc10thsalpim.domain.benefit.enums.RegionScope;
 import salpim.umc10thsalpim.domain.benefit.repository.WelfareBenefitRepository;
+import salpim.umc10thsalpim.domain.benefit.repository.FavoriteBenefitRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
@@ -48,6 +59,18 @@ class MemberWithdrawalServiceTest {
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private PhoneVerificationRepository phoneVerificationRepository;
+
+    @Autowired
+    private FavoriteBenefitRepository favoriteBenefitRepository;
+
+    @Autowired
+    private PasswordVerificationAttemptRepository passwordVerificationAttemptRepository;
+
+    @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Autowired
     private TermsTypeRepository termsTypeRepository;
@@ -96,6 +119,36 @@ class MemberWithdrawalServiceTest {
                 .termsVersion(termsVersion)
                 .agreed(true)
                 .build());
+        PhoneVerification phoneVerification = phoneVerificationRepository.save(
+                PhoneVerification.builder()
+                        .member(member)
+                        .phoneNumber(member.getPhoneNumber())
+                        .codeHash("encoded-code")
+                        .expiredAt(LocalDateTime.now().plusMinutes(5))
+                        .sentAt(LocalDateTime.now())
+                        .verified(false)
+                        .purpose(PhoneVerificationPurpose.PHONE_CHANGE)
+                        .build()
+        );
+        FavoriteBenefit favoriteBenefit = favoriteBenefitRepository.save(FavoriteBenefit.builder()
+                .memberId(member.getId())
+                .benefitId(benefit.getId())
+                .build());
+        PasswordVerificationAttempt passwordVerificationAttempt =
+                passwordVerificationAttemptRepository.save(
+                        PasswordVerificationAttempt.create(
+                                PasswordVerificationPurpose.PASSWORD_CHANGE,
+                                PasswordVerificationTargetType.MEMBER,
+                                member.getId().toString()
+                        )
+                );
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.save(
+                PasswordResetToken.builder()
+                        .member(member)
+                        .tokenIdHash("password-reset-token-hash")
+                        .expiredAt(LocalDateTime.now().plusMinutes(5))
+                        .build()
+        );
 
         memberWithdrawalService.withdraw(member.getId());
         memberRepository.flush();
@@ -103,6 +156,11 @@ class MemberWithdrawalServiceTest {
         assertThat(memberRepository.existsById(member.getId())).isFalse();
         assertThat(refreshTokenRepository.existsById(refreshToken.getId())).isFalse();
         assertThat(memberTermAgreementRepository.count()).isZero();
+        assertThat(phoneVerificationRepository.existsById(phoneVerification.getId())).isFalse();
+        assertThat(favoriteBenefitRepository.existsById(favoriteBenefit.getId())).isFalse();
+        assertThat(passwordVerificationAttemptRepository.existsById(passwordVerificationAttempt.getId()))
+                .isFalse();
+        assertThat(passwordResetTokenRepository.existsById(passwordResetToken.getId())).isFalse();
         assertThat(regionRepository.existsById(region.getId())).isTrue();
         assertThat(welfareBenefitRepository.existsById(benefit.getId())).isTrue();
     }

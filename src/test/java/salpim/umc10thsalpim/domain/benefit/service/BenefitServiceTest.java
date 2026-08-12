@@ -4,7 +4,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.BeforeEach;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
@@ -13,6 +12,8 @@ import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 import salpim.umc10thsalpim.domain.benefit.enums.RegionScope;
 import salpim.umc10thsalpim.domain.benefit.repository.BenefitRuleRepository;
+import salpim.umc10thsalpim.domain.benefit.repository.FavoriteBenefitRepository;
+import salpim.umc10thsalpim.domain.benefit.repository.WelfareCategoryRepository;
 import salpim.umc10thsalpim.domain.benefit.repository.WelfareBenefitRepository;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -20,13 +21,17 @@ import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.repository.RegionRepository;
 import salpim.umc10thsalpim.domain.region.service.RegionQueryService;
+import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
 import salpim.umc10thsalpim.domain.benefit.exception.BenefitException;
 import salpim.umc10thsalpim.domain.benefit.exception.code.BenefitErrorCode;
 import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -34,6 +39,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 class BenefitServiceTest {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private static final LocalDate TODAY = LocalDate.of(2026, 8, 13);
+    private static final Clock FIXED_KST_CLOCK = Clock.fixed(
+            Instant.parse("2026-08-12T15:00:00Z"),
+            KST
+    );
+
+    @Mock
+    private BokjiroApiClient bokjiroApiClient;
 
     @Mock
     private WelfareBenefitRepository welfareBenefitRepository;
@@ -50,13 +65,29 @@ class BenefitServiceTest {
     @Mock
     private RegionQueryService regionQueryService;
 
-    @InjectMocks
+    @Mock
+    private WelfareCategoryRepository welfareCategoryRepository;
+
+    @Mock
+    private FavoriteBenefitRepository favoriteBenefitRepository;
+
     private BenefitService benefitService;
 
     private BenefitRule onlineRule;
 
     @BeforeEach
     void setUp() {
+        benefitService = new BenefitService(
+                bokjiroApiClient,
+                welfareBenefitRepository,
+                benefitRuleRepository,
+                regionRepository,
+                memberRepository,
+                welfareCategoryRepository,
+                regionQueryService,
+                favoriteBenefitRepository,
+                FIXED_KST_CLOCK
+        );
         onlineRule = BenefitRule.builder()
                 .welfareBenefitId(100L)
                 .applicationType(ApplicationType.ONLINE)
@@ -608,7 +639,7 @@ class BenefitServiceTest {
 
     @Test
     @DisplayName("제한 연령 혜택에서 회원 나이가 최소 연령과 같으면 연령 조건을 충족")
-    void returnsTrueWhenAgeEqualsMinAge() {
+    void returnsTrueWhenKstClockDateIsMembersMinAgeBirthday() {
         Long memberId = 1L;
         Long benefitId = 100L;
         Long memberRegionId = 10L;
@@ -616,7 +647,7 @@ class BenefitServiceTest {
         Member member = Member.builder()
                 .id(memberId)
                 .regionId(memberRegionId)
-                .birthDate(LocalDate.now().minusYears(65))
+                .birthDate(TODAY.minusYears(65))
                 .build();
 
         Region memberRegion = Region.builder()
@@ -663,7 +694,7 @@ class BenefitServiceTest {
         Member member = Member.builder()
                 .id(memberId)
                 .regionId(memberRegionId)
-                .birthDate(LocalDate.now().minusYears(80))
+                .birthDate(TODAY.minusYears(80))
                 .build();
 
         Region memberRegion = Region.builder()
@@ -710,7 +741,7 @@ class BenefitServiceTest {
         Member member = Member.builder()
                 .id(memberId)
                 .regionId(memberRegionId)
-                .birthDate(LocalDate.now().minusYears(64))
+                .birthDate(TODAY.minusYears(64))
                 .build();
 
         Region memberRegion = Region.builder()
@@ -757,7 +788,7 @@ class BenefitServiceTest {
         Member member = Member.builder()
                 .id(memberId)
                 .regionId(memberRegionId)
-                .birthDate(LocalDate.now().minusYears(81))
+                .birthDate(TODAY.minusYears(81))
                 .build();
 
         Region memberRegion = Region.builder()
