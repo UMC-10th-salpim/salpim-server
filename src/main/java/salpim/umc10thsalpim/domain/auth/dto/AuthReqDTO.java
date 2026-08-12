@@ -1,17 +1,21 @@
 package salpim.umc10thsalpim.domain.auth.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.WordSize;
+import salpim.umc10thsalpim.domain.term.dto.TermReqDTO;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public class AuthReqDTO {
 
@@ -116,6 +120,18 @@ public class AuthReqDTO {
             @Schema(example = "가을")
             @NotBlank(message = "passwordAnswer is required.")
             String passwordAnswer
+    ) {
+    }
+
+    public record SignupTermsAgreement(
+            @Schema(example = "01012345678")
+            @NotBlank(message = "phoneNumber is required.")
+            @Pattern(regexp = KOREAN_MOBILE_PHONE_PATTERN, message = "phoneNumber must be a valid Korean mobile number.")
+            String phoneNumber,
+
+            @NotEmpty(message = "동의할 약관 목록은 필수입니다.")
+            @Valid
+            List<TermReqDTO.@NotNull(message = "약관 동의 항목은 null일 수 없습니다.") AgreementItem> agreements
     ) {
     }
 

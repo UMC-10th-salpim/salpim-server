@@ -9,8 +9,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.enums.WordSize;
+import salpim.umc10thsalpim.domain.term.dto.TermReqDTO;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +76,20 @@ class AuthReqDTOTest {
                     assertThat(violation.getPropertyPath()).hasToString("newPassword");
                     assertThat(violation.getMessage()).isEqualTo("비밀번호는 6자리 숫자여야 합니다.");
                 });
+    }
+
+    @Test
+    void signupTermsAgreementRejectsNullAgreementItem() {
+        AuthReqDTO.SignupTermsAgreement request = new AuthReqDTO.SignupTermsAgreement(
+                "010-3176-8867",
+                Arrays.asList(new TermReqDTO.AgreementItem(1L, true), null)
+        );
+
+        Set<ConstraintViolation<AuthReqDTO.SignupTermsAgreement>> violations = validator.validate(request);
+
+        assertThat(violations)
+                .anySatisfy(violation ->
+                        assertThat(violation.getMessage()).isEqualTo("약관 동의 항목은 null일 수 없습니다."));
     }
 
     private AuthReqDTO.LocalSignup localSignup(String password) {

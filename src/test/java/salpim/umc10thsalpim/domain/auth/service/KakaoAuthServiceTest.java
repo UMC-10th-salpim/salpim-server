@@ -27,6 +27,7 @@ import salpim.umc10thsalpim.domain.region.entity.Region;
 import salpim.umc10thsalpim.domain.region.enums.RegionLevel;
 import salpim.umc10thsalpim.domain.region.exception.RegionException;
 import salpim.umc10thsalpim.domain.region.exception.code.RegionErrorCode;
+import salpim.umc10thsalpim.domain.term.repository.MemberTermAgreementRepository;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -60,6 +61,12 @@ class KakaoAuthServiceTest {
 
     @Mock
     private PhoneVerificationService phoneVerificationService;
+
+    @Mock
+    private TermsAgreementVerificationService termsAgreementVerificationService;
+
+    @Mock
+    private MemberTermAgreementRepository memberTermAgreementRepository;
 
     @InjectMocks
     private KakaoAuthService kakaoAuthService;
