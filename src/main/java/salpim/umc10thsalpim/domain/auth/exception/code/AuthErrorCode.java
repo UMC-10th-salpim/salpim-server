@@ -96,6 +96,15 @@ public enum AuthErrorCode implements BaseErrorCode {
     SMS_SEND_FAILED(HttpStatus.BAD_GATEWAY,
             "AUTH502_SMS_SEND",
             "인증번호 문자 발송에 실패했습니다."),
+    TERMS_AGREEMENT_NOT_SUBMITTED(HttpStatus.BAD_REQUEST,
+            "AUTH400_TERMS_AGREEMENT_NOT_SUBMITTED",
+            "약관 동의 정보가 제출되지 않았습니다."),
+    TERMS_AGREEMENT_EXPIRED(HttpStatus.BAD_REQUEST,
+            "AUTH400_TERMS_AGREEMENT_EXPIRED",
+            "약관 동의가 만료되었습니다. 약관 동의를 다시 제출해 주세요."),
+    TERMS_AGREEMENT_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST,
+            "AUTH400_TERMS_AGREEMENT_VERIFICATION",
+            "약관 동의 정보를 확인할 수 없습니다. 약관 동의를 다시 제출해 주세요."),
     ;
 
     private final HttpStatus status;
