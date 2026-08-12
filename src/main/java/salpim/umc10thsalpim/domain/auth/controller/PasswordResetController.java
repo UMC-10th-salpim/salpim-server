@@ -35,7 +35,10 @@ public class PasswordResetController {
                 ));
     }
 
-    @Operation(summary = "비밀번호 재설정")
+    @Operation(
+            summary = "비밀번호 재설정",
+            description = "비밀번호를 재설정하고 기존 로그인 세션을 무효화합니다."
+    )
     @PutMapping
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody AuthReqDTO.PasswordReset request

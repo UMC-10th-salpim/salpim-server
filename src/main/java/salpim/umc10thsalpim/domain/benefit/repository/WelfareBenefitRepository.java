@@ -16,7 +16,7 @@ public interface WelfareBenefitRepository extends JpaRepository<WelfareBenefit, 
 
     @Query("SELECT w FROM WelfareBenefit w " +
             "WHERE (w.source = 'NATIONAL' OR (w.source = 'LOCAL' AND w.regionId IN :regionIds)) " +
-            "AND EXISTS (SELECT 1 FROM BenefitRule br WHERE br.welfareBenefitId = w.id AND br.applicationType = :applicationType) " +
+            "AND EXISTS (SELECT 1 FROM BenefitRule br WHERE br.welfareBenefitId = w.id AND br.applicationType = :applicationType AND br.facilityTypeId = 1) " +
             "AND w.id > :cursorId " +
             "ORDER BY w.id ASC")
     List<WelfareBenefit> findWelfareBenefitsByRegionAndCursorAndAppType(

@@ -57,6 +57,7 @@ public final class MemberConverter {
                 .latitude(BigDecimal.valueOf(request.latitude()))
                 .longitude(BigDecimal.valueOf(request.longitude()))
                 .region(region)
+                .welfareCenter(region.getName())
                 .build();
     }
 
@@ -84,6 +85,10 @@ public final class MemberConverter {
                 administrativeArea
 
         );
+    }
+
+    public static MemberResDTO.WelfareCenterInfo toWelfareCenterInfo(Member member) {
+        return new MemberResDTO.WelfareCenterInfo(member.getWelfareCenter());
     }
 
     public static String normalizeNullableText(String value) {

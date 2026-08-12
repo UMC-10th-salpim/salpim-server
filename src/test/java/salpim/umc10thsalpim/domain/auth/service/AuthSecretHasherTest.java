@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.domain.auth.service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import salpim.umc10thsalpim.domain.auth.config.AuthSecretProperties;
+import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,5 +42,27 @@ class AuthSecretHasherTest {
         assertThat(authSecretHasher.matchesRefreshToken("refresh-token", hash)).isTrue();
         assertThat(authSecretHasher.matchesRefreshToken("replayed-token", hash)).isFalse();
         assertThat(authSecretHasher.matchesRefreshToken(null, hash)).isFalse();
+    }
+
+    @Test
+    void createsDifferentCredentialFingerprintWhenPasswordChanges() {
+        String previousFingerprint = authSecretHasher.createCredentialFingerprint(
+                SocialProvider.LOCAL,
+                "previous-password-hash"
+        );
+        String currentFingerprint = authSecretHasher.createCredentialFingerprint(
+                SocialProvider.LOCAL,
+                "current-password-hash"
+        );
+
+        assertThat(previousFingerprint).isNotEqualTo(currentFingerprint);
+        assertThat(authSecretHasher.matchesCredentialFingerprint(
+                previousFingerprint,
+                previousFingerprint
+        )).isTrue();
+        assertThat(authSecretHasher.matchesCredentialFingerprint(
+                previousFingerprint,
+                currentFingerprint
+        )).isFalse();
     }
 }

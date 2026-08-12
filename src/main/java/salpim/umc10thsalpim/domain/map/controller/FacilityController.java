@@ -32,7 +32,7 @@ public class FacilityController {
 
         @Valid @ParameterObject @ModelAttribute MapReqDTO.FacilityInfoRequest request,
 
-        @Parameter(description = "다음 페이지 커서 (첫 요청 시 비워둠, 다음 요청 시 이전 응답의 nextCursor 입력)", example = "WLF00001234")
+        @Parameter(description = "다음 페이지 커서 (첫 요청 시 비워둠, 다음 요청 시 이전 응답의 nextCursor 입력)")
         @RequestParam(value = "cursor", required = false) String cursor,
 
         @Parameter(description = "페이지 크기 (기본값 10)", example = "10")

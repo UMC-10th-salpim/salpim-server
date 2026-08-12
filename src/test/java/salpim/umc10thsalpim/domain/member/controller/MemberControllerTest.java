@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
+import salpim.umc10thsalpim.domain.auth.service.AuthSecretHasher;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
@@ -28,6 +29,7 @@ import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.enums.Gender;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import salpim.umc10thsalpim.domain.member.enums.PasswordVerificationMethod;
+import salpim.umc10thsalpim.domain.member.enums.WordSize;
 import salpim.umc10thsalpim.domain.member.service.MemberService;
 import salpim.umc10thsalpim.domain.member.service.MemberWithdrawalService;
 import salpim.umc10thsalpim.global.apiPayload.handler.GeneralExceptionAdvice;
@@ -69,6 +71,9 @@ class MemberControllerTest {
 
     @MockitoBean
     private TokenService tokenService;
+
+    @MockitoBean
+    private AuthSecretHasher authSecretHasher;
 
     @MockitoBean
     private MemberRepository memberRepository;
@@ -142,6 +147,47 @@ class MemberControllerTest {
                 .andExpect(jsonPath("$.code").value("MEMBER200_2"));
 
         verify(memberService).updateProfile(MEMBER_ID, request);
+    }
+
+    @Test
+    @DisplayName("글자 크기를 정상 수정한다")
+    void updateWordSizeSuccess() throws Exception {
+        MemberReqDTO.UpdateWordSize request = new MemberReqDTO.UpdateWordSize(WordSize.LARGE);
+
+        mockMvc.perform(put("/api/users/me/word-size")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.code").value("MEMBER200_6"));
+
+        verify(memberService).updateWordSize(MEMBER_ID, WordSize.LARGE);
+    }
+
+    @Test
+    @DisplayName("글자 크기가 없으면 수정에 실패한다")
+    void updateWordSizeFailsWhenWordSizeIsMissing() throws Exception {
+        mockMvc.perform(put("/api/users/me/word-size")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON400"));
+
+        verifyNoInteractions(memberService);
+    }
+
+    @Test
+    @DisplayName("지원하지 않는 글자 크기면 수정에 실패한다")
+    void updateWordSizeFailsWhenWordSizeIsInvalid() throws Exception {
+        mockMvc.perform(put("/api/users/me/word-size")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"wordSize\":\"HUGE\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON400"));
+
+        verifyNoInteractions(memberService);
     }
 
     @Test

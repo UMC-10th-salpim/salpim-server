@@ -76,6 +76,7 @@ public class PasswordResetService {
         }
 
         member.changePassword(passwordEncoder.encode(request.newPassword()));
+        tokenService.invalidateMemberSession(member);
     }
 
 

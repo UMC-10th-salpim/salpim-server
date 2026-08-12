@@ -10,8 +10,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.service.AuthSecretHasher;
 import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
@@ -27,6 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenService tokenService;
     private final MemberRepository memberRepository;
+    private final AuthSecretHasher authSecretHasher;
 
     @Override
     protected void doFilterInternal(
@@ -43,17 +46,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private void authenticate(HttpServletRequest request, String token) {
         try {
-            Long memberId = tokenService.validateAccessTokenAndGetMemberId(token);
-            if (memberRepository.existsById(memberId)) {
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(memberId, null, List.of());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else {
-                request.setAttribute(
-                        JwtAuthenticationEntryPoint.AUTH_ERROR_ATTRIBUTE,
-                        AuthErrorCode.INVALID_TOKEN
-                );
-            }
+            TokenDTO.AccessTokenClaims claims = tokenService.parseAccessToken(token);
+
+            memberRepository.findById(claims.memberId())
+                    .filter(member -> authSecretHasher.matchesCredentialFingerprint(
+                            claims.credentialFingerprint(),
+                            authSecretHasher.createCredentialFingerprint(
+                                    member.getLoginType(),
+                                    member.getPassword()
+                            )
+                    ))
+                    .ifPresentOrElse(
+                            member -> {
+                                UsernamePasswordAuthenticationToken authentication =
+                                        new UsernamePasswordAuthenticationToken(
+                                                member.getId(),
+                                                null,
+                                                List.of()
+                                        );
+                                SecurityContextHolder.getContext()
+                                        .setAuthentication(authentication);
+                            },
+                            () -> request.setAttribute(
+                                    JwtAuthenticationEntryPoint.AUTH_ERROR_ATTRIBUTE,
+                                    AuthErrorCode.INVALID_TOKEN
+                            )
+                    );
         } catch (AuthException e) {
             SecurityContextHolder.clearContext();
             request.setAttribute(

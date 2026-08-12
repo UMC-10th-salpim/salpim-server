@@ -87,7 +87,7 @@ public class Member extends BaseEntity {
     @Column(name = "password_recovery_answer")
     private String passwordRecoveryAnswer;
 
-    @Column(name = "welfare_center")
+    @Column(name = "welfare_center", nullable = false)
     private String welfareCenter;
 
     @PrePersist
@@ -135,7 +135,9 @@ public class Member extends BaseEntity {
             String detailAddress,
             BigDecimal latitude,
             BigDecimal longitude,
-            Region region
+            Region region,
+            String welfareCenter
+
     ) {
         this.name = name;
         this.birthDate = birthDate;
@@ -145,6 +147,11 @@ public class Member extends BaseEntity {
         this.latitude = latitude;
         this.longitude = longitude;
         this.region = region;
+        this.welfareCenter = welfareCenter;
+    }
+
+    public void updateWordSize(WordSize wordSize) {
+        this.wordSize = wordSize;
     }
 
     public void updatePhoneNumber(String phoneNumber) {

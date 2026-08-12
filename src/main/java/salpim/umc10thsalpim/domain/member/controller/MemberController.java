@@ -67,6 +67,21 @@ public class MemberController {
         );
     }
 
+    @GetMapping("/users/me/welfare-center")
+    @Operation(
+            summary = "소속 복지관 조회",
+            description = "현재 회원의 지역을 기준으로 배정된 복지관 정보를 조회합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<MemberResDTO.WelfareCenterInfo> getWelfareCenter(
+            @AuthenticationPrincipal Long memberId
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_WELFARE_CENTER_VIEW,
+                memberService.getWelfareCenter(memberId)
+        );
+    }
+
     @PutMapping("/users/me")
     @Operation(
             summary = "개인정보 수정",
@@ -83,6 +98,24 @@ public class MemberController {
 
         return ApiResponse.onSuccess(
                 MemberSuccessCode.MEMBER_PROFILE_UPDATED,
+                null
+        );
+    }
+
+    @PutMapping("/users/me/word-size")
+    @Operation(
+            summary = "글자 크기 수정",
+            description = "회원이 설정한 글자 크기를 변경합니다.",
+            security = @SecurityRequirement(name = "JWT TOKEN")
+    )
+    public ApiResponse<Void> updateWordSize(
+            @AuthenticationPrincipal Long memberId,
+            @Valid @RequestBody MemberReqDTO.UpdateWordSize request
+    ) {
+        memberService.updateWordSize(memberId, request.wordSize());
+
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.MEMBER_WORD_SIZE_UPDATED,
                 null
         );
     }
@@ -162,7 +195,8 @@ public class MemberController {
     @PutMapping("/users/me/password")
     @Operation(
             summary = "비밀번호 변경",
-            description = "현재 비밀번호 또는 복구 답변을 재검증한 뒤 새 비밀번호로 변경합니다.",
+            description = "현재 비밀번호 또는 복구 답변을 재검증한 뒤 새 비밀번호로 변경합니다. " +
+                    "비밀번호 변경 후 기존 로그인 세션은 만료되며, 다시 로그인해야 합니다.",
             security = @SecurityRequirement(name = "JWT TOKEN")
     )
     public ApiResponse<Void> changePassword(

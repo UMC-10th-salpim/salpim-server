@@ -107,6 +107,8 @@ class TokenServiceTest {
         );
         Member member = Member.builder()
                 .id(MEMBER_ID)
+                .loginType(SocialProvider.LOCAL)
+                .password("encoded-password")
                 .wordSize(WordSize.LARGE)
                 .build();
         RefreshToken savedRefreshToken = RefreshToken.builder()
@@ -125,6 +127,10 @@ class TokenServiceTest {
         )).thenReturn(true);
         when(authSecretHasher.hashRefreshToken(anyString()))
                 .thenReturn("rotated-refresh-token-hash");
+        when(authSecretHasher.createCredentialFingerprint(
+                SocialProvider.LOCAL,
+                "encoded-password"
+        )).thenReturn("credential-fingerprint");
 
         AuthResDTO.TokenResult result = tokenService.reissueLoginTokens(refreshToken);
 
@@ -133,6 +139,8 @@ class TokenServiceTest {
         assertThat(result.wordSize()).isEqualTo(WordSize.LARGE);
         assertThat(tokenService.validateAccessTokenAndGetMemberId(result.accessToken()))
                 .isEqualTo(MEMBER_ID);
+        assertThat(tokenService.parseAccessToken(result.accessToken()).credentialFingerprint())
+                .isEqualTo("credential-fingerprint");
         assertThat(tokenService.parseRefreshToken(result.refreshToken()).memberId())
                 .isEqualTo(MEMBER_ID);
         assertThat(savedRefreshToken.getTokenHash()).isEqualTo("rotated-refresh-token-hash");
@@ -143,6 +151,7 @@ class TokenServiceTest {
     void includesWordSizeWhenIssuingKakaoLoginTokens() {
         Member member = Member.builder()
                 .id(MEMBER_ID)
+                .loginType(SocialProvider.KAKAO)
                 .wordSize(WordSize.LARGE)
                 .build();
 
@@ -152,6 +161,8 @@ class TokenServiceTest {
                 .thenReturn(java.util.Optional.empty());
         when(authSecretHasher.hashRefreshToken(anyString()))
                 .thenReturn("refresh-token-hash");
+        when(authSecretHasher.createCredentialFingerprint(SocialProvider.KAKAO, null))
+                .thenReturn("credential-fingerprint");
 
         AuthResDTO.KakaoLoginResult result = tokenService
                 .issueKakaoLoginCompleteTokens(member);
@@ -161,6 +172,30 @@ class TokenServiceTest {
         assertThat(result.wordSize()).isEqualTo(WordSize.LARGE);
         assertThat(result.accessToken()).isNotBlank();
         assertThat(result.refreshToken()).isNotBlank();
+        assertThat(tokenService.parseAccessToken(result.accessToken()).credentialFingerprint())
+                .isEqualTo("credential-fingerprint");
+    }
+
+    @Test
+    void rejectsAccessTokenWithoutCredentialFingerprint() {
+        String token = createToken(
+                TokenPurpose.ACCESS,
+                new Date(System.currentTimeMillis() + 60_000L)
+        );
+
+        assertThatThrownBy(() -> tokenService.parseAccessToken(token))
+                .isInstanceOfSatisfying(AuthException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(AuthErrorCode.INVALID_TOKEN));
+    }
+
+    @Test
+    void invalidatesMemberSessionByDeletingRefreshToken() {
+        Member member = Member.builder().id(MEMBER_ID).build();
+
+        tokenService.invalidateMemberSession(member);
+
+        verify(refreshTokenRepository).deleteByMember(member);
     }
 
     @Test

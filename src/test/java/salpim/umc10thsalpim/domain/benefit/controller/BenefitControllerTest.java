@@ -15,7 +15,12 @@ import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
 import salpim.umc10thsalpim.domain.benefit.enums.ApplicationType;
 import salpim.umc10thsalpim.domain.benefit.service.BenefitService;
 import salpim.umc10thsalpim.domain.auth.service.TokenService;
+import salpim.umc10thsalpim.domain.auth.service.AuthSecretHasher;
+import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
+import salpim.umc10thsalpim.domain.auth.enums.TokenPurpose;
 import salpim.umc10thsalpim.domain.auth.security.JwtAuthenticationFilter;
+import salpim.umc10thsalpim.domain.member.entity.Member;
+import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import salpim.umc10thsalpim.domain.benefit.enums.AgeConditionStatus;
@@ -49,6 +54,9 @@ class BenefitControllerTest {
 
     @MockitoBean
     private TokenService tokenService;
+
+    @MockitoBean
+    private AuthSecretHasher authSecretHasher;
 
     @MockitoBean
     private MemberRepository memberRepository;
@@ -86,9 +94,27 @@ class BenefitControllerTest {
 
         given(benefitService.getApplicationHelperInfo(1L, benefitId))
                 .willReturn(response);
-        given(tokenService.validateAccessTokenAndGetMemberId("access-token"))
-                .willReturn(1L);
-        given(memberRepository.existsById(1L)).willReturn(true);
+        Member member = Member.builder()
+                .id(1L)
+                .loginType(SocialProvider.LOCAL)
+                .password("encoded-password")
+                .build();
+        TokenDTO.AccessTokenClaims claims = new TokenDTO.AccessTokenClaims(
+                TokenPurpose.ACCESS,
+                1L,
+                "credential-fingerprint"
+        );
+
+        given(tokenService.parseAccessToken("access-token")).willReturn(claims);
+        given(memberRepository.findById(1L)).willReturn(java.util.Optional.of(member));
+        given(authSecretHasher.createCredentialFingerprint(
+                SocialProvider.LOCAL,
+                "encoded-password"
+        )).willReturn("expected-fingerprint");
+        given(authSecretHasher.matchesCredentialFingerprint(
+                "credential-fingerprint",
+                "expected-fingerprint"
+        )).willReturn(true);
 
         mockMvc.perform(get("/api/benefits/{benefitId}/application-helper", benefitId)
                         .header("Authorization", "Bearer access-token")

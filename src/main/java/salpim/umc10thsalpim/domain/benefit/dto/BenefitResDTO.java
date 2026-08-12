@@ -48,7 +48,8 @@ public class BenefitResDTO {
         String welfareCategoryName,
         Integer minAge,
         Integer maxAge,
-        AgeConditionStatus ageConditionStatus
+        AgeConditionStatus ageConditionStatus,
+        Boolean isOnlineApplicationAvailable
     ){}
 
     @Builder
