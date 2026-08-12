@@ -25,6 +25,7 @@ import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -70,13 +71,28 @@ class TokenServiceTest {
     @Test
     void parsesIssuedPasswordResetToken() {
         Member member = Member.builder().id(MEMBER_ID).build();
+        String tokenId = UUID.randomUUID().toString();
 
-        String token = tokenService.issuePasswordResetToken(member);
+        String token = tokenService.issuePasswordResetToken(member, tokenId);
 
         TokenDTO.PasswordResetTokenClaims claims = tokenService.parsePasswordResetToken(token);
 
         assertThat(claims.purpose()).isEqualTo(TokenPurpose.PASSWORD_RESET);
         assertThat(claims.memberId()).isEqualTo(MEMBER_ID);
+        assertThat(claims.tokenId()).isEqualTo(tokenId);
+    }
+
+    @Test
+    void rejectsPasswordResetTokenWithoutTokenId() {
+        String token = createToken(
+                TokenPurpose.PASSWORD_RESET,
+                new Date(System.currentTimeMillis() + 60_000L)
+        );
+
+        assertThatThrownBy(() -> tokenService.parsePasswordResetToken(token))
+                .isInstanceOfSatisfying(AuthException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
     }
 
     @Test

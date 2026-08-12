@@ -40,6 +40,7 @@ public class MemberService {
     private final PasswordVerificationAttemptService passwordVerificationAttemptService;
     private final RegionQueryService regionQueryService;
     private final TokenService tokenService;
+    private final PasswordPolicy passwordPolicy;
 
     @Transactional(readOnly = true)
     public MemberResDTO.MyPageInfo getMyPage(Long memberId) {
@@ -166,6 +167,8 @@ public class MemberService {
 
             throw e;
         }
+
+        passwordPolicy.validateNewPasswordIsDifferent(member, request.newPassword());
 
         clearPasswordChangeFailures(memberId);
         member.changePassword(passwordEncoder.encode(request.newPassword()));
@@ -298,4 +301,5 @@ public class MemberService {
         return e.getErrorCode() == MemberErrorCode.PASSWORD_MISMATCH
                 || e.getErrorCode() == MemberErrorCode.RECOVERY_ANSWER_MISMATCH;
     }
+
 }
