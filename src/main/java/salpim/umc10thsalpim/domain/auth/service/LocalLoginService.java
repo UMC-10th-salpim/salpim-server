@@ -34,7 +34,7 @@ public class LocalLoginService {
             throw new AuthException(AuthErrorCode.INVALID_LOGIN_CREDENTIALS);
         }
 
-        loginAttemptService.clearPhoneFailures(normalizedPhoneNumber);
+        loginAttemptService.clearFailures(normalizedPhoneNumber, clientIp);
         return tokenService.issueLoginTokens(member);
     }
 

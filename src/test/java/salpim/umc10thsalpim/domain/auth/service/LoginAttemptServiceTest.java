@@ -74,13 +74,18 @@ class LoginAttemptServiceTest {
     }
 
     @Test
-    void successfulLoginClearsOnlyPhoneFailures() {
-        loginAttemptService.clearPhoneFailures(PHONE_NUMBER);
+    void successfulLoginClearsPhoneAndIpFailures() {
+        loginAttemptService.clearFailures(PHONE_NUMBER, CLIENT_IP);
 
         verify(attemptService).clearFailures(
                 PasswordVerificationPurpose.LOGIN,
                 PasswordVerificationTargetType.PHONE_NUMBER,
                 PHONE_NUMBER
+        );
+        verify(attemptService).clearFailures(
+                PasswordVerificationPurpose.LOGIN,
+                PasswordVerificationTargetType.IP_ADDRESS,
+                CLIENT_IP
         );
     }
 

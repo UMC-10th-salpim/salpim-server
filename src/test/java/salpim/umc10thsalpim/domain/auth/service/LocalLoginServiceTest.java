@@ -64,7 +64,7 @@ class LocalLoginServiceTest {
         assertThat(result).isEqualTo(expectedToken);
         assertThat(result.wordSize()).isEqualTo(WordSize.LARGE);
         verify(passwordEncoder).matches(RAW_PASSWORD, ENCODED_PASSWORD);
-        verify(loginAttemptService).clearPhoneFailures(PHONE_NUMBER);
+        verify(loginAttemptService).clearFailures(PHONE_NUMBER, CLIENT_IP);
     }
 
     @Test

@@ -47,11 +47,16 @@ public class LoginAttemptService {
         );
     }
 
-    public void clearPhoneFailures(String phoneNumber) {
+    public void clearFailures(String phoneNumber, String clientIp) {
         attemptService.clearFailures(
                 PURPOSE,
                 PasswordVerificationTargetType.PHONE_NUMBER,
                 phoneNumber
+        );
+        attemptService.clearFailures(
+                PURPOSE,
+                PasswordVerificationTargetType.IP_ADDRESS,
+                clientIp
         );
     }
 
