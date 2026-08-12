@@ -39,6 +39,7 @@ class AuthSecretHasherTest {
     void comparesRefreshTokenWithStoredHash() {
         String hash = authSecretHasher.hashRefreshToken("refresh-token");
 
+        assertThat(hash).hasSize(43);
         assertThat(authSecretHasher.matchesRefreshToken("refresh-token", hash)).isTrue();
         assertThat(authSecretHasher.matchesRefreshToken("replayed-token", hash)).isFalse();
         assertThat(authSecretHasher.matchesRefreshToken(null, hash)).isFalse();

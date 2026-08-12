@@ -19,7 +19,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,7 +66,7 @@ class LocalLoginServiceTest {
         assertThat(result).isEqualTo(expectedToken);
         assertThat(result.wordSize()).isEqualTo(WordSize.LARGE);
         verify(passwordEncoder).matches(RAW_PASSWORD, ENCODED_PASSWORD);
-        verify(loginAttemptService).clearFailures(PHONE_NUMBER, CLIENT_IP);
+        verify(loginAttemptService).clearPhoneFailures(PHONE_NUMBER);
     }
 
     @Test
@@ -92,6 +94,20 @@ class LocalLoginServiceTest {
                         assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
 
         verify(loginAttemptService).recordFailure(PHONE_NUMBER, CLIENT_IP);
+    }
+
+    @Test
+    void loginStopsBeforeAuthenticationWhenAttemptsAreExceeded() {
+        AuthReqDTO.LocalLogin request = new AuthReqDTO.LocalLogin(PHONE_NUMBER, RAW_PASSWORD);
+        doThrow(new AuthException(AuthErrorCode.LOGIN_ATTEMPTS_EXCEEDED))
+                .when(loginAttemptService).validateAllowed(PHONE_NUMBER, CLIENT_IP);
+
+        assertThatThrownBy(() -> localLoginService.login(request, CLIENT_IP))
+                .isInstanceOfSatisfying(AuthException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(AuthErrorCode.LOGIN_ATTEMPTS_EXCEEDED));
+
+        verifyNoInteractions(memberRepository, passwordEncoder, tokenService);
     }
 
     private Member localMember() {

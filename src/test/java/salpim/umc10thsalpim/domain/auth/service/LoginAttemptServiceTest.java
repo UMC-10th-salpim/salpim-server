@@ -14,6 +14,7 @@ import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -75,19 +76,15 @@ class LoginAttemptServiceTest {
     }
 
     @Test
-    void successfulLoginClearsPhoneAndIpFailures() {
-        loginAttemptService.clearFailures(PHONE_NUMBER, CLIENT_IP);
+    void successfulLoginClearsOnlyPhoneFailures() {
+        loginAttemptService.clearPhoneFailures(PHONE_NUMBER);
 
         verify(attemptService).clearFailures(
                 PasswordVerificationPurpose.LOGIN,
                 PasswordVerificationTargetType.PHONE_NUMBER,
                 PHONE_NUMBER
         );
-        verify(attemptService).clearFailures(
-                PasswordVerificationPurpose.LOGIN,
-                PasswordVerificationTargetType.IP_ADDRESS,
-                CLIENT_IP
-        );
+        verifyNoMoreInteractions(attemptService);
     }
 
     @Test
