@@ -41,6 +41,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -684,6 +685,57 @@ class MemberServiceTest {
         verify(passwordEncoder).matches("봄", "encoded-answer");
         verify(passwordEncoder).encode("654321");
         verify(tokenService).invalidateMemberSession(member);
+    }
+
+    @Test
+    @DisplayName("Rejects a new password that matches the current password after password verification")
+    void changePasswordRejectsCurrentPasswordAsNewPassword() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.CURRENT_PASSWORD,
+                "123456",
+                null,
+                "123456"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("123456", "encoded-password")).willReturn(true);
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.changePassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.PASSWORD_SAME_AS_CURRENT);
+        verify(passwordEncoder, never()).encode("123456");
+        verify(tokenService, never()).invalidateMemberSession(member);
+    }
+
+    @Test
+    @DisplayName("Rejects a new password that matches the current password after recovery answer verification")
+    void changePasswordRejectsCurrentPasswordAsNewPasswordAfterRecoveryAnswer() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.RECOVERY_ANSWER,
+                null,
+                "answer",
+                "123456"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("answer", "encoded-answer")).willReturn(true);
+        given(passwordEncoder.matches("123456", "encoded-password")).willReturn(true);
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.changePassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.PASSWORD_SAME_AS_CURRENT);
+        verify(passwordEncoder, never()).encode("123456");
+        verify(tokenService, never()).invalidateMemberSession(member);
     }
 
     @Test

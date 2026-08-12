@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
+import salpim.umc10thsalpim.domain.auth.entity.PasswordResetToken;
 import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationPurpose;
 import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationTargetType;
 import salpim.umc10thsalpim.domain.auth.enums.TokenPurpose;
@@ -16,8 +17,11 @@ import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
+import salpim.umc10thsalpim.domain.member.exception.MemberException;
+import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +39,7 @@ class PasswordResetServiceTest {
     private static final String RECOVERY_ANSWER = "spring";
     private static final String ENCODED_RECOVERY_ANSWER = "encoded-recovery-answer";
     private static final String PASSWORD_RESET_TOKEN = "password-reset-token";
+    private static final String TOKEN_ID = "token-id";
     private static final String NEW_PASSWORD = "123456";
     private static final String ENCODED_NEW_PASSWORD = "encoded-new-password";
 
@@ -50,6 +55,9 @@ class PasswordResetServiceTest {
     @Mock
     private PasswordVerificationAttemptService passwordVerificationAttemptService;
 
+    @Mock
+    private PasswordResetTokenService passwordResetTokenService;
+
     @InjectMocks
     private PasswordResetService passwordResetService;
 
@@ -63,14 +71,15 @@ class PasswordResetServiceTest {
 
         when(memberRepository.findByPhoneNumber(PHONE_NUMBER)).thenReturn(Optional.of(member));
         when(passwordEncoder.matches(RECOVERY_ANSWER, ENCODED_RECOVERY_ANSWER)).thenReturn(true);
-        when(tokenService.issuePasswordResetToken(member)).thenReturn(PASSWORD_RESET_TOKEN);
+        when(passwordResetTokenService.issuePasswordResetToken(member))
+                .thenReturn(PASSWORD_RESET_TOKEN);
 
         AuthResDTO.PasswordResetVerifyResult result =
                 passwordResetService.verifyRecoveryAnswer(request);
 
         assertThat(result.passwordResetToken()).isEqualTo(PASSWORD_RESET_TOKEN);
         verify(passwordEncoder).matches(RECOVERY_ANSWER, ENCODED_RECOVERY_ANSWER);
-        verify(tokenService).issuePasswordResetToken(member);
+        verify(passwordResetTokenService).issuePasswordResetToken(member);
         verify(passwordVerificationAttemptService).validateAttemptAllowed(
                 PasswordVerificationPurpose.PASSWORD_RESET,
                 PasswordVerificationTargetType.PHONE_NUMBER,
@@ -96,7 +105,7 @@ class PasswordResetServiceTest {
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(AuthErrorCode.PASSWORD_RESET_VERIFICATION_FAILED));
 
-        verifyNoInteractions(passwordEncoder, tokenService);
+        verifyNoInteractions(passwordEncoder, tokenService, passwordResetTokenService);
         verify(passwordVerificationAttemptService).recordFailure(
                 PasswordVerificationPurpose.PASSWORD_RESET,
                 PasswordVerificationTargetType.PHONE_NUMBER,
@@ -119,7 +128,7 @@ class PasswordResetServiceTest {
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(AuthErrorCode.PASSWORD_RESET_VERIFICATION_FAILED));
 
-        verify(tokenService, never()).issuePasswordResetToken(member);
+        verify(passwordResetTokenService, never()).issuePasswordResetToken(member);
         verify(passwordVerificationAttemptService).recordFailure(
                 PasswordVerificationPurpose.PASSWORD_RESET,
                 PasswordVerificationTargetType.PHONE_NUMBER,
@@ -128,30 +137,58 @@ class PasswordResetServiceTest {
     }
 
     @Test
-    void resetPasswordChangesPasswordForMemberInToken() {
+    void resetPasswordConsumesTokenAndChangesPassword() {
         Member member = localMember();
+        PasswordResetToken storedToken = activeToken(member);
         AuthReqDTO.PasswordReset request = new AuthReqDTO.PasswordReset(
                 PASSWORD_RESET_TOKEN,
                 NEW_PASSWORD
         );
-        TokenDTO.PasswordResetTokenClaims claims = new TokenDTO.PasswordResetTokenClaims(
-                TokenPurpose.PASSWORD_RESET,
-                MEMBER_ID
-        );
+        TokenDTO.PasswordResetTokenClaims claims = claims();
 
         when(tokenService.parsePasswordResetToken(PASSWORD_RESET_TOKEN)).thenReturn(claims);
-        when(memberRepository.findById(MEMBER_ID)).thenReturn(Optional.of(member));
+        when(memberRepository.findByIdForUpdate(MEMBER_ID)).thenReturn(Optional.of(member));
+        when(passwordResetTokenService.getUsablePasswordResetTokenForUpdate(claims))
+                .thenReturn(storedToken);
+        when(passwordEncoder.matches(NEW_PASSWORD, member.getPassword())).thenReturn(false);
         when(passwordEncoder.encode(NEW_PASSWORD)).thenReturn(ENCODED_NEW_PASSWORD);
 
         passwordResetService.resetPassword(request);
 
+        assertThat(storedToken.getUsedAt()).isNotNull();
         assertThat(member.getPassword()).isEqualTo(ENCODED_NEW_PASSWORD);
         verify(passwordEncoder).encode(NEW_PASSWORD);
         verify(tokenService).invalidateMemberSession(member);
     }
 
     @Test
-    void resetPasswordFailsWhenTokenIsInvalid() {
+    void resetPasswordKeepsTokenWhenNewPasswordMatchesCurrentPassword() {
+        Member member = localMember();
+        PasswordResetToken storedToken = activeToken(member);
+        AuthReqDTO.PasswordReset request = new AuthReqDTO.PasswordReset(
+                PASSWORD_RESET_TOKEN,
+                NEW_PASSWORD
+        );
+        TokenDTO.PasswordResetTokenClaims claims = claims();
+
+        when(tokenService.parsePasswordResetToken(PASSWORD_RESET_TOKEN)).thenReturn(claims);
+        when(memberRepository.findByIdForUpdate(MEMBER_ID)).thenReturn(Optional.of(member));
+        when(passwordResetTokenService.getUsablePasswordResetTokenForUpdate(claims))
+                .thenReturn(storedToken);
+        when(passwordEncoder.matches(NEW_PASSWORD, member.getPassword())).thenReturn(true);
+
+        assertThatThrownBy(() -> passwordResetService.resetPassword(request))
+                .isInstanceOfSatisfying(MemberException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(MemberErrorCode.PASSWORD_SAME_AS_CURRENT));
+
+        assertThat(storedToken.getUsedAt()).isNull();
+        verify(passwordEncoder, never()).encode(NEW_PASSWORD);
+        verify(tokenService, never()).invalidateMemberSession(member);
+    }
+
+    @Test
+    void resetPasswordFailsWhenJwtIsInvalid() {
         AuthReqDTO.PasswordReset request = new AuthReqDTO.PasswordReset(
                 PASSWORD_RESET_TOKEN,
                 NEW_PASSWORD
@@ -164,7 +201,23 @@ class PasswordResetServiceTest {
                         assertThat(exception.getErrorCode())
                                 .isEqualTo(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
 
-        verifyNoInteractions(memberRepository, passwordEncoder);
+        verifyNoInteractions(memberRepository, passwordEncoder, passwordResetTokenService);
+    }
+
+    private TokenDTO.PasswordResetTokenClaims claims() {
+        return new TokenDTO.PasswordResetTokenClaims(
+                TokenPurpose.PASSWORD_RESET,
+                MEMBER_ID,
+                TOKEN_ID
+        );
+    }
+
+    private PasswordResetToken activeToken(Member member) {
+        return PasswordResetToken.builder()
+                .member(member)
+                .tokenIdHash("token-id-hash")
+                .expiredAt(LocalDateTime.now().plusMinutes(5))
+                .build();
     }
 
     private Member localMember() {
