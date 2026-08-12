@@ -25,5 +25,9 @@ public class LoginAttemptProperties {
 
     @NotNull
     @Positive
-    private Long lockDurationMillis;
+    private Long phoneLockDurationMillis;
+
+    @NotNull
+    @Positive
+    private Long ipLockDurationMillis;
 }

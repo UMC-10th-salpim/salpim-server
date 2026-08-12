@@ -12,6 +12,7 @@ class PasswordVerificationAttemptTest {
 
     private static final int MAX_FAILURE_COUNT = 5;
     private static final long LOCK_DURATION_MILLIS = 15 * 60 * 1000L;
+    private static final long IP_LOCK_DURATION_MILLIS = 60 * 60 * 1000L;
 
     @Test
     void locksAfterMaximumFailures() {
@@ -93,12 +94,12 @@ class PasswordVerificationAttemptTest {
         );
 
         for (int failure = 0; failure < 15; failure++) {
-            attempt.recordFailure(now.plusMinutes(failure * 20L), 15, LOCK_DURATION_MILLIS);
+            attempt.recordFailure(now.plusMinutes(failure * 20L), 15, IP_LOCK_DURATION_MILLIS);
         }
 
         LocalDateTime fifteenthFailureAt = now.plusMinutes(14 * 20L);
         assertThat(attempt.getFailureCount()).isEqualTo(15);
-        assertThat(attempt.isLocked(fifteenthFailureAt.plusMinutes(14))).isTrue();
-        assertThat(attempt.isLocked(fifteenthFailureAt.plusMinutes(15))).isFalse();
+        assertThat(attempt.isLocked(fifteenthFailureAt.plusMinutes(59))).isTrue();
+        assertThat(attempt.isLocked(fifteenthFailureAt.plusMinutes(60))).isFalse();
     }
 }

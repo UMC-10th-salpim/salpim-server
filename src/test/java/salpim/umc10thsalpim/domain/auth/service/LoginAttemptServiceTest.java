@@ -53,7 +53,8 @@ class LoginAttemptServiceTest {
     void recordsFailureWithSeparatePhoneAndIpThresholds() {
         when(properties.getPhoneMaxFailureCount()).thenReturn(5);
         when(properties.getIpMaxFailureCount()).thenReturn(15);
-        when(properties.getLockDurationMillis()).thenReturn(900_000L);
+        when(properties.getPhoneLockDurationMillis()).thenReturn(900_000L);
+        when(properties.getIpLockDurationMillis()).thenReturn(3_600_000L);
 
         loginAttemptService.recordFailure(PHONE_NUMBER, CLIENT_IP);
 
@@ -69,7 +70,7 @@ class LoginAttemptServiceTest {
                 PasswordVerificationTargetType.IP_ADDRESS,
                 CLIENT_IP,
                 15,
-                900_000L
+                3_600_000L
         );
     }
 
@@ -93,7 +94,8 @@ class LoginAttemptServiceTest {
     void retriesWhenConcurrentRequestsCreateFirstAttemptTogether() {
         when(properties.getPhoneMaxFailureCount()).thenReturn(5);
         when(properties.getIpMaxFailureCount()).thenReturn(15);
-        when(properties.getLockDurationMillis()).thenReturn(900_000L);
+        when(properties.getPhoneLockDurationMillis()).thenReturn(900_000L);
+        when(properties.getIpLockDurationMillis()).thenReturn(3_600_000L);
         doThrow(new DataIntegrityViolationException("first insert race"))
                 .doNothing()
                 .when(attemptService).recordFailure(

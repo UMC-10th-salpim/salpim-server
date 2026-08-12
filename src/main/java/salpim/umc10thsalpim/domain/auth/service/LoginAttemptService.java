@@ -37,13 +37,13 @@ public class LoginAttemptService {
                 PasswordVerificationTargetType.PHONE_NUMBER,
                 phoneNumber,
                 properties.getPhoneMaxFailureCount(),
-                properties.getLockDurationMillis()
+                properties.getPhoneLockDurationMillis()
         );
         recordFailureWithFirstInsertRetry(
                 PasswordVerificationTargetType.IP_ADDRESS,
                 clientIp,
                 properties.getIpMaxFailureCount(),
-                properties.getLockDurationMillis()
+                properties.getIpLockDurationMillis()
         );
     }
 
