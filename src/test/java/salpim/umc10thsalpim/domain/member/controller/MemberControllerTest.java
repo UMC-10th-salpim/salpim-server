@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
+import salpim.umc10thsalpim.domain.auth.service.AuthSecretHasher;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
@@ -70,6 +71,9 @@ class MemberControllerTest {
 
     @MockitoBean
     private TokenService tokenService;
+
+    @MockitoBean
+    private AuthSecretHasher authSecretHasher;
 
     @MockitoBean
     private MemberRepository memberRepository;

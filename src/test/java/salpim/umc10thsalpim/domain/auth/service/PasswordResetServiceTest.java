@@ -147,6 +147,7 @@ class PasswordResetServiceTest {
 
         assertThat(member.getPassword()).isEqualTo(ENCODED_NEW_PASSWORD);
         verify(passwordEncoder).encode(NEW_PASSWORD);
+        verify(tokenService).invalidateMemberSession(member);
     }
 
     @Test
