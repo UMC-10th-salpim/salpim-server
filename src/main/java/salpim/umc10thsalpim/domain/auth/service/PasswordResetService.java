@@ -23,8 +23,9 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final PasswordVerificationAttemptService passwordVerificationAttemptService;
+    private final PasswordResetTokenService passwordResetTokenService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResDTO.PasswordResetVerifyResult verifyRecoveryAnswer(
             AuthReqDTO.PasswordResetVerify request
     ) {
@@ -49,7 +50,7 @@ public class PasswordResetService {
             );
 
             return new AuthResDTO.PasswordResetVerifyResult(
-                    tokenService.issuePasswordResetToken(member)
+                    passwordResetTokenService.issuePasswordResetToken(member)
             );
         } catch (AuthException e) {
             passwordVerificationAttemptService.recordFailure(
