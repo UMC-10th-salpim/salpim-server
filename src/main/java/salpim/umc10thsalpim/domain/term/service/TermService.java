@@ -84,7 +84,7 @@ public class TermService {
                 .distinct()
                 .count();
         if (distinctVersionIdCount != agreements.size()) {
-            throw new AgreementException(AgreementErrorCode.TERM_NOT_FOUND);
+            throw new AgreementException(AgreementErrorCode.DUPLICATE_TERMS_VERSION);
         }
 
         Map<Long, Boolean> agreedByVersionId = agreements.stream()

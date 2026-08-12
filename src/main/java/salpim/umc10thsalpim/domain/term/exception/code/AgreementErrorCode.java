@@ -15,6 +15,9 @@ public enum AgreementErrorCode implements BaseErrorCode {
     REQUIRED_TERM_NOT_AGREED(HttpStatus.BAD_REQUEST,
             "TERM400_REQUIRED",
             "필수 약관에 동의해야 합니다."),
+    DUPLICATE_TERMS_VERSION(HttpStatus.BAD_REQUEST,
+            "TERM400_DUPLICATE_VERSION",
+            "동일한 약관 버전에 대한 동의 항목이 중복되었습니다."),
     ;
 
     private final HttpStatus status;
