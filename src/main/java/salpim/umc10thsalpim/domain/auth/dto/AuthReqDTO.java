@@ -131,7 +131,7 @@ public class AuthReqDTO {
 
             @NotEmpty(message = "동의할 약관 목록은 필수입니다.")
             @Valid
-            List<TermReqDTO.AgreementItem> agreements
+            List<TermReqDTO.@NotNull(message = "약관 동의 항목은 null일 수 없습니다.") AgreementItem> agreements
     ) {
     }
 
