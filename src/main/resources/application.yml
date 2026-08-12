@@ -58,9 +58,6 @@ login-attempt:
   phone-lock-duration-millis: ${LOGIN_PHONE_LOCK_DURATION_MILLIS:900000}
   ip-lock-duration-millis: ${LOGIN_IP_LOCK_DURATION_MILLIS:3600000}
 
-discord:
-  otp-webhook-url: ${DISCORD_OTP_WEBHOOK_URL:}
-
 bokjiro:
   base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
   local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations
