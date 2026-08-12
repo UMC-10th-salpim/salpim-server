@@ -40,6 +40,7 @@ public class MemberService {
     private final PasswordVerificationAttemptService passwordVerificationAttemptService;
     private final RegionQueryService regionQueryService;
     private final TokenService tokenService;
+    private final PasswordPolicy passwordPolicy;
 
     @Transactional(readOnly = true)
     public MemberResDTO.MyPageInfo getMyPage(Long memberId) {
@@ -167,7 +168,7 @@ public class MemberService {
             throw e;
         }
 
-        validateNewPasswordIsDifferent(member, request.newPassword());
+        passwordPolicy.validateNewPasswordIsDifferent(member, request.newPassword());
 
         clearPasswordChangeFailures(memberId);
         member.changePassword(passwordEncoder.encode(request.newPassword()));
@@ -301,14 +302,4 @@ public class MemberService {
                 || e.getErrorCode() == MemberErrorCode.RECOVERY_ANSWER_MISMATCH;
     }
 
-    private void validateNewPasswordIsDifferent(
-            Member member,
-            String newPassword
-    ) {
-        if (passwordEncoder.matches(newPassword, member.getPassword())) {
-            throw new MemberException(
-                    MemberErrorCode.PASSWORD_SAME_AS_CURRENT
-            );
-        }
-    }
 }

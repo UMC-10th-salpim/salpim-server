@@ -14,9 +14,8 @@ import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
-import salpim.umc10thsalpim.domain.member.exception.MemberException;
-import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
+import salpim.umc10thsalpim.domain.member.service.PasswordPolicy;
 
 import java.time.LocalDateTime;
 
@@ -29,6 +28,7 @@ public class PasswordResetService {
     private final TokenService tokenService;
     private final PasswordVerificationAttemptService passwordVerificationAttemptService;
     private final PasswordResetTokenService passwordResetTokenService;
+    private final PasswordPolicy passwordPolicy;
 
     @Transactional
     public AuthResDTO.PasswordResetVerifyResult verifyRecoveryAnswer(
@@ -84,7 +84,7 @@ public class PasswordResetService {
             throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
         }
 
-        validateNewPasswordIsDifferent(member, request.newPassword());
+        passwordPolicy.validateNewPasswordIsDifferent(member, request.newPassword());
 
         passwordResetToken.consume(LocalDateTime.now());
         member.changePassword(passwordEncoder.encode(request.newPassword()));
@@ -110,14 +110,4 @@ public class PasswordResetService {
         return phoneNumber.replace("-", "").trim();
     }
 
-    private void validateNewPasswordIsDifferent(
-            Member member,
-            String newPassword
-    ) {
-        if (passwordEncoder.matches(newPassword, member.getPassword())) {
-            throw new MemberException(
-                    MemberErrorCode.PASSWORD_SAME_AS_CURRENT
-            );
-        }
-    }
 }

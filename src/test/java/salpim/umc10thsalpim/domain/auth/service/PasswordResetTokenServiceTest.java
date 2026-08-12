@@ -21,7 +21,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,7 +67,7 @@ class PasswordResetTokenServiceTest {
         when(authSecretHasher.hashPasswordResetTokenId(anyString())).thenReturn(TOKEN_ID_HASH);
         when(jwtProperties.getPasswordResetTokenExpirationMillis()).thenReturn(300_000L);
         when(tokenService.issuePasswordResetToken(
-                org.mockito.ArgumentMatchers.eq(member),
+                eq(member),
                 anyString()
         )).thenReturn(PASSWORD_RESET_TOKEN);
         when(passwordResetTokenRepository.findByMemberId(MEMBER_ID))
@@ -80,7 +82,33 @@ class PasswordResetTokenServiceTest {
         ArgumentCaptor<String> tokenIdCaptor = ArgumentCaptor.forClass(String.class);
         verify(authSecretHasher).hashPasswordResetTokenId(tokenIdCaptor.capture());
         verify(tokenService).issuePasswordResetToken(member, tokenIdCaptor.getValue());
-        verify(passwordResetTokenRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(passwordResetTokenRepository, never()).save(any());
+    }
+
+    @Test
+    void issuePasswordResetTokenSavesNewTokenWhenNoneExists() {
+        Member member = member();
+        LocalDateTime beforeRequest = LocalDateTime.now();
+
+        when(memberRepository.findByIdForUpdate(MEMBER_ID)).thenReturn(Optional.of(member));
+        when(authSecretHasher.hashPasswordResetTokenId(anyString())).thenReturn(TOKEN_ID_HASH);
+        when(jwtProperties.getPasswordResetTokenExpirationMillis()).thenReturn(300_000L);
+        when(tokenService.issuePasswordResetToken(eq(member), anyString()))
+                .thenReturn(PASSWORD_RESET_TOKEN);
+        when(passwordResetTokenRepository.findByMemberId(MEMBER_ID)).thenReturn(Optional.empty());
+
+        String result = passwordResetTokenService.issuePasswordResetToken(member);
+
+        ArgumentCaptor<PasswordResetToken> tokenCaptor =
+                ArgumentCaptor.forClass(PasswordResetToken.class);
+        verify(passwordResetTokenRepository).save(tokenCaptor.capture());
+
+        PasswordResetToken savedToken = tokenCaptor.getValue();
+        assertThat(result).isEqualTo(PASSWORD_RESET_TOKEN);
+        assertThat(savedToken.getMember()).isEqualTo(member);
+        assertThat(savedToken.getTokenIdHash()).isEqualTo(TOKEN_ID_HASH);
+        assertThat(savedToken.getExpiredAt()).isAfter(beforeRequest);
+        assertThat(savedToken.getUsedAt()).isNull();
     }
 
     @Test

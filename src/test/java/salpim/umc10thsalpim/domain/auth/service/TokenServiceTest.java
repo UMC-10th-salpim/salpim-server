@@ -83,6 +83,19 @@ class TokenServiceTest {
     }
 
     @Test
+    void rejectsPasswordResetTokenWithoutTokenId() {
+        String token = createToken(
+                TokenPurpose.PASSWORD_RESET,
+                new Date(System.currentTimeMillis() + 60_000L)
+        );
+
+        assertThatThrownBy(() -> tokenService.parsePasswordResetToken(token))
+                .isInstanceOfSatisfying(AuthException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
+    }
+
+    @Test
     void rejectsTokenWithDifferentPurpose() {
         String token = createToken(TokenPurpose.ACCESS, new Date(System.currentTimeMillis() + 60_000L));
 

@@ -20,6 +20,7 @@ import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.exception.MemberException;
 import salpim.umc10thsalpim.domain.member.exception.code.MemberErrorCode;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
+import salpim.umc10thsalpim.domain.member.service.PasswordPolicy;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -57,6 +59,9 @@ class PasswordResetServiceTest {
 
     @Mock
     private PasswordResetTokenService passwordResetTokenService;
+
+    @Mock
+    private PasswordPolicy passwordPolicy;
 
     @InjectMocks
     private PasswordResetService passwordResetService;
@@ -150,7 +155,6 @@ class PasswordResetServiceTest {
         when(memberRepository.findByIdForUpdate(MEMBER_ID)).thenReturn(Optional.of(member));
         when(passwordResetTokenService.getUsablePasswordResetTokenForUpdate(claims))
                 .thenReturn(storedToken);
-        when(passwordEncoder.matches(NEW_PASSWORD, member.getPassword())).thenReturn(false);
         when(passwordEncoder.encode(NEW_PASSWORD)).thenReturn(ENCODED_NEW_PASSWORD);
 
         passwordResetService.resetPassword(request);
@@ -175,7 +179,9 @@ class PasswordResetServiceTest {
         when(memberRepository.findByIdForUpdate(MEMBER_ID)).thenReturn(Optional.of(member));
         when(passwordResetTokenService.getUsablePasswordResetTokenForUpdate(claims))
                 .thenReturn(storedToken);
-        when(passwordEncoder.matches(NEW_PASSWORD, member.getPassword())).thenReturn(true);
+        doThrow(new MemberException(MemberErrorCode.PASSWORD_SAME_AS_CURRENT))
+                .when(passwordPolicy)
+                .validateNewPasswordIsDifferent(member, NEW_PASSWORD);
 
         assertThatThrownBy(() -> passwordResetService.resetPassword(request))
                 .isInstanceOfSatisfying(MemberException.class, exception ->
@@ -183,6 +189,32 @@ class PasswordResetServiceTest {
                                 .isEqualTo(MemberErrorCode.PASSWORD_SAME_AS_CURRENT));
 
         assertThat(storedToken.getUsedAt()).isNull();
+        verify(passwordEncoder, never()).encode(NEW_PASSWORD);
+        verify(tokenService, never()).invalidateMemberSession(member);
+    }
+
+    @Test
+    void resetPasswordRejectsKakaoMember() {
+        Member member = kakaoMember();
+        PasswordResetToken storedToken = activeToken(member);
+        AuthReqDTO.PasswordReset request = new AuthReqDTO.PasswordReset(
+                PASSWORD_RESET_TOKEN,
+                NEW_PASSWORD
+        );
+        TokenDTO.PasswordResetTokenClaims claims = claims();
+
+        when(tokenService.parsePasswordResetToken(PASSWORD_RESET_TOKEN)).thenReturn(claims);
+        when(memberRepository.findByIdForUpdate(MEMBER_ID)).thenReturn(Optional.of(member));
+        when(passwordResetTokenService.getUsablePasswordResetTokenForUpdate(claims))
+                .thenReturn(storedToken);
+
+        assertThatThrownBy(() -> passwordResetService.resetPassword(request))
+                .isInstanceOfSatisfying(AuthException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
+
+        assertThat(storedToken.getUsedAt()).isNull();
+        verifyNoInteractions(passwordPolicy);
         verify(passwordEncoder, never()).encode(NEW_PASSWORD);
         verify(tokenService, never()).invalidateMemberSession(member);
     }
@@ -227,6 +259,13 @@ class PasswordResetServiceTest {
                 .phoneNumber(PHONE_NUMBER)
                 .password("encoded-password")
                 .passwordRecoveryAnswer(ENCODED_RECOVERY_ANSWER)
+                .build();
+    }
+
+    private Member kakaoMember() {
+        return Member.builder()
+                .id(MEMBER_ID)
+                .loginType(SocialProvider.KAKAO)
                 .build();
     }
 }
