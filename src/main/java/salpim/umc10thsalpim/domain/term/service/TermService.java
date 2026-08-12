@@ -79,6 +79,14 @@ public class TermService {
     // 약관 버전 ID 목록을 실제 게시된 TermsVersion으로 해석하고, 필수 약관 동의 여부를 검증한다.
     // 회원가입 전 약관 동의 사전 검증(TermsAgreementVerificationService)에서도 재사용한다.
     public Map<TermsVersion, Boolean> resolveAndValidateAgreements(List<TermReqDTO.AgreementItem> agreements) {
+        long distinctVersionIdCount = agreements.stream()
+                .map(TermReqDTO.AgreementItem::termsVersionId)
+                .distinct()
+                .count();
+        if (distinctVersionIdCount != agreements.size()) {
+            throw new AgreementException(AgreementErrorCode.TERM_NOT_FOUND);
+        }
+
         Map<Long, Boolean> agreedByVersionId = agreements.stream()
                 .collect(Collectors.toMap(
                         TermReqDTO.AgreementItem::termsVersionId,
