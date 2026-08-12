@@ -14,6 +14,7 @@ import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
+import salpim.umc10thsalpim.domain.auth.service.AuthSecretHasher;
 import salpim.umc10thsalpim.domain.auth.service.PasswordResetService;
 import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
@@ -41,6 +42,9 @@ class PasswordResetControllerTest {
 
     @MockitoBean
     private TokenService tokenService;
+
+    @MockitoBean
+    private AuthSecretHasher authSecretHasher;
 
     @MockitoBean
     private MemberRepository memberRepository;

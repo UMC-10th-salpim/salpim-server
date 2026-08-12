@@ -11,6 +11,7 @@ import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.service.PasswordVerificationAttemptService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
+import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.member.converter.MemberConverter;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
@@ -38,6 +39,7 @@ public class MemberService {
 
     private final PasswordVerificationAttemptService passwordVerificationAttemptService;
     private final RegionQueryService regionQueryService;
+    private final TokenService tokenService;
 
     @Transactional(readOnly = true)
     public MemberResDTO.MyPageInfo getMyPage(Long memberId) {
@@ -167,6 +169,7 @@ public class MemberService {
 
         clearPasswordChangeFailures(memberId);
         member.changePassword(passwordEncoder.encode(request.newPassword()));
+        tokenService.invalidateMemberSession(member);
     }
 
     private void updatePhoneNumberIfRequested(

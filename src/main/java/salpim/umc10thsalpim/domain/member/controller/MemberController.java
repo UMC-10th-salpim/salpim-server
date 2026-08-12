@@ -195,7 +195,8 @@ public class MemberController {
     @PutMapping("/users/me/password")
     @Operation(
             summary = "비밀번호 변경",
-            description = "현재 비밀번호 또는 복구 답변을 재검증한 뒤 새 비밀번호로 변경합니다.",
+            description = "현재 비밀번호 또는 복구 답변을 재검증한 뒤 새 비밀번호로 변경합니다. " +
+                    "비밀번호 변경 후 기존 로그인 세션은 만료되며, 다시 로그인해야 합니다.",
             security = @SecurityRequirement(name = "JWT TOKEN")
     )
     public ApiResponse<Void> changePassword(

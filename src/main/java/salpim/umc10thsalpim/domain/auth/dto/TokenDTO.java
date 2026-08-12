@@ -24,4 +24,11 @@ public class TokenDTO {
             Long memberId
     ){
     }
+
+    public record AccessTokenClaims(
+            TokenPurpose purpose,
+            Long memberId,
+            String credentialFingerprint
+    ) {
+    }
 }

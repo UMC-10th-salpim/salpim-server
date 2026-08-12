@@ -13,6 +13,7 @@ import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.auth.service.PasswordVerificationAttemptService;
 import salpim.umc10thsalpim.domain.auth.service.PhoneVerificationService;
+import salpim.umc10thsalpim.domain.auth.service.TokenService;
 import salpim.umc10thsalpim.domain.member.dto.MemberReqDTO;
 import salpim.umc10thsalpim.domain.member.dto.MemberResDTO;
 import salpim.umc10thsalpim.domain.member.entity.Member;
@@ -66,6 +67,9 @@ class MemberServiceTest {
 
     @Mock
     private PasswordVerificationAttemptService passwordVerificationAttemptService;
+
+    @Mock
+    private TokenService tokenService;
 
     @InjectMocks
     private MemberService memberService;
@@ -650,6 +654,7 @@ class MemberServiceTest {
         assertThat(member.getPassword()).isEqualTo("new-encoded-password");
         verify(passwordEncoder).matches("123456", "encoded-password");
         verify(passwordEncoder).encode("654321");
+        verify(tokenService).invalidateMemberSession(member);
         verify(passwordVerificationAttemptService).clearFailures(
                 PasswordVerificationPurpose.PASSWORD_CHANGE,
                 PasswordVerificationTargetType.MEMBER,
@@ -678,6 +683,7 @@ class MemberServiceTest {
         assertThat(member.getPassword()).isEqualTo("new-encoded-password");
         verify(passwordEncoder).matches("봄", "encoded-answer");
         verify(passwordEncoder).encode("654321");
+        verify(tokenService).invalidateMemberSession(member);
     }
 
     @Test
