@@ -127,6 +127,11 @@ public class TokenService {
                 .build();
     }
 
+    @Transactional
+    public void invalidateMemberSession(Member member) {
+        refreshTokenRepository.deleteByMember(member);
+    }
+
     public AuthResDTO.KakaoLoginResult issueSignupRequiredToken(
             SocialProvider provider,
             String providerId,
