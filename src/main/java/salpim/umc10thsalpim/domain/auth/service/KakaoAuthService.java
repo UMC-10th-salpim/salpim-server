@@ -108,7 +108,7 @@ public class KakaoAuthService {
             String requestedPhoneNumber
     ) {
         if (StringUtils.hasText(signupTokenClaims.providerPhoneNumber())) {
-            return signupTokenClaims.providerPhoneNumber();
+            return signupTokenClaims.providerPhoneNumber(); // 카카오 계정에서 전화번호를 바로 받을 수 있는 경우 (사업자 등록 필요)
         }
         if (!StringUtils.hasText(requestedPhoneNumber)) {
             throw new AuthException(AuthErrorCode.KAKAO_PHONE_VERIFICATION_REQUIRED);
