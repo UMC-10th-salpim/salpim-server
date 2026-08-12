@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -61,12 +62,12 @@ public class TermController {
                 필수 약관(isRequired=true)에 agreed=true로 동의하지 않으면 REQUIRED_TERM_NOT_AGREED(400) 에러가 발생합니다.
                 """
     )
-    public ApiResponse<List<TermResDTO.AgreedTerms>> submitAgreements(
+    public ResponseEntity<ApiResponse<List<TermResDTO.AgreedTerms>>> submitAgreements(
             @AuthenticationPrincipal Long memberId,
             @Valid @RequestBody TermReqDTO.SubmitAgreements request
     ) {
-        return ApiResponse.onSuccess(
-                TermSuccessCode.TERM_AGREEMENT_SUBMITTED,
-                termService.submitAgreements(memberId, request));
+        List<TermResDTO.AgreedTerms> response = termService.submitAgreements(memberId, request);
+        return ResponseEntity.status(TermSuccessCode.TERM_AGREEMENT_SUBMITTED.getStatus())
+                .body(ApiResponse.onSuccess(TermSuccessCode.TERM_AGREEMENT_SUBMITTED, response));
     }
 }
