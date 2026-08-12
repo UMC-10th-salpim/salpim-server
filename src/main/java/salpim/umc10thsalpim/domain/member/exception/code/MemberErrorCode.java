@@ -45,6 +45,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     PASSWORD_CHANGE_NOT_SUPPORTED(HttpStatus.BAD_REQUEST,
             "MEMBER400_5",
             "카카오 로그인 회원은 비밀번호를 변경할 수 없습니다."),
+    PASSWORD_SAME_AS_CURRENT(HttpStatus.BAD_REQUEST,
+            "MEMBER400_6",
+            "새 비밀번호는 현재 비밀번호와 달라야 합니다."),
     ;
 
     private final HttpStatus status;

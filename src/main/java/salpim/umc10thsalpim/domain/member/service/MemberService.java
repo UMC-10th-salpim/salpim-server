@@ -167,6 +167,8 @@ public class MemberService {
             throw e;
         }
 
+        validateNewPasswordIsDifferent(member, request.newPassword());
+
         clearPasswordChangeFailures(memberId);
         member.changePassword(passwordEncoder.encode(request.newPassword()));
         tokenService.invalidateMemberSession(member);
@@ -297,5 +299,16 @@ public class MemberService {
     private boolean isPasswordVerificationFailure(MemberException e) {
         return e.getErrorCode() == MemberErrorCode.PASSWORD_MISMATCH
                 || e.getErrorCode() == MemberErrorCode.RECOVERY_ANSWER_MISMATCH;
+    }
+
+    private void validateNewPasswordIsDifferent(
+            Member member,
+            String newPassword
+    ) {
+        if (passwordEncoder.matches(newPassword, member.getPassword())) {
+            throw new MemberException(
+                    MemberErrorCode.PASSWORD_SAME_AS_CURRENT
+            );
+        }
     }
 }

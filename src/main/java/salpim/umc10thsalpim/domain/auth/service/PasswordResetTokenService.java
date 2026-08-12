@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.config.JwtProperties;
+import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
 import salpim.umc10thsalpim.domain.auth.entity.PasswordResetToken;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
 import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
@@ -59,6 +60,28 @@ public class PasswordResetTokenService {
                                         .build()
                         )
                 );
+
+        return passwordResetToken;
+    }
+
+    @Transactional
+    public PasswordResetToken getUsablePasswordResetTokenForUpdate(
+            TokenDTO.PasswordResetTokenClaims claims
+    ) {
+        LocalDateTime now = LocalDateTime.now();
+        String tokenIdHash = authSecretHasher.hashPasswordResetTokenId(
+                claims.tokenId()
+        );
+
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository
+                .findByTokenIdHashForUpdate(tokenIdHash)
+                .orElseThrow(() ->
+                        new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
+
+        if (!passwordResetToken.getMember().getId().equals(claims.memberId())
+                || !passwordResetToken.isUsableAt(now)) {
+            throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
+        }
 
         return passwordResetToken;
     }
