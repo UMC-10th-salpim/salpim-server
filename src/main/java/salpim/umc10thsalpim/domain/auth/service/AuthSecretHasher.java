@@ -3,6 +3,7 @@ package salpim.umc10thsalpim.domain.auth.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import salpim.umc10thsalpim.domain.auth.config.AuthSecretProperties;
+import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,6 +19,7 @@ public class AuthSecretHasher {
     private static final String HMAC_ALGORITHM = "HmacSHA256";
     private static final String OTP_CONTEXT = "phone-verification:";
     private static final String REFRESH_TOKEN_CONTEXT = "refresh-token:";
+    private static final String ACCESS_TOKEN_CREDENTIAL_CONTEXT = "access-token-credential";
 
     private final AuthSecretProperties authSecretProperties;
 
@@ -45,6 +47,29 @@ public class AuthSecretHasher {
         byte[] actual = hashRefreshToken(refreshToken).getBytes(StandardCharsets.US_ASCII);
         byte[] expected = expectedHash.getBytes(StandardCharsets.US_ASCII);
         return MessageDigest.isEqual(actual, expected);
+    }
+
+    public String createCredentialFingerprint(
+            SocialProvider loginType,
+            String passwordHash
+    ) {
+        String credentialState = loginType.name() + ":" + String.valueOf(passwordHash);
+
+        return hash(ACCESS_TOKEN_CREDENTIAL_CONTEXT, credentialState);
+    }
+
+    public boolean matchesCredentialFingerprint(
+            String credentialFingerprint,
+            String expectedFingerprint
+    ) {
+        if (credentialFingerprint == null || expectedFingerprint == null) {
+            return false;
+        }
+
+        return MessageDigest.isEqual(
+                credentialFingerprint.getBytes(StandardCharsets.US_ASCII),
+                expectedFingerprint.getBytes(StandardCharsets.US_ASCII)
+        );
     }
 
     private String hash(String context, String value) {

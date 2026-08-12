@@ -37,6 +37,7 @@ public class TokenService {
     private static final String CLAIM_PROVIDER = "provider";
     private static final String CLAIM_PROVIDER_ID = "providerId";
     private static final String CLAIM_PROVIDER_PHONE_NUMBER = "providerPhoneNumber";
+    private static final String CLAIM_CREDENTIAL_FINGERPRINT = "credentialFingerprint";
 
     private final JwtProperties jwtProperties;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -48,11 +49,8 @@ public class TokenService {
         Member lockedMember = memberRepository.findByIdForUpdate(member.getId())
                 .orElseThrow(() -> new AuthException(AuthErrorCode.LOGIN_MEMBER_NOT_FOUND));
 
-        String accessToken = createMemberToken(
-                lockedMember,
-                TokenPurpose.ACCESS,
-                jwtProperties.getAccessTokenExpirationMillis()
-        );
+        String accessToken = createAccessToken(lockedMember);
+
         String refreshToken = createRefreshToken(lockedMember);
         LocalDateTime refreshTokenExpiredAt = LocalDateTime.now()
                 .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
@@ -98,11 +96,7 @@ public class TokenService {
             throw new AuthException(AuthErrorCode.INVALID_REFRESH_TOKEN);
         }
 
-        String accessToken = createMemberToken(
-                lockedMember,
-                TokenPurpose.ACCESS,
-                jwtProperties.getAccessTokenExpirationMillis()
-        );
+        String accessToken = createAccessToken(lockedMember);
         String rotatedRefreshToken = createRefreshToken(lockedMember);
         LocalDateTime rotatedRefreshTokenExpiredAt = now
                 .plus(Duration.ofMillis(jwtProperties.getRefreshTokenExpirationMillis()));
@@ -291,17 +285,38 @@ public class TokenService {
     }
 
     public Long validateAccessTokenAndGetMemberId(String token) {
-        try {
+        return parseAccessToken(token).memberId();
+    }
+
+    public TokenDTO.AccessTokenClaims parseAccessToken(String token) {
+        try{
             var claims = Jwts.parser()
                     .verifyWith(getSecretKey())
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
 
-            if (!Objects.equals(TokenPurpose.ACCESS.name(), claims.get(CLAIM_PURPOSE, String.class))) {
+            if (!Objects.equals(
+                    TokenPurpose.ACCESS.name(),
+                    claims.get(CLAIM_PURPOSE, String.class)
+            )) {
                 throw new AuthException(AuthErrorCode.INVALID_TOKEN);
             }
-            return Long.parseLong(claims.getSubject());
+
+            String credentialFingerprint = claims.get(
+                    CLAIM_CREDENTIAL_FINGERPRINT,
+                    String.class
+            );
+
+            if (!StringUtils.hasText(credentialFingerprint)) {
+                throw new AuthException(AuthErrorCode.INVALID_TOKEN);
+            }
+
+            return new TokenDTO.AccessTokenClaims(
+                    TokenPurpose.ACCESS,
+                    Long.parseLong(claims.getSubject()),
+                    credentialFingerprint
+            );
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
@@ -314,5 +329,25 @@ public class TokenService {
             throw new AuthException(AuthErrorCode.INVALID_TOKEN);
         }
         return Keys.hmacShaKeyFor(jwtProperties.getDecodedSecretKey());
+    }
+
+    private String createAccessToken(Member member) {
+        Date now = new Date();
+        Date expiredAt = new Date(now.getTime() + jwtProperties.getAccessTokenExpirationMillis());
+
+        return Jwts.builder()
+                .subject(String.valueOf(member.getId()))
+                .claim(CLAIM_PURPOSE, TokenPurpose.ACCESS.name())
+                .claim(
+                        CLAIM_CREDENTIAL_FINGERPRINT,
+                        authSecretHasher.createCredentialFingerprint(
+                                member.getLoginType(),
+                                member.getPassword()
+                        )
+                )
+                .issuedAt(now)
+                .expiration(expiredAt)
+                .signWith(getSecretKey())
+                .compact();
     }
 }
