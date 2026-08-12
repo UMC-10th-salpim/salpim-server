@@ -66,4 +66,20 @@ class PasswordVerificationAttemptTest {
         assertThat(attempt.getLastFailedAt()).isNull();
         assertThat(attempt.getLockedUntil()).isNull();
     }
+
+    @Test
+    void startsNewFailureWindowAfterInactivity() {
+        LocalDateTime now = LocalDateTime.now();
+        PasswordVerificationAttempt attempt = PasswordVerificationAttempt.create(
+                PasswordVerificationPurpose.LOGIN,
+                PasswordVerificationTargetType.IP_ADDRESS,
+                "203.0.113.10"
+        );
+
+        attempt.recordFailure(now, 15, LOCK_DURATION_MILLIS);
+        attempt.recordFailure(now.plusMinutes(15), 15, LOCK_DURATION_MILLIS);
+
+        assertThat(attempt.getFailureCount()).isEqualTo(1);
+        assertThat(attempt.getLockedUntil()).isNull();
+    }
 }

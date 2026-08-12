@@ -20,23 +20,29 @@ public class LocalLoginService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final LoginAttemptService loginAttemptService;
 
     @Transactional
-    public AuthResDTO.TokenResult login(AuthReqDTO.LocalLogin request) {
+    public AuthResDTO.TokenResult login(AuthReqDTO.LocalLogin request, String clientIp) {
         String normalizedPhoneNumber = normalizePhoneNumber(request.phoneNumber());
-        Member member = memberRepository.findByPhoneNumber(normalizedPhoneNumber)
-                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
+        loginAttemptService.validateAllowed(normalizedPhoneNumber, clientIp);
 
-        validateLocalPassword(member, request.password());
+        Member member = memberRepository.findByPhoneNumber(normalizedPhoneNumber).orElse(null);
+
+        if (!hasValidLocalPassword(member, request.password())) {
+            loginAttemptService.recordFailure(normalizedPhoneNumber, clientIp);
+            throw new AuthException(AuthErrorCode.INVALID_LOGIN_CREDENTIALS);
+        }
+
+        loginAttemptService.clearPhoneFailures(normalizedPhoneNumber);
         return tokenService.issueLoginTokens(member);
     }
 
-    private void validateLocalPassword(Member member, String rawPassword) {
-        if (member.getLoginType() != SocialProvider.LOCAL
-                || member.getPassword() == null
-                || !passwordEncoder.matches(rawPassword, member.getPassword())) {
-            throw new AuthException(AuthErrorCode.INVALID_LOGIN_CREDENTIALS);
-        }
+    private boolean hasValidLocalPassword(Member member, String rawPassword) {
+        return member != null
+                && member.getLoginType() == SocialProvider.LOCAL
+                && member.getPassword() != null
+                && passwordEncoder.matches(rawPassword, member.getPassword());
     }
 
     private String normalizePhoneNumber(String phoneNumber) {

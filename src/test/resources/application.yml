@@ -34,6 +34,11 @@ password-verification-attempt:
   max-failure-count: 5
   lock-duration-millis: 900000
 
+login-attempt:
+  phone-max-failure-count: 5
+  ip-max-failure-count: 15
+  lock-duration-millis: 900000
+
 bokjiro:
   base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
   local-base-url: https://apis.data.go.kr/B554287/LocalGovernmentWelfareInformations

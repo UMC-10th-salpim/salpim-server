@@ -44,6 +44,11 @@ password-verification-attempt:
   max-failure-count: ${PASSWORD_VERIFICATION_MAX_FAILURE_COUNT:5}
   lock-duration-millis: ${PASSWORD_VERIFICATION_LOCK_DURATION_MILLIS:900000}
 
+login-attempt:
+  phone-max-failure-count: ${LOGIN_PHONE_MAX_FAILURE_COUNT:5}
+  ip-max-failure-count: ${LOGIN_IP_MAX_FAILURE_COUNT:15}
+  lock-duration-millis: ${LOGIN_LOCK_DURATION_MILLIS:900000}
+
 discord:
   otp-webhook-url: ${DISCORD_OTP_WEBHOOK_URL:}
 

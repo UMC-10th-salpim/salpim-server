@@ -69,7 +69,11 @@ public class PasswordVerificationAttempt extends BaseEntity {
                 int maxFailureCount,
                 long lockDurationMillis
         ){
-                if(lockedUntil != null && !now.isBefore(lockedUntil)) {
+                boolean lockExpired = lockedUntil != null && !now.isBefore(lockedUntil);
+                boolean failureWindowExpired = lastFailedAt != null
+                        && !now.isBefore(lastFailedAt.plus(Duration.ofMillis(lockDurationMillis)));
+
+                if(lockExpired || failureWindowExpired) {
                         clearFailures();
                 }
 

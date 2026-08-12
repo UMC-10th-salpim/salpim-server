@@ -2,6 +2,7 @@ package salpim.umc10thsalpim.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +32,13 @@ public class LoginController {
     @Operation(summary = "Local login API")
     @PostMapping("/local")
     public ResponseEntity<ApiResponse<AuthResDTO.TokenResult>> loginLocal(
-            @Valid @RequestBody AuthReqDTO.LocalLogin request
+            @Valid @RequestBody AuthReqDTO.LocalLogin request,
+            HttpServletRequest httpServletRequest
     ) {
-        AuthResDTO.TokenResult response = localLoginService.login(request);
+        AuthResDTO.TokenResult response = localLoginService.login(
+                request,
+                httpServletRequest.getRemoteAddr()
+        );
         return ResponseEntity.status(AuthSuccessCode.LOGIN_SUCCESS.getStatus())
                 .body(ApiResponse.onSuccess(AuthSuccessCode.LOGIN_SUCCESS, response));
     }
