@@ -1,3 +1,14 @@
+server:
+  forward-headers-strategy: native
+  tomcat:
+    remoteip:
+      remote-ip-header: X-Forwarded-For
+      protocol-header: X-Forwarded-Proto
+      protocol-header-https-value: https
+      host-header: X-Forwarded-Host
+      port-header: X-Forwarded-Port
+      internal-proxies: 127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,::1/128
+
 spring:
   datasource:
     driver-class-name: org.h2.Driver
@@ -33,6 +44,12 @@ auth:
 password-verification-attempt:
   max-failure-count: 5
   lock-duration-millis: 900000
+
+login-attempt:
+  phone-max-failure-count: 5
+  ip-max-failure-count: 15
+  phone-lock-duration-millis: 900000
+  ip-lock-duration-millis: 3600000
 
 bokjiro:
   base-url: https://apis.data.go.kr/B554287/NationalWelfareInformationsV001
