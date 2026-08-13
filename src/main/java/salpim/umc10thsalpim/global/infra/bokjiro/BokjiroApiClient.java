@@ -138,14 +138,6 @@ public class BokjiroApiClient {
                 });
     }
 
-    // 기존 메서드는 껍데기만
-    public BokjiroApiDTO.BenefitListRes searchBenefits(
-            int pageNo, int pageSize, List<String> searchWrd,
-            String intrsThemaArray, String source, String ctpvNm, String sggNm) {
-        return searchBenefitsMono(pageNo, pageSize, searchWrd, intrsThemaArray, source, ctpvNm, sggNm)
-                .block();
-    }
-
     //중복 제거 및 합치기
     private BokjiroApiDTO.BenefitListRes mergeRes(List<BokjiroApiDTO.BenefitListRes> results) {
 
