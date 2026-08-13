@@ -8,16 +8,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 import salpim.umc10thsalpim.global.infra.exception.BokjiroException;
 import salpim.umc10thsalpim.global.infra.exception.code.BokjiroErrorCode;
 
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.LinkedHashMap;
 
 @Component
 @Slf4j
@@ -28,6 +29,10 @@ public class BokjiroApiClient {
     private final String nationalServiceKey;
     private final String localServiceKey;
     private final XmlMapper xmlMapper;
+
+    private static final Duration API_TIMEOUT = Duration.ofSeconds(9);
+    private static final int MAX_RETRY = 2;
+    private static final Duration RETRY_BACKOFF = Duration.ofMillis(150);
 
     public BokjiroApiClient(@Qualifier("bokjiroNationalWebClient") WebClient nationalWebClient,
                             @Value("${bokjiro.service-key}") String serviceKey,
@@ -56,7 +61,8 @@ public class BokjiroApiClient {
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(10))
+                .timeout(API_TIMEOUT)
+                .retryWhen(Retry.backoff(MAX_RETRY, RETRY_BACKOFF))
                 .map(this::parseAndValidate);
     }
 
@@ -75,9 +81,12 @@ public class BokjiroApiClient {
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(10))
+                .timeout(API_TIMEOUT)
+                .retryWhen(Retry.backoff(MAX_RETRY, RETRY_BACKOFF))
                 .map(this::parseAndValidate);
     }
+
+
 
     private BokjiroApiDTO.BenefitListRes parseAndValidate(String xml){
 
