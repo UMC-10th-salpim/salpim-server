@@ -36,9 +36,9 @@ import salpim.umc10thsalpim.global.dto.CursorResDTO;
 import salpim.umc10thsalpim.global.infra.bokjiro.BokjiroApiClient;
 import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.Period;
-import java.time.ZoneId;
 import java.util.List;
 import java.net.URI;
 import java.util.*;
@@ -55,7 +55,6 @@ public class BenefitService {
     private static final String SOURCE_NATIONAL = "NATIONAL";
     private static final String SOURCE_LOCAL = "LOCAL";
     private static final int DEADLINE_SOON_LIMIT = 3;
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final WelfareBenefitRepository welfareBenefitRepository;
     private final BenefitRuleRepository benefitRuleRepository;
@@ -64,6 +63,7 @@ public class BenefitService {
     private final WelfareCategoryRepository welfareCategoryRepository;
     private final RegionQueryService regionQueryService;
     private final FavoriteBenefitRepository favoriteBenefitRepository;
+    private final Clock clock;
 
     @Transactional(readOnly = true)
     public BenefitResDTO.GetApplicationHelperInfo getApplicationHelperInfo(
@@ -180,7 +180,7 @@ public class BenefitService {
             case UNKNOWN -> null;
             case NO_RESTRICTION -> true;
             case RESTRICTED -> {
-                int age = Period.between(member.getBirthDate(), LocalDate.now()).getYears();
+                int age = Period.between(member.getBirthDate(), LocalDate.now(clock)).getYears();
 
                 boolean meetsMinAge = welfareBenefit.getMinAge() == null
                         || age >= welfareBenefit.getMinAge();
@@ -301,7 +301,7 @@ public class BenefitService {
             matched.addAll(welfareBenefitRepository.findByExternalIdInAndSource(servIds_L, SOURCE_LOCAL));
         }
 
-        LocalDate today = LocalDate.now(KST);
+        LocalDate today = LocalDate.now(clock);
 
         List<WelfareBenefit> filtered = matched.stream()
                 .filter(b -> categoryIds==null || categoryIds.isEmpty()||
@@ -396,7 +396,7 @@ public class BenefitService {
 
     public List<BenefitResDTO.DeadlineSoonBenefitDTO> getDeadlineSoonBenefits(Long memberId) {
 
-        LocalDate today = LocalDate.now(KST);
+        LocalDate today = LocalDate.now(clock);
 
         List<WelfareBenefit> benefits = favoriteBenefitRepository.findDeadlineSoonFavoriteBenefits(
                 memberId, today, PageRequest.of(0, DEADLINE_SOON_LIMIT));

@@ -39,7 +39,6 @@ public class PhoneVerificationService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthSecretHasher authSecretHasher;
-    private final DiscordWebhookNotifier discordWebhookNotifier;
     private final SolapiSmsSender solapiSmsSender;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -199,12 +198,6 @@ public class PhoneVerificationService {
         }
 
         solapiSmsSender.sendVerificationCode(normalizedPhoneNumber, code);
-
-        discordWebhookNotifier.sendVerificationCode(
-                maskPhoneNumber(normalizedPhoneNumber),
-                code,
-                purpose
-        );
     }
 
     @Transactional
@@ -322,14 +315,6 @@ public class PhoneVerificationService {
         return Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString(tokenBytes);
-    }
-
-    private String maskPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.length() < 4) {
-            return "****";
-        }
-
-        return "****" + phoneNumber.substring(phoneNumber.length() - 4);
     }
 
     private String normalizePhoneNumber(String phoneNumber) {
