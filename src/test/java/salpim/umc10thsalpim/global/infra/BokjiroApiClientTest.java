@@ -204,24 +204,6 @@ class BokjiroApiClientTest {
     }
 
     @Test
-    @DisplayName("블로킹 방식 searchBenefits도 병렬 호출 결과를 그대로 반환한다")
-    void blockingSearchBenefitsReturnsSameMergedResult() {
-        BokjiroApiClient client = client(wrd -> switch (wrd) {
-            case "노인" -> ok(10, "S1", "S2");
-            case "돌봄" -> ok(70, "S2", "S3");
-            default -> ok(0);
-        });
-
-        BokjiroApiDTO.BenefitListRes res = client.searchBenefits(
-                PAGE_NO, PAGE_SIZE, List.of("노인", "돌봄"), null, SOURCE_NATIONAL, null, null);
-
-        assertThat(res.getBenefitList())
-                .extracting(BokjiroApiDTO.BenefitItem::getServId)
-                .containsExactlyInAnyOrder("S1", "S2", "S3");
-        assertThat(res.getMaxTotalCount()).isEqualTo(70);
-    }
-
-    @Test
     @DisplayName("중앙부처와 지자체를 동시에 조회해도 서로 영향을 주지 않는다")
     void queriesNationalAndLocalTogether() {
         BokjiroApiClient client = client(

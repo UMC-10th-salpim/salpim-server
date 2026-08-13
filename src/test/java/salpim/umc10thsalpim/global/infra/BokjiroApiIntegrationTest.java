@@ -25,7 +25,9 @@ public class BokjiroApiIntegrationTest {
     @Test
     @DisplayName("중앙부처 복지로 api 연결 확인")
     void nationalBokjiroApiTest(){
-        var res = bokjiroApiClient.searchBenefits(1, 10, List.of(""), null, "National", null, null);
+        var res = bokjiroApiClient
+                .searchBenefitsMono(1, 10, List.of(""), null, "National", null, null)
+                .block();
         assertThat(res.getMaxTotalCount()).isPositive();
         assertThat(res.getBenefitList()).isNotEmpty();
         assertThat(res.getBenefitList().get(0).getServId()).isNotBlank();
@@ -34,7 +36,9 @@ public class BokjiroApiIntegrationTest {
     @Test
     @DisplayName("지자체 복지로 api 연결 확인")
     void localBokjiroApiTest(){
-        var res = bokjiroApiClient.searchBenefits(1, 10, List.of(""), null, "Local", "인천", null);
+        var res = bokjiroApiClient
+                .searchBenefitsMono(1, 10, List.of(""), null, "Local", "인천", null)
+                .block();
         assertThat(res.getMaxTotalCount()).isPositive();
         assertThat(res.getBenefitList()).isNotEmpty();
         assertThat(res.getBenefitList().get(0).getServId()).isNotBlank();
