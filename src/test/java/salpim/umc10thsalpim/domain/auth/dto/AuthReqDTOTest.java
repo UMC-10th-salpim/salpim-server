@@ -52,7 +52,7 @@ class AuthReqDTOTest {
                 .anySatisfy(violation -> {
                     assertThat(violation.getPropertyPath()).hasToString("password");
                     assertThat(violation.getMessage())
-                            .isEqualTo("password must be exactly 6 digits.");
+                            .isEqualTo("비밀번호는 6자리 숫자여야 합니다.");
                 });
     }
 
