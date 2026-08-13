@@ -42,6 +42,8 @@ public class FacilityService {
             String cursor,
             int size
     ) {
+        Long cursorId = parseCursor(cursor);
+
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
@@ -73,7 +75,6 @@ public class FacilityService {
         Map<Long, String> regionNameMap = regionQueryService.getAncestorRegionNameMap(member.getRegionId());
         List<Long> upperRegionIds = new ArrayList<>(regionNameMap.keySet());
 
-        Long cursorId = parseCursor(cursor);
         PageRequest pageRequest = PageRequest.of(0, size + 1);
 
         // DB 단일 쿼리로 중앙 + 지자체 혜택 중 VISIT만 페이징

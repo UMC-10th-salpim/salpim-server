@@ -251,9 +251,7 @@ class FacilityServiceTest {
         @DisplayName("유효하지 않은 커서 형식인 경우 MapException(INVALID_CURSOR) 발생")
         void getFacilityInfo_InvalidCursor_ThrowsMapException() {
             // given
-            Member member = createMockMember(1L, "용현동");
             MapReqDTO.FacilityInfoRequest request = createMockRequest("용현동 행정복지센터");
-            when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
 
             // when & then
             MapException exception = assertThrows(MapException.class,

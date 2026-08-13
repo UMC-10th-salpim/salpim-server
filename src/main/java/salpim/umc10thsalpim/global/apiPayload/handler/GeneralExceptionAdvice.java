@@ -2,6 +2,7 @@ package salpim.umc10thsalpim.global.apiPayload.handler;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -59,7 +60,12 @@ public class GeneralExceptionAdvice {
     public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
             HttpRequestMethodNotSupportedException e
     ) {
+        HttpHeaders headers = new HttpHeaders();
+        if (e.getSupportedHttpMethods() != null) {
+            headers.setAllow(e.getSupportedHttpMethods());
+        }
         return ResponseEntity.status(GeneralErrorCode.METHOD_NOT_ALLOWED.getStatus())
+                .headers(headers)
                 .body(ApiResponse.onFailure(GeneralErrorCode.METHOD_NOT_ALLOWED, null));
     }
     //없는 리소스 경로
