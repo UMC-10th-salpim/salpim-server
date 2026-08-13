@@ -22,7 +22,7 @@ public class AuthReqDTO {
             @Pattern(regexp = KOREAN_MOBILE_PHONE_PATTERN, message = "phoneNumber must be a valid Korean mobile number.")
             String phoneNumber,
 
-            @Schema(example = "qwer1234")
+            @Schema(example = "123456")
             @NotBlank(message = "password is required.")
             String password
     ) {

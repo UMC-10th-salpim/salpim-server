@@ -28,6 +28,9 @@ class LoginOpenApiTest {
                         operationPath + "['requestBody']['content']['application/json']['schema']['$ref']",
                         endsWith("/LocalLogin")
                 ))
+                .andExpect(jsonPath(
+                        "$['components']['schemas']['LocalLogin']['properties']['password']['example']"
+                ).value("123456"))
                 .andExpect(jsonPath(operationPath + "['parameters']").doesNotExist());
     }
 }
