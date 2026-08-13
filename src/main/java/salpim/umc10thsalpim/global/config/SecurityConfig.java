@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -46,17 +47,42 @@ public class SecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/members/me").authenticated()
-                        .requestMatchers("/api/benefits/*/application-helper").authenticated()
-                        .requestMatchers("/api/benefits/*/favorite").authenticated()
-                        .requestMatchers("/api/benefits/favorites").authenticated()
-                        .requestMatchers("/api/benefits/favorites/deadline-soon").authenticated()
-                        .requestMatchers("/api/recommendations/result").authenticated()
-                        .requestMatchers("/api/map/details").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/terms/agreements").authenticated()
-                        .requestMatchers("/api/password-reset/**").permitAll()
-                        .anyRequest().permitAll())
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/error"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/login/local",
+                                "/api/login/reissue",
+                                "/api/login/kakao",
+                                "/api/signup/phone/send",
+                                "/api/signup/phone/verify",
+                                "/api/signup/location/geocode",
+                                "/api/signup/terms",
+                                "/api/signup/local",
+                                "/api/signup/kakao",
+                                "/api/password-reset/verify"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/password-reset").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/regions/resolve").permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/regions",
+                                "/api/regions/*/children"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/terms", "/api/terms/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/benefits/search").permitAll()
+                        .requestMatchers(
+                                new RegexRequestMatcher("^/api/benefits/\\d+$", HttpMethod.GET.name())
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/benefits/*/application-link").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/benefits/*/share").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/recommendations/options/*").permitAll()
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
