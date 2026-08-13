@@ -27,11 +27,11 @@ public class PasswordVerificationAttempt extends BaseEntity {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
-        @Column(name = "purpose")
+        @Column(name = "purpose", columnDefinition = "varchar(30)")
         @Enumerated(EnumType.STRING)
         private PasswordVerificationPurpose purpose;
 
-        @Column(name = "target_type")
+        @Column(name = "target_type", columnDefinition = "varchar(30)")
         @Enumerated(EnumType.STRING)
         private PasswordVerificationTargetType targetType;
 
