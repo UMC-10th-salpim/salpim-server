@@ -151,6 +151,6 @@ class PasswordResetControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.isSuccess").value(false))
-                .andExpect(jsonPath("$.code").value("AUTH429_PASSWORD_VERIFICATION_ATTEMPTS"));
+                .andExpect(jsonPath("$.code").value("AUTH429_4"));
     }
 }

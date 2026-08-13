@@ -35,7 +35,7 @@ class JwtAuthenticationEntryPointTest {
         assertThat(response.getStatus()).isEqualTo(401);
         assertThat(response.getContentType()).startsWith("application/json");
         assertThat(body.get("isSuccess").asBoolean()).isFalse();
-        assertThat(body.get("code").asText()).isEqualTo("AUTH401_TOKEN");
+        assertThat(body.get("code").asText()).isEqualTo("AUTH401_3");
         assertThat(body.get("message").asText()).isEqualTo("유효하지 않은 토큰입니다.");
         assertThat(body.get("result").isNull()).isTrue();
     }

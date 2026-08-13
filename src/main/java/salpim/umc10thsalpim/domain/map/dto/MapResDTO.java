@@ -28,34 +28,29 @@ public class MapResDTO {
     public record BenefitPageDTO(
             @Schema(description = "Benefit list")
             List<BenefitDTO> data,
-            @Schema(description = "Whether another page exists", example = "true")
+            @Schema(example = "true")
             boolean hasNext,
-            @Schema(description = "Cursor for the next request", example = "WLF00001234")
+            @Schema(example = "422")
             String nextCursor,
-            @Schema(description = "Number of benefits in this page", example = "10")
-            int pageSize,
-            @Schema(description = "Total benefit count", example = "42")
-            int totalCount
+            @Schema(example = "10")
+            int pageSize
     ) {
     }
 
     @Builder
     public record BenefitDTO(
             //페이징 커서용 DB PK
-            @Schema(description = "DB Primary Key (커서 페이징용)", example = "34")
+            @Schema(example = "34")
             Long benefitId,
             //자세히 보기 버튼 조회용 servId
-            @Schema(description = "Service identifier used as a cursor", example = "WLF00001234")
+            @Schema(example = "WLF00001234")
             String servId,
 
-            @Schema(description = "Provided region", example = "Nationwide")
+            @Schema(example = "Nationwide")
             String region,
 
-            @Schema(description = "Service name", example = "Youth monthly rent support")
+            @Schema(example = "Youth monthly rent support")
             String serviceName
     ) {
-        public String getServId() {
-            return servId;
-        }
     }
 }
