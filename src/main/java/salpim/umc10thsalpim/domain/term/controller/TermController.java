@@ -32,8 +32,10 @@ public class TermController {
             summary = "회원가입 약관 목록 조회",
             description = """
                 회원가입 약관 동의 화면에서 보여줄 약관 목록을 조회합니다.
-                약관 종류(TermsType)마다 현재 게시(PUBLISHED)된 버전 정보를 함께 반환합니다.
-                isRequired가 true인 약관은 반드시 동의해야 하는 필수 항목입니다.
+                약관 종류(TermsType)마다 현재 게시(PUBLISHED)된 버전 정보를 함께 반환하며, displayOrder 오름차순으로 정렬됩니다.
+                - isRequired: true이면 반드시 동의해야 하는 필수 약관입니다.
+                - termsVersionId: 조항 상세 조회, 약관 동의 제출 시 사용하는 버전 ID입니다.
+                - effectiveDate: 해당 약관 버전의 시행일입니다.
                 """
     )
     public ApiResponse<List<TermResDTO.TermsSummary>> getSignupTerms() {
@@ -43,7 +45,11 @@ public class TermController {
     @GetMapping("/{termsVersionId}")
     @Operation(
             summary = "약관 조항 상세 조회",
-            description = "약관 목록에서 특정 약관을 클릭했을 때, 해당 약관 버전의 조항(제N조) 전문을 조회합니다."
+            description = """
+                약관 목록에서 특정 약관을 클릭했을 때, 해당 약관 버전의 조항(제N조) 전문을 조회합니다.
+                - clauses: 조항 목록이며, displayOrder 오름차순으로 정렬됩니다.
+                - clauseNo: 제N조의 N에 해당하는 조항 번호입니다.
+                """
     )
     public ApiResponse<TermResDTO.TermsDetail> getTermsDetail(
             @Parameter(description = "조회할 약관 버전 ID", example = "1")
@@ -60,6 +66,8 @@ public class TermController {
                 회원가입 약관 동의 화면에서 '다음' 클릭 시 호출합니다.
                 제출한 약관 버전 각각에 대한 동의 여부를 이력으로 저장합니다.
                 필수 약관(isRequired=true)에 agreed=true로 동의하지 않으면 REQUIRED_TERM_NOT_AGREED(400) 에러가 발생합니다.
+                - termsVersionId: 요청 시 전달한 약관 버전 ID가 그대로 반환됩니다.
+                - agreed: 실제로 저장된 동의 여부입니다.
                 """
     )
     public ResponseEntity<ApiResponse<List<TermResDTO.AgreedTerms>>> submitAgreements(
