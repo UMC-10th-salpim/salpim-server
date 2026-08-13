@@ -142,7 +142,7 @@ class PhoneVerificationServiceTest {
     }
 
     @Test
-    @DisplayName("SMS 발송에 실패하면 인증번호를 Discord로 전송하지 않는다")
+    @DisplayName("SMS 발송 실패 예외를 전달한다")
     void throwsExceptionWhenSmsDeliveryFails() {
         given(memberRepository.existsByPhoneNumber(NORMALIZED_PHONE_NUMBER)).willReturn(false);
         given(phoneVerificationRepository.findByPhoneNumberAndPurposeForUpdate(
