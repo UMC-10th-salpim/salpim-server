@@ -21,7 +21,8 @@ public class TokenDTO {
 
     public record PasswordResetTokenClaims(
             TokenPurpose purpose,
-            Long memberId
+            Long memberId,
+            String tokenId
     ){
     }
 

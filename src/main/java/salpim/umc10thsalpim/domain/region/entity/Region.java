@@ -47,7 +47,12 @@ public class Region extends BaseEntity {
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
-    @Column(name = "region_level", nullable = false, length = 30)
+    @Column(
+            name = "region_level",
+            nullable = false,
+            length = 30,
+            columnDefinition = "varchar(30)"
+    )
     @Enumerated(EnumType.STRING)
     private RegionLevel regionLevel;
 

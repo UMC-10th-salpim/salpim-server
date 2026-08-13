@@ -34,6 +34,8 @@ WHERE fb.memberId = :memberId
 
     void deleteByMemberIdAndBenefitId(Long memberId, Long benefitId);
 
+    void deleteByMemberId(Long memberId);
+
     @Query("""
 SELECT wb FROM FavoriteBenefit fb JOIN WelfareBenefit wb ON wb.id = fb.benefitId
 WHERE fb.memberId = :memberId

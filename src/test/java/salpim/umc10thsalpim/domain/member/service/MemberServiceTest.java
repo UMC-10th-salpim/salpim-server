@@ -41,6 +41,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(MockitoExtension.class)
 class MemberServiceTest {
@@ -70,6 +72,9 @@ class MemberServiceTest {
 
     @Mock
     private TokenService tokenService;
+
+    @Mock
+    private PasswordPolicy passwordPolicy;
 
     @InjectMocks
     private MemberService memberService;
@@ -684,6 +689,64 @@ class MemberServiceTest {
         verify(passwordEncoder).matches("봄", "encoded-answer");
         verify(passwordEncoder).encode("654321");
         verify(tokenService).invalidateMemberSession(member);
+    }
+
+    @Test
+    @DisplayName("Rejects a new password that matches the current password after password verification")
+    void changePasswordRejectsCurrentPasswordAsNewPassword() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.CURRENT_PASSWORD,
+                "123456",
+                null,
+                "123456"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("123456", "encoded-password")).willReturn(true);
+        doThrow(new MemberException(MemberErrorCode.PASSWORD_SAME_AS_CURRENT))
+                .when(passwordPolicy)
+                .validateNewPasswordIsDifferent(member, "123456");
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.changePassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.PASSWORD_SAME_AS_CURRENT);
+        verify(passwordPolicy).validateNewPasswordIsDifferent(member, "123456");
+        verify(passwordEncoder, never()).encode("123456");
+        verify(tokenService, never()).invalidateMemberSession(member);
+    }
+
+    @Test
+    @DisplayName("Rejects a new password that matches the current password after recovery answer verification")
+    void changePasswordRejectsCurrentPasswordAsNewPasswordAfterRecoveryAnswer() {
+        Member member = createLocalMember("encoded-password", "encoded-answer");
+        MemberReqDTO.ChangePassword request = new MemberReqDTO.ChangePassword(
+                PasswordVerificationMethod.RECOVERY_ANSWER,
+                null,
+                "answer",
+                "123456"
+        );
+
+        given(memberRepository.findById(MEMBER_ID)).willReturn(Optional.of(member));
+        given(passwordEncoder.matches("answer", "encoded-answer")).willReturn(true);
+        doThrow(new MemberException(MemberErrorCode.PASSWORD_SAME_AS_CURRENT))
+                .when(passwordPolicy)
+                .validateNewPasswordIsDifferent(member, "123456");
+
+        MemberException exception = assertThrows(
+                MemberException.class,
+                () -> memberService.changePassword(MEMBER_ID, request)
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(MemberErrorCode.PASSWORD_SAME_AS_CURRENT);
+        verify(passwordPolicy).validateNewPasswordIsDifferent(member, "123456");
+        verify(passwordEncoder, never()).encode("123456");
+        verify(tokenService, never()).invalidateMemberSession(member);
     }
 
     @Test

@@ -27,15 +27,28 @@ public class PasswordVerificationAttemptService {
             PasswordVerificationTargetType targetType,
             String targetValue
     ) {
+        validateAttemptAllowed(
+                purpose,
+                targetType,
+                targetValue,
+                AuthErrorCode.PASSWORD_VERIFICATION_ATTEMPTS_EXCEEDED
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public void validateAttemptAllowed(
+            PasswordVerificationPurpose purpose,
+            PasswordVerificationTargetType targetType,
+            String targetValue,
+            AuthErrorCode exceededErrorCode
+    ) {
         attemptRepository.findByPurposeAndTargetTypeAndTargetValue(
                 purpose,
                 targetType,
                 targetValue
         ).ifPresent(attempt -> {
             if(attempt.isLocked(LocalDateTime.now())) {
-                throw new AuthException(
-                        AuthErrorCode.PASSWORD_VERIFICATION_ATTEMPTS_EXCEEDED
-                );
+                throw new AuthException(exceededErrorCode);
             }
         });
     }
@@ -45,6 +58,23 @@ public class PasswordVerificationAttemptService {
             PasswordVerificationPurpose purpose,
             PasswordVerificationTargetType targetType,
             String targetValue
+    ) {
+        recordFailure(
+                purpose,
+                targetType,
+                targetValue,
+                properties.getMaxFailureCount(),
+                properties.getLockDurationMillis()
+        );
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordFailure(
+            PasswordVerificationPurpose purpose,
+            PasswordVerificationTargetType targetType,
+            String targetValue,
+            int maxFailureCount,
+            long lockDurationMillis
     ) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -61,8 +91,8 @@ public class PasswordVerificationAttemptService {
 
         attempt.recordFailure(
                 now,
-                properties.getMaxFailureCount(),
-                properties.getLockDurationMillis()
+                maxFailureCount,
+                lockDurationMillis
         );
 
         attemptRepository.save(attempt);

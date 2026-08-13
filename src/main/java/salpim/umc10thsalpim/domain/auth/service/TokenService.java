@@ -203,12 +203,20 @@ public class TokenService {
         }
     }
 
-    public String issuePasswordResetToken(Member member){
-        return createMemberToken(
-                member,
-                TokenPurpose.PASSWORD_RESET,
-                jwtProperties.getPasswordResetTokenExpirationMillis()
+    public String issuePasswordResetToken(Member member, String tokenId){
+        Date now = new Date();
+        Date expiredAt = new Date(
+                now.getTime() + jwtProperties.getPasswordResetTokenExpirationMillis()
         );
+
+        return Jwts.builder()
+                .id(tokenId)
+                .subject(String.valueOf(member.getId()))
+                .claim(CLAIM_PURPOSE, TokenPurpose.PASSWORD_RESET.name())
+                .issuedAt(now)
+                .expiration(expiredAt)
+                .signWith(getSecretKey())
+                .compact();
     }
 
     public TokenDTO.PasswordResetTokenClaims parsePasswordResetToken(String token){
@@ -227,9 +235,15 @@ public class TokenService {
                 throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_TYPE_INVALID);
             }
 
+            String tokenId = claims.getId();
+            if(!StringUtils.hasText(tokenId)) {
+                throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
+            }
+
             return new TokenDTO.PasswordResetTokenClaims(
                     purpose,
-                    Long.parseLong(claims.getSubject())
+                    Long.parseLong(claims.getSubject()),
+                    tokenId
             );
         } catch (AuthException e) {
             throw e;
@@ -238,19 +252,6 @@ public class TokenService {
         } catch (IllegalArgumentException | JwtException e) {
             throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
         }
-    }
-
-    private String createMemberToken(Member member, TokenPurpose purpose, Long expirationMillis) {
-        Date now = new Date();
-        Date expiredAt = new Date(now.getTime() + expirationMillis);
-
-        return Jwts.builder()
-                .subject(String.valueOf(member.getId()))
-                .claim(CLAIM_PURPOSE, purpose.name())
-                .issuedAt(now)
-                .expiration(expiredAt)
-                .signWith(getSecretKey())
-                .compact();
     }
 
     private String createRefreshToken(Member member) {

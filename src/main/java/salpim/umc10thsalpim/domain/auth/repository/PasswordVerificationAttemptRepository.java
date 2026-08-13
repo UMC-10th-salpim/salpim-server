@@ -32,4 +32,6 @@ public interface PasswordVerificationAttemptRepository extends JpaRepository<Pas
             @Param("targetType") PasswordVerificationTargetType targetType,
             @Param("targetValue") String targetValue
     );
+
+    void deleteByTargetTypeAndTargetValue(PasswordVerificationTargetType targetType, String targetValue);
 }

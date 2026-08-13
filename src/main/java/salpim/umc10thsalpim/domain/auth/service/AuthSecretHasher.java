@@ -19,7 +19,8 @@ public class AuthSecretHasher {
     private static final String HMAC_ALGORITHM = "HmacSHA256";
     private static final String OTP_CONTEXT = "phone-verification:";
     private static final String REFRESH_TOKEN_CONTEXT = "refresh-token:";
-    private static final String ACCESS_TOKEN_CREDENTIAL_CONTEXT = "access-token-credential";
+    private static final String ACCESS_TOKEN_CREDENTIAL_CONTEXT = "access-token-credential:";
+    private static final String PASSWORD_RESET_TOKEN_ID_CONTEXT = "password-reset-token-id:";
 
     private final AuthSecretProperties authSecretProperties;
 
@@ -70,6 +71,10 @@ public class AuthSecretHasher {
                 credentialFingerprint.getBytes(StandardCharsets.US_ASCII),
                 expectedFingerprint.getBytes(StandardCharsets.US_ASCII)
         );
+    }
+
+    public String hashPasswordResetTokenId(String tokenId) {
+        return hash(PASSWORD_RESET_TOKEN_ID_CONTEXT, tokenId);
     }
 
     private String hash(String context, String value) {

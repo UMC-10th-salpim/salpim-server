@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import salpim.umc10thsalpim.domain.auth.dto.AuthReqDTO;
 import salpim.umc10thsalpim.domain.auth.dto.AuthResDTO;
 import salpim.umc10thsalpim.domain.auth.dto.TokenDTO;
+import salpim.umc10thsalpim.domain.auth.entity.PasswordResetToken;
 import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationPurpose;
 import salpim.umc10thsalpim.domain.auth.enums.PasswordVerificationTargetType;
 import salpim.umc10thsalpim.domain.auth.exception.AuthException;
@@ -14,6 +15,9 @@ import salpim.umc10thsalpim.domain.auth.exception.code.AuthErrorCode;
 import salpim.umc10thsalpim.domain.member.entity.Member;
 import salpim.umc10thsalpim.domain.member.enums.SocialProvider;
 import salpim.umc10thsalpim.domain.member.repository.MemberRepository;
+import salpim.umc10thsalpim.domain.member.service.PasswordPolicy;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +27,10 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final PasswordVerificationAttemptService passwordVerificationAttemptService;
+    private final PasswordResetTokenService passwordResetTokenService;
+    private final PasswordPolicy passwordPolicy;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResDTO.PasswordResetVerifyResult verifyRecoveryAnswer(
             AuthReqDTO.PasswordResetVerify request
     ) {
@@ -49,7 +55,7 @@ public class PasswordResetService {
             );
 
             return new AuthResDTO.PasswordResetVerifyResult(
-                    tokenService.issuePasswordResetToken(member)
+                    passwordResetTokenService.issuePasswordResetToken(member)
             );
         } catch (AuthException e) {
             passwordVerificationAttemptService.recordFailure(
@@ -67,14 +73,20 @@ public class PasswordResetService {
         TokenDTO.PasswordResetTokenClaims claims =
                 tokenService.parsePasswordResetToken(request.passwordResetToken());
 
-        Member member = memberRepository.findById(claims.memberId())
+        Member member = memberRepository.findByIdForUpdate(claims.memberId())
                 .orElseThrow(() ->
                         new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID));
+
+        PasswordResetToken passwordResetToken = passwordResetTokenService
+                .getUsablePasswordResetTokenForUpdate(claims);
 
         if (member.getLoginType() != SocialProvider.LOCAL) {
             throw new AuthException(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
         }
 
+        passwordPolicy.validateNewPasswordIsDifferent(member, request.newPassword());
+
+        passwordResetToken.consume(LocalDateTime.now());
         member.changePassword(passwordEncoder.encode(request.newPassword()));
         tokenService.invalidateMemberSession(member);
     }
@@ -97,4 +109,5 @@ public class PasswordResetService {
     private String normalizePhoneNumber(String phoneNumber) {
         return phoneNumber.replace("-", "").trim();
     }
+
 }

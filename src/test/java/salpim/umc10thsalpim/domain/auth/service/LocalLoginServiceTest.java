@@ -19,7 +19,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,6 +30,7 @@ class LocalLoginServiceTest {
     private static final String PHONE_NUMBER = "01031768867";
     private static final String RAW_PASSWORD = "password123!";
     private static final String ENCODED_PASSWORD = "encoded-password";
+    private static final String CLIENT_IP = "203.0.113.10";
 
     @Mock
     private MemberRepository memberRepository;
@@ -37,6 +40,9 @@ class LocalLoginServiceTest {
 
     @Mock
     private TokenService tokenService;
+
+    @Mock
+    private LoginAttemptService loginAttemptService;
 
     @InjectMocks
     private LocalLoginService localLoginService;
@@ -55,11 +61,12 @@ class LocalLoginServiceTest {
         when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
         when(tokenService.issueLoginTokens(member)).thenReturn(expectedToken);
 
-        AuthResDTO.TokenResult result = localLoginService.login(request);
+        AuthResDTO.TokenResult result = localLoginService.login(request, CLIENT_IP);
 
         assertThat(result).isEqualTo(expectedToken);
         assertThat(result.wordSize()).isEqualTo(WordSize.LARGE);
         verify(passwordEncoder).matches(RAW_PASSWORD, ENCODED_PASSWORD);
+        verify(loginAttemptService).clearPhoneFailures(PHONE_NUMBER);
     }
 
     @Test
@@ -67,9 +74,11 @@ class LocalLoginServiceTest {
         AuthReqDTO.LocalLogin request = new AuthReqDTO.LocalLogin(PHONE_NUMBER, RAW_PASSWORD);
         when(memberRepository.findByPhoneNumber(PHONE_NUMBER)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> localLoginService.login(request))
+        assertThatThrownBy(() -> localLoginService.login(request, CLIENT_IP))
                 .isInstanceOfSatisfying(AuthException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
+
+        verify(loginAttemptService).recordFailure(PHONE_NUMBER, CLIENT_IP);
     }
 
     @Test
@@ -80,9 +89,25 @@ class LocalLoginServiceTest {
         when(memberRepository.findByPhoneNumber(PHONE_NUMBER)).thenReturn(Optional.of(member));
         when(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).thenReturn(false);
 
-        assertThatThrownBy(() -> localLoginService.login(request))
+        assertThatThrownBy(() -> localLoginService.login(request, CLIENT_IP))
                 .isInstanceOfSatisfying(AuthException.class, exception ->
                         assertThat(exception.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_LOGIN_CREDENTIALS));
+
+        verify(loginAttemptService).recordFailure(PHONE_NUMBER, CLIENT_IP);
+    }
+
+    @Test
+    void loginStopsBeforeAuthenticationWhenAttemptsAreExceeded() {
+        AuthReqDTO.LocalLogin request = new AuthReqDTO.LocalLogin(PHONE_NUMBER, RAW_PASSWORD);
+        doThrow(new AuthException(AuthErrorCode.LOGIN_ATTEMPTS_EXCEEDED))
+                .when(loginAttemptService).validateAllowed(PHONE_NUMBER, CLIENT_IP);
+
+        assertThatThrownBy(() -> localLoginService.login(request, CLIENT_IP))
+                .isInstanceOfSatisfying(AuthException.class, exception ->
+                        assertThat(exception.getErrorCode())
+                                .isEqualTo(AuthErrorCode.LOGIN_ATTEMPTS_EXCEEDED));
+
+        verifyNoInteractions(memberRepository, passwordEncoder, tokenService);
     }
 
     private Member localMember() {

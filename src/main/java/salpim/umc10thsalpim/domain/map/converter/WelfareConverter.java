@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 import salpim.umc10thsalpim.domain.benefit.entity.WelfareBenefit;
 import salpim.umc10thsalpim.domain.map.dto.MapReqDTO;
 import salpim.umc10thsalpim.domain.map.dto.MapResDTO;
-import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 
 import java.util.Collections;
 import java.util.List;

@@ -18,6 +18,9 @@ public enum AuthErrorCode implements BaseErrorCode {
     INVALID_LOGIN_CREDENTIALS(HttpStatus.UNAUTHORIZED,
             "AUTH401_LOGIN_CREDENTIALS",
             "전화번호 또는 비밀번호가 올바르지 않습니다."),
+    LOGIN_ATTEMPTS_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS,
+            "AUTH429_LOGIN_ATTEMPTS",
+            "로그인 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED,
             "AUTH401_TOKEN",
             "유효하지 않은 토큰입니다."),
@@ -96,6 +99,15 @@ public enum AuthErrorCode implements BaseErrorCode {
     SMS_SEND_FAILED(HttpStatus.BAD_GATEWAY,
             "AUTH502_SMS_SEND",
             "인증번호 문자 발송에 실패했습니다."),
+    TERMS_AGREEMENT_NOT_SUBMITTED(HttpStatus.BAD_REQUEST,
+            "AUTH400_TERMS_AGREEMENT_NOT_SUBMITTED",
+            "약관 동의 정보가 제출되지 않았습니다."),
+    TERMS_AGREEMENT_EXPIRED(HttpStatus.BAD_REQUEST,
+            "AUTH400_TERMS_AGREEMENT_EXPIRED",
+            "약관 동의가 만료되었습니다. 약관 동의를 다시 제출해 주세요."),
+    TERMS_AGREEMENT_VERIFICATION_FAILED(HttpStatus.BAD_REQUEST,
+            "AUTH400_TERMS_AGREEMENT_VERIFICATION",
+            "약관 동의 정보를 확인할 수 없습니다. 약관 동의를 다시 제출해 주세요."),
     ;
 
     private final HttpStatus status;
