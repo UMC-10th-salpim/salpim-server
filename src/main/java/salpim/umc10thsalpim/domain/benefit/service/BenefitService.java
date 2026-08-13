@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
 import salpim.umc10thsalpim.domain.benefit.converter.BenefitConverter;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitReqDTO;
 import salpim.umc10thsalpim.domain.benefit.dto.BenefitResDTO;
@@ -44,6 +45,9 @@ import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BenefitService {
@@ -273,12 +277,16 @@ public class BenefitService {
         List<String> servIds_N = new ArrayList<>();
         List<String> servIds_L = new ArrayList<>();
         int pageNumber = 1;
+        long start = System.currentTimeMillis();
         while(servIds_N.size()<MAX_SERV_NUMBER && servIds_L.size()<MAX_SERV_NUMBER){
-            BokjiroApiDTO.BenefitListRes NationalRes =
-                    bokjiroApiClient.searchBenefits(pageNumber, API_MAX_SIZE, searchKeyList, null, "National", sido.getName(), sigungu.getName());
 
-            BokjiroApiDTO.BenefitListRes LocalRes =
-                    bokjiroApiClient.searchBenefits(pageNumber, API_MAX_SIZE, searchKeyList, null, "Local", sido.getName(), sigungu.getName());
+            var both = Mono.zip(
+                    bokjiroApiClient.searchBenefitsMono(pageNumber, API_MAX_SIZE, searchKeyList, null, "National", sido.getName(), sigungu.getName()),
+                    bokjiroApiClient.searchBenefitsMono(pageNumber, API_MAX_SIZE, searchKeyList, null, "Local", sido.getName(), sigungu.getName())
+            ).block();
+
+            BokjiroApiDTO.BenefitListRes NationalRes = both.getT1();
+            BokjiroApiDTO.BenefitListRes LocalRes = both.getT2();
 
             NationalRes.getBenefitList().forEach(item -> {servIds_N.add(item.getServId());
                 viewCountMap.put(SOURCE_NATIONAL+":"+item.getServId(), Integer.parseInt(item.getInqNum()));
@@ -291,6 +299,8 @@ public class BenefitService {
             pageNumber*API_MAX_SIZE>=LocalRes.getMaxTotalCount()){ break; }
             pageNumber++;
         }
+        log.info("복지로 조회 완료 - {}ms, 페이지 {}바퀴, N={}건, L={}건",
+                System.currentTimeMillis()-start, pageNumber, servIds_N.size(), servIds_L.size());
 
         //DB 매칭 & 카테고리/마감일 필터링
         List<WelfareBenefit> matched = new ArrayList<>();
@@ -368,7 +378,24 @@ public class BenefitService {
 
         Page<WelfareBenefit> favoriteBenefits = favoriteBenefitRepository.findFavoriteBenefitsByMemberId(memberId, pageRequest);
 
-        return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits.getContent(), favoriteBenefits.getTotalElements(), favoriteBenefits.hasNext());
+        List<Long> categoryIds = favoriteBenefits.getContent().stream()
+                .map(WelfareBenefit::getCategoryId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<Long, String> categoryNameMap =
+                welfareCategoryRepository.findAllById(categoryIds).stream()
+                        .collect(Collectors.toMap(
+                                WelfareCategory::getId,
+                                WelfareCategory::getName
+                        ));
+
+        return BenefitConverter.toFavoriteBenefitPagination(
+                favoriteBenefits.getContent(),
+                favoriteBenefits.getTotalElements(),
+                favoriteBenefits.hasNext(),
+                categoryNameMap);
     }
 
     @Transactional

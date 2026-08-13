@@ -56,6 +56,7 @@ public class BenefitResDTO {
     public record FavoriteBenefitDTO(
             Long benefitId,
             String title,
+            String benefitCategory,
             LocalDate applicationEndDate,
             Integer minAge
     ){}

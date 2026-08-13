@@ -1,24 +1,27 @@
 package salpim.umc10thsalpim.global.infra.bokjiro;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 import salpim.umc10thsalpim.global.infra.dto.BokjiroApiDTO;
 import salpim.umc10thsalpim.global.infra.exception.BokjiroException;
 import salpim.umc10thsalpim.global.infra.exception.code.BokjiroErrorCode;
 
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.LinkedHashMap;
 
 @Component
+@Slf4j
 public class BokjiroApiClient {
 
     private final WebClient nationalWebClient;
@@ -26,6 +29,10 @@ public class BokjiroApiClient {
     private final String nationalServiceKey;
     private final String localServiceKey;
     private final XmlMapper xmlMapper;
+
+    private static final Duration API_TIMEOUT = Duration.ofSeconds(9);
+    private static final int MAX_RETRY = 2;
+    private static final Duration RETRY_BACKOFF = Duration.ofMillis(150);
 
     public BokjiroApiClient(@Qualifier("bokjiroNationalWebClient") WebClient nationalWebClient,
                             @Value("${bokjiro.service-key}") String serviceKey,
@@ -54,7 +61,8 @@ public class BokjiroApiClient {
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(60))
+                .timeout(API_TIMEOUT)
+                .retryWhen(Retry.backoff(MAX_RETRY, RETRY_BACKOFF))
                 .map(this::parseAndValidate);
     }
 
@@ -73,9 +81,12 @@ public class BokjiroApiClient {
                         .build())
                 .retrieve()
                 .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(60))
+                .timeout(API_TIMEOUT)
+                .retryWhen(Retry.backoff(MAX_RETRY, RETRY_BACKOFF))
                 .map(this::parseAndValidate);
     }
+
+
 
     private BokjiroApiDTO.BenefitListRes parseAndValidate(String xml){
 
@@ -97,32 +108,43 @@ public class BokjiroApiClient {
 
     }
 
-    public BokjiroApiDTO.BenefitListRes searchBenefits(int pageNo, int pageSize, List<String> searchWrd, String intrsThemaArray, String source, String ctpvNm, String sggNm){
+    // .block() 없는 버전 — 호출만 걸어두고 바로 반환
+    public Mono<BokjiroApiDTO.BenefitListRes> searchBenefitsMono(
+            int pageNo, int pageSize, List<String> searchWrd,
+            String intrsThemaArray, String source, String ctpvNm, String sggNm) {
 
-        List<BokjiroApiDTO.BenefitListRes> results = List.of();
+        // 키워드 개수만큼 동시에 (최소 1개, 최대 10개)
+        int concurrency = Math.min(Math.max(searchWrd.size(), 1), 10);
 
-        if (source.equals("National")) {
+        Flux<BokjiroApiDTO.BenefitListRes> calls;
 
-            results = Flux.fromIterable(searchWrd)
-                    .flatMap(wrd -> searchNationalBenefits(pageNo, pageSize, wrd, intrsThemaArray).onErrorResume(e->Mono.empty()), 3)
-                    .collectList()
-                    .block();
+        if ("National".equals(source)) {
+            calls = Flux.fromIterable(searchWrd)
+                    .flatMap(wrd -> searchNationalBenefits(pageNo, pageSize, wrd, intrsThemaArray)
+                            .onErrorResume(e -> {
+                                log.warn("복지로 National 실패 - searchWrd={}, pageNo={}", wrd, pageNo, e);
+                                return Mono.empty();
+                            }), concurrency);
 
+        } else if ("Local".equals(source)) {
+            calls = Flux.fromIterable(searchWrd)
+                    .flatMap(wrd -> searchLocalBenefits(pageNo, pageSize, wrd, intrsThemaArray, ctpvNm, sggNm)
+                            .onErrorResume(e -> {
+                                log.warn("복지로 Local 실패 - searchWrd={}, pageNo={}", wrd, pageNo, e);
+                                return Mono.empty();
+                            }), concurrency);
 
-        } else if (source.equals("Local")) {
-
-            results = Flux.fromIterable(searchWrd)
-                    .flatMap(wrd -> searchLocalBenefits(pageNo, pageSize, wrd, intrsThemaArray, ctpvNm, sggNm).onErrorResume(e->Mono.empty()), 3)
-                    .collectList()
-                    .block();
-
+        } else {
+            return Mono.error(new BokjiroException(BokjiroErrorCode.BOKJIRO_API_ERROR));
         }
 
-        if (!searchWrd.isEmpty() && results.isEmpty()) {
-            throw new BokjiroException(BokjiroErrorCode.BOKJIRO_API_ERROR);
-        }
-
-        return mergeRes(results);
+        return calls.collectList()
+                .map(results -> {
+                    if (!searchWrd.isEmpty() && results.isEmpty()) {
+                        throw new BokjiroException(BokjiroErrorCode.BOKJIRO_API_ERROR);
+                    }
+                    return mergeRes(results);
+                });
     }
 
     //중복 제거 및 합치기
