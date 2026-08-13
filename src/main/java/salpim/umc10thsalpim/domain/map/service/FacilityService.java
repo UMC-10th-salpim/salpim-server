@@ -42,6 +42,8 @@ public class FacilityService {
             String cursor,
             int size
     ) {
+        Long cursorId = parseCursor(cursor);
+
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
 
@@ -73,7 +75,6 @@ public class FacilityService {
         Map<Long, String> regionNameMap = regionQueryService.getAncestorRegionNameMap(member.getRegionId());
         List<Long> upperRegionIds = new ArrayList<>(regionNameMap.keySet());
 
-        Long cursorId = (cursor != null && !cursor.isBlank()) ? Long.parseLong(cursor) : 0L;
         PageRequest pageRequest = PageRequest.of(0, size + 1);
 
         // DB 단일 쿼리로 중앙 + 지자체 혜택 중 VISIT만 페이징
@@ -125,6 +126,17 @@ public class FacilityService {
 
         if(!containsDong){
             throw new MapException(MapErrorCode.NOT_MY_SERVICE_CENTER); //400_3
+        }
+    }
+
+    private Long parseCursor(String cursor) {
+        if (cursor == null || cursor.isBlank()) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(cursor);
+        } catch (NumberFormatException e) {
+            throw new MapException(MapErrorCode.INVALID_CURSOR);
         }
     }
 }
