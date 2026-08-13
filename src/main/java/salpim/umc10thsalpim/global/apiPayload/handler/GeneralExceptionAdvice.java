@@ -4,9 +4,13 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import salpim.umc10thsalpim.global.apiPayload.ApiResponse;
 import salpim.umc10thsalpim.global.apiPayload.code.BaseErrorCode;
 import salpim.umc10thsalpim.global.apiPayload.code.GeneralErrorCode;
@@ -28,7 +32,44 @@ public class GeneralExceptionAdvice {
         return ResponseEntity.status(errorCode.getStatus())
                 .body(ApiResponse.onFailure(errorCode, null));
     }
+    //타입 불일치
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException e
+    ) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put(e.getName(), e.getName() + " 형식이 올바르지 않습니다.");
 
+        return ResponseEntity.status(GeneralErrorCode.BAD_REQUEST.getStatus())
+                .body(ApiResponse.onFailure(GeneralErrorCode.BAD_REQUEST, errors));
+    }
+    //파라미터 누락
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleMissingRequestParameter(
+            MissingServletRequestParameterException e
+    ) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put(e.getParameterName(), e.getParameterName() + " is required.");
+
+        return ResponseEntity.status(GeneralErrorCode.BAD_REQUEST.getStatus())
+                .body(ApiResponse.onFailure(GeneralErrorCode.BAD_REQUEST, errors));
+    }
+    //지원하지 않는 메서드
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException e
+    ) {
+        return ResponseEntity.status(GeneralErrorCode.METHOD_NOT_ALLOWED.getStatus())
+                .body(ApiResponse.onFailure(GeneralErrorCode.METHOD_NOT_ALLOWED, null));
+    }
+    //없는 리소스 경로
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(
+            NoResourceFoundException e
+    ) {
+        return ResponseEntity.status(GeneralErrorCode.NOT_FOUND.getStatus())
+                .body(ApiResponse.onFailure(GeneralErrorCode.NOT_FOUND, null));
+    }
     // 그 외의 정의되지 않은 모든 예외 처리 -> 서버 오류로 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<String>> handleException(

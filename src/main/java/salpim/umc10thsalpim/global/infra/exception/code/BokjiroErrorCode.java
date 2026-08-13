@@ -10,14 +10,14 @@ import salpim.umc10thsalpim.global.apiPayload.code.BaseErrorCode;
 public enum BokjiroErrorCode implements BaseErrorCode {
 
     BOKJIRO_API_ERROR(HttpStatus.BAD_GATEWAY,
-            "BOKJIRO502",
+            "BOKJIRO502_1",
             "복지로 API 호출에 실패했습니다."),
     BOKJIRO_PARSE_ERROR(HttpStatus.BAD_GATEWAY,
-            "BOKJIRO502_1",
+            "BOKJIRO502_2",
             "복지로 API 응답을 처리할 수 없습니다."),
     BOKJIRO_TIME_OUT(
             HttpStatus.GATEWAY_TIMEOUT,
-            "BOKJIRO504",
+            "BOKJIRO504_1",
             "복지로 API 응답 시간이 초과되었습니다."
     );
 
