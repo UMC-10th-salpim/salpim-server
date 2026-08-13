@@ -283,7 +283,7 @@ class MemberControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.isSuccess").value(false))
-                .andExpect(jsonPath("$.code").value("AUTH429_PHONE_VERIFICATION_RESEND"));
+                .andExpect(jsonPath("$.code").value("AUTH429_2"));
     }
 
     @Test
