@@ -79,21 +79,25 @@ public class BenefitConverter {
       );
    }
 
-   public static CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO> toFavoriteBenefitPagination(List<WelfareBenefit> favoriteBenefits, Long totalCount, Boolean hasNext) {
+   public static CursorResDTO.Pagination<BenefitResDTO.FavoriteBenefitDTO> toFavoriteBenefitPagination(List<WelfareBenefit> favoriteBenefits, Long totalCount, Boolean hasNext,  Map<Long, String> categoryNameMap) {
       return CursorResDTO.Pagination.<BenefitResDTO.FavoriteBenefitDTO>builder()
           .data(favoriteBenefits.stream()
-              .map(BenefitConverter::toFavoriteBenefitDTO)
-              .toList())
+                  .map(benefit -> toFavoriteBenefitDTO(
+                          benefit,
+                          categoryNameMap.get(benefit.getCategoryId())
+                  ))
+                  .toList())
           .totalCount(totalCount.intValue())
           .pageSize(favoriteBenefits.size())
           .hasNext(hasNext)
           .build();
    }
 
-   public static BenefitResDTO.FavoriteBenefitDTO toFavoriteBenefitDTO(WelfareBenefit benefit) {
+   public static BenefitResDTO.FavoriteBenefitDTO toFavoriteBenefitDTO(WelfareBenefit benefit, String categoryName) {
       return BenefitResDTO.FavoriteBenefitDTO.builder()
           .benefitId(benefit.getId())
           .title(benefit.getTitle())
+              .benefitCategory(categoryName)
           .applicationEndDate(benefit.getApplicationEndDate())
           .minAge(benefit.getMinAge())
           .build();

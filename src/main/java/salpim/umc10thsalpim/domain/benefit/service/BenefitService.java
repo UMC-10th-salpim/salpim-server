@@ -378,7 +378,24 @@ public class BenefitService {
 
         Page<WelfareBenefit> favoriteBenefits = favoriteBenefitRepository.findFavoriteBenefitsByMemberId(memberId, pageRequest);
 
-        return BenefitConverter.toFavoriteBenefitPagination(favoriteBenefits.getContent(), favoriteBenefits.getTotalElements(), favoriteBenefits.hasNext());
+        List<Long> categoryIds = favoriteBenefits.getContent().stream()
+                .map(WelfareBenefit::getCategoryId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<Long, String> categoryNameMap =
+                welfareCategoryRepository.findAllById(categoryIds).stream()
+                        .collect(Collectors.toMap(
+                                WelfareCategory::getId,
+                                WelfareCategory::getName
+                        ));
+
+        return BenefitConverter.toFavoriteBenefitPagination(
+                favoriteBenefits.getContent(),
+                favoriteBenefits.getTotalElements(),
+                favoriteBenefits.hasNext(),
+                categoryNameMap);
     }
 
     @Transactional
